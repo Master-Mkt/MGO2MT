@@ -1,0 +1,38 @@
+#pragma once
+#include <windows.h>
+#include <vector>
+#include <filesystem>
+#include <functional>
+#include <string>
+namespace mgo2win {
+struct GraphicsConfig {
+ unsigned fullscreen=0,width=1280,height=720,refresh_num=0,refresh_den=1,shadow=2048,vsync=1;
+ bool operator==(const GraphicsConfig&)const=default;
+};
+struct DisplayMode {unsigned width,height,num,den;};
+bool valid_graphics(const GraphicsConfig&);
+bool load_graphics(const std::filesystem::path&,GraphicsConfig&);
+void save_graphics(const std::filesystem::path&,const GraphicsConfig&);
+class GraphicsSettings {
+ std::filesystem::path path_;GraphicsConfig previous_;
+ bool request_=false,undo_=false;ULONGLONG until_=0;
+ int focus_=0;bool back_=false;
+ std::vector<unsigned> cues_;
+ void change(int);void activate();
+public:
+ GraphicsConfig active,draft;
+ std::vector<DisplayMode> modes;
+ std::function<bool(const GraphicsConfig&)> apply;
+ std::wstring notice=L"項目を選び、変更後に「適用」を押してください。";
+ explicit GraphicsSettings(std::filesystem::path);
+ bool pending()const{return until_!=0;}
+ void request(){if(!pending())request_=true;}
+ void cancel(){if(pending())undo_=true;}
+ bool confirm();
+ void tick(ULONGLONG now,bool foreground);
+ bool message(HWND,UINT,WPARAM,LPARAM);
+ void draw(HDC,const std::vector<HFONT>&);
+ bool back(){bool b=back_;back_=false;return b;}
+ std::vector<unsigned> cues(){auto c=std::move(cues_);cues_.clear();return c;}
+};
+}

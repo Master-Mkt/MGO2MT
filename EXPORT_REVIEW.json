@@ -1,0 +1,507 @@
+{
+  "status": "reviewed_source_export_for_owner_requested_prerelease",
+  "files": [
+    {
+      "path": ".gitignore",
+      "size": 259,
+      "sha256": "ecca5d74f7489d0299391756c278fbc48eb403e86f88c96412e196d89b8fdb72"
+    },
+    {
+      "path": "Allow-OpenMGO2.cmd",
+      "size": 311,
+      "sha256": "237613c8360c492af520bd1cb5e659a2b52a51115c5f5c6e4306b04fe4e7ed8a"
+    },
+    {
+      "path": "Build-Title.cmd",
+      "size": 243,
+      "sha256": "4cdee74af465687f032729a00e7488915cc84d93b14cc981474c975ad30d20cc"
+    },
+    {
+      "path": "CMakeLists.txt",
+      "size": 11057,
+      "sha256": "68228d30a72d19332ee87701055eccc0706a024c6446a9f25a9567ad595f0fc9"
+    },
+    {
+      "path": "distribution/LICENSE_STATUS.md",
+      "size": 1986,
+      "sha256": "e70093e455c1aaabdb6dce543204a61d0ac26145ea428d29e11e36e0385bea35"
+    },
+    {
+      "path": "distribution/PUBLICATION.md",
+      "size": 1162,
+      "sha256": "aa63a966dd32ba0c892b79ddd390dcc52cd4eab71b146fc8debd941be5c5be93"
+    },
+    {
+      "path": "distribution/README.ja.md",
+      "size": 4289,
+      "sha256": "e7f606f1d33e8e79123414908742efae51092f7d83609dadc345a78bf9513034"
+    },
+    {
+      "path": "distribution/README.md",
+      "size": 3897,
+      "sha256": "213e6bb7f2184ed792c9e67b86666b244c1fc9c92d57fd9fb759d77ead623618"
+    },
+    {
+      "path": "distribution/THIRD_PARTY_NOTICES.md",
+      "size": 18023,
+      "sha256": "66bf2b5a775be6921467c61e1396f801dcc79d34c1272d98bef126f43d7ec895"
+    },
+    {
+      "path": "include/agreement_screen.h",
+      "size": 1093,
+      "sha256": "64f17d945a6588ee3f0eb4f39e0c0ba10a7a246aab8d37d8c11854a99c7e864c"
+    },
+    {
+      "path": "include/audio_control.h",
+      "size": 174,
+      "sha256": "ee8fd5fc0b41af58c0026adde5d84eb79edabef4a02b2f583fa4dc99b7659549"
+    },
+    {
+      "path": "include/audio_fade.h",
+      "size": 1010,
+      "sha256": "108cf47ce886c3c9f2a129ebeb8f6138f505cb541c0680cb186e25d083405363"
+    },
+    {
+      "path": "include/authentication.h",
+      "size": 1245,
+      "sha256": "43503015466051e25899d425f9aa9b4c50e5f641c18ead7168e2bed725311f64"
+    },
+    {
+      "path": "include/character_catalog.h",
+      "size": 1785,
+      "sha256": "a3888ee7fdb5ecaa1001e75ec47964b60eb5f67e4feb230c34cd5c47ab309d8f"
+    },
+    {
+      "path": "include/character_client.h",
+      "size": 3362,
+      "sha256": "9a823e9bbed954a60ead3376a36213a30e80365902aa00b2bcd5d050c9cb80e5"
+    },
+    {
+      "path": "include/character_creation.h",
+      "size": 2877,
+      "sha256": "1a3fc352ba714c2e786b3d4948f7ce64d86522a92076496a6f78c6a6dd83f332"
+    },
+    {
+      "path": "include/character_model.h",
+      "size": 706,
+      "sha256": "f008c7eb942e7a4d099ff5cf229e9b5a802b38f870c8aaaee546c29a22200d09"
+    },
+    {
+      "path": "include/character_renderer.h",
+      "size": 1044,
+      "sha256": "d373d31105f4224ca4a73f8a63f45b1a3d0f281c73db7165f42856133068332b"
+    },
+    {
+      "path": "include/character_screen.h",
+      "size": 3203,
+      "sha256": "efd7580dd8f85b02eddce03e93b07b4e94eab391ea252387ab53443ebe4c9f26"
+    },
+    {
+      "path": "include/character_slots.h",
+      "size": 2257,
+      "sha256": "f33c2acea50d40b1a0200aa2778d7089eb62895f91c80c8fec9784f64b67d272"
+    },
+    {
+      "path": "include/controller_input.h",
+      "size": 1521,
+      "sha256": "d41ccab156b3af05367e528be7f2a97de4958ba21892afa3184bd5a54375a71d"
+    },
+    {
+      "path": "include/controller_panel.h",
+      "size": 1071,
+      "sha256": "f6f2793e1aadc0b4032fc0ca45f71b5c4d4dcb4af06b40bd4325d2ad371c35cf"
+    },
+    {
+      "path": "include/gcx_runtime.h",
+      "size": 2207,
+      "sha256": "6aceceeab18e5e0a0e3337cd98df5039358ae668fe1c0c7237cf861d08d8cc65"
+    },
+    {
+      "path": "include/graphics_settings.h",
+      "size": 1445,
+      "sha256": "659e8425dc383649d1c62a9e070bd27b4ea72d7678b525e585241603e4d627c4"
+    },
+    {
+      "path": "include/http_text.h",
+      "size": 403,
+      "sha256": "8bc0b000b33402e6ffd78e50dba5ef5f8995b3b70e533e1a975b857b5a12f70d"
+    },
+    {
+      "path": "include/login_form.h",
+      "size": 3758,
+      "sha256": "fa03b20cf1ab4fea3f5448eb00d8da8b059b043a12a298e301b7a07732c1471c"
+    },
+    {
+      "path": "include/login_screen.h",
+      "size": 3428,
+      "sha256": "0eb5240d7f89e8cfe65ebf0c8d5137f415bd9e9d71f7b97a03d8fed3c9393c26"
+    },
+    {
+      "path": "include/login_store.h",
+      "size": 280,
+      "sha256": "c8aa1cabf9d90d9488b9873903c39f738f0c8de31c3aac6e5a1d0ae1d2c73ac8"
+    },
+    {
+      "path": "include/mgo2win/gcl_lengths.hpp",
+      "size": 500,
+      "sha256": "1e9ac89e2c63244069de734ca1918958dd5a32f54e84530a5030def01e7faa1b"
+    },
+    {
+      "path": "include/port_screen.h",
+      "size": 1903,
+      "sha256": "293bcb09c7d50ceb3365cc950b1a339f80af88366b92976b39bd19d2ec3bccc5"
+    },
+    {
+      "path": "include/port_settings.h",
+      "size": 1257,
+      "sha256": "16a06ecf4bc016b62b5eaa4f8c79c38ab0ade563ff54d706237ea5b6497ea2db"
+    },
+    {
+      "path": "include/stun.h",
+      "size": 850,
+      "sha256": "8de151d13b50202088e7b4164df2f1a784b38570c6c9ef9fc547fc03f870cc99"
+    },
+    {
+      "path": "include/title_animation.h",
+      "size": 2297,
+      "sha256": "8cbcb7a145790dca2690af14731cbf65be1823963a61871c2b3c9cbc96859fe1"
+    },
+    {
+      "path": "include/title_gcx.h",
+      "size": 1089,
+      "sha256": "79b7e1280405700b04dfdadcbc46a38c5f8189a411ecd5f55d4f45fba7c8bee0"
+    },
+    {
+      "path": "LICENSE_STATUS.md",
+      "size": 1986,
+      "sha256": "e70093e455c1aaabdb6dce543204a61d0ac26145ea428d29e11e36e0385bea35"
+    },
+    {
+      "path": "licenses/Solid4-local-README.txt",
+      "size": 1709,
+      "sha256": "f057fbdf804adc5efaa37d58ba2033aa91c3394bc82f9213a0df9b5ca4e8a580"
+    },
+    {
+      "path": "licenses/vgmstream-r2117-COPYING.txt",
+      "size": 1314,
+      "sha256": "fcc26d35c4c4365e31f21734f846e4ee362ff0b57ba696085605a7b4768d8763"
+    },
+    {
+      "path": "PUBLICATION.md",
+      "size": 1162,
+      "sha256": "aa63a966dd32ba0c892b79ddd390dcc52cd4eab71b146fc8debd941be5c5be93"
+    },
+    {
+      "path": "README.ja.md",
+      "size": 4289,
+      "sha256": "e7f606f1d33e8e79123414908742efae51092f7d83609dadc345a78bf9513034"
+    },
+    {
+      "path": "README.md",
+      "size": 3897,
+      "sha256": "213e6bb7f2184ed792c9e67b86666b244c1fc9c92d57fd9fb759d77ead623618"
+    },
+    {
+      "path": "scenes/README.md",
+      "size": 389,
+      "sha256": "fdb5d5da339a3c527cd4ff810a92a7c9d1b1e9d1cc7ddbe95a5f617c7f2e7bd1"
+    },
+    {
+      "path": "src/agreement_screen.cpp",
+      "size": 5410,
+      "sha256": "8673da1a32c9c7d494f3a2a4b94d392cd50ad1a6b7496568be3e92ae2cdcb350"
+    },
+    {
+      "path": "src/audio_main.cpp",
+      "size": 229,
+      "sha256": "8763f5b1686c13d6225c215c1c44a9f8e6cd1f7642e37e2af3ac94656911dc2f"
+    },
+    {
+      "path": "src/authentication.cpp",
+      "size": 7158,
+      "sha256": "f1fc5a805984d8cc4f2b1848f7839e487c6a68672fbd3ef307198bea47d5472d"
+    },
+    {
+      "path": "src/character_catalog.cpp",
+      "size": 10080,
+      "sha256": "7812599997d8f4c4f42c3cb5ef07ca89c0c9940294c0484969699a77d02be94a"
+    },
+    {
+      "path": "src/character_client.cpp",
+      "size": 16025,
+      "sha256": "ed21fc4f57a97ecb9b15a825d22ac9f3f97665f1ca11862eb52e732f8b7778b5"
+    },
+    {
+      "path": "src/character_creation.cpp",
+      "size": 14718,
+      "sha256": "5d82c4d3838ed61a50979483b11e074581818a809d24fe1db3dc81e8d8380f22"
+    },
+    {
+      "path": "src/character_model.cpp",
+      "size": 2089,
+      "sha256": "f3a886aab3e58f9ca2ba7f117f24f66f49d97779982143fa1eec59c817a7b709"
+    },
+    {
+      "path": "src/character_renderer.cpp",
+      "size": 6686,
+      "sha256": "92aeed30e20f81bc49994c8889de02cf76d70c7625e193b5d7d66b72f5966bec"
+    },
+    {
+      "path": "src/character_screen.cpp",
+      "size": 14407,
+      "sha256": "8bd229183dff59a1c8f176f216586318ee2fb164f098cae5958eb89c1752d9d7"
+    },
+    {
+      "path": "src/controller_input.cpp",
+      "size": 5771,
+      "sha256": "4804842eb7ce1c4cc6ccf5e92864b223febb6aae5b1f96ac0336773713c23989"
+    },
+    {
+      "path": "src/controller_panel.cpp",
+      "size": 6620,
+      "sha256": "96847d8c3f7f1f4e97c179e16fea51f3d8d41f68ed7622e83316d5a61d640cc0"
+    },
+    {
+      "path": "src/gcl_lengths.cpp",
+      "size": 1034,
+      "sha256": "b2cde984cf8a1e2de01b33093b8a16915ccf5da059123312dc26940a38ca5857"
+    },
+    {
+      "path": "src/gcx_runtime.cpp",
+      "size": 14405,
+      "sha256": "d13884a4eec2a7caa37ee6dd35bcefd79020ee3f0d5d41351ec1bd1f0fa9c9de"
+    },
+    {
+      "path": "src/graphics_settings.cpp",
+      "size": 9069,
+      "sha256": "9f2e5cf3d49abed2b5b34a4b9fc6c2d9859dfe185cff6858bf81730d85320761"
+    },
+    {
+      "path": "src/http_text.cpp",
+      "size": 5323,
+      "sha256": "4e38ce382d14a60c0438dbccfc6f392e6b17ddf8867571e1a9ff58d6adabd4f4"
+    },
+    {
+      "path": "src/login_screen.cpp",
+      "size": 13635,
+      "sha256": "b764006898c151b49b9768169975608794febaf062230b7028db33c7735f3342"
+    },
+    {
+      "path": "src/login_store.cpp",
+      "size": 2711,
+      "sha256": "35f4f3e87524f707e793cb32d884d64381cea7c214296e26dea60b27982defab"
+    },
+    {
+      "path": "src/port_screen.cpp",
+      "size": 15991,
+      "sha256": "e2a43dce5b040f23e89a1e3a5878a9e54166d2ef7a18347939a3503162e2da75"
+    },
+    {
+      "path": "src/port_settings.cpp",
+      "size": 3908,
+      "sha256": "033eb9c2b299dd0cb16442344aa60a2f086c07df020b01de03298a0c40f906fe"
+    },
+    {
+      "path": "src/stun.cpp",
+      "size": 4602,
+      "sha256": "c4db6048390e66269c8676bec5cc05dff0274cbd4e4222f5cfc6c019d21e5714"
+    },
+    {
+      "path": "src/title_animation.cpp",
+      "size": 9000,
+      "sha256": "65b6706332c85267be7f17c4520b74bb3b19f79e541d73e199d97207ffcb4ddd"
+    },
+    {
+      "path": "src/title_desktop_main.cpp",
+      "size": 14777,
+      "sha256": "b9fc706e0454f9df1d56b66c2077436dac5ef9edbe8966f46d47d1aeda3f2e56"
+    },
+    {
+      "path": "src/title_gcx.cpp",
+      "size": 4075,
+      "sha256": "0852b0010aefbd690315ad24b7aacb077e9fc57ff90fcb335bc8d22939463d29"
+    },
+    {
+      "path": "src/title_main.cpp",
+      "size": 117,
+      "sha256": "e58da967a3e5a62153ac30704cf987f38479ce77c088e3b12a407c414999e466"
+    },
+    {
+      "path": "src/title_preview.cpp",
+      "size": 55071,
+      "sha256": "739f31fc5d3126c36fbe08b0bf3a5a79dcf7b012ee190e7e1f6bd39c4b7d96f8"
+    },
+    {
+      "path": "src/windows_audio.cpp",
+      "size": 9722,
+      "sha256": "c89d3ae8e57001f3373abe1a37bb54516bf93a333475910c5b5f9dc0161e3bdf"
+    },
+    {
+      "path": "tests/audio_fade_test.cpp",
+      "size": 971,
+      "sha256": "8c256548f6220136c53cb1e576f4410591474a79b114be47ababab0051c4a19f"
+    },
+    {
+      "path": "tests/authentication_test.cpp",
+      "size": 2537,
+      "sha256": "dc45ad3579e354f66ada0bc6b9cd2d2d584181400e9241a4952f77444a40db24"
+    },
+    {
+      "path": "tests/background_animation_test.cpp",
+      "size": 2065,
+      "sha256": "bb38f5ce0bfeb97a9ab3a99cf460d1950cd81533a2120567cfb863fd9b5f6fcf"
+    },
+    {
+      "path": "tests/character_catalog_test.cpp",
+      "size": 6846,
+      "sha256": "4bf8ace86dd69ff2f6555cda5ba62a431180263fe1bf4731719eb0a799ac32cd"
+    },
+    {
+      "path": "tests/character_client_test.cpp",
+      "size": 5839,
+      "sha256": "d7f5455721aab8232eed1a5074aa7c9cd6e5ffb57d71c3c0752599da142669cd"
+    },
+    {
+      "path": "tests/character_creation_test.cpp",
+      "size": 9618,
+      "sha256": "163f01d9ee1b311eca1ffe909cd4eaa9d97ccac5becb9ebe28050e88140f564d"
+    },
+    {
+      "path": "tests/character_model_test.cpp",
+      "size": 1994,
+      "sha256": "33622fbfff4af92b590c9af97258171a01d15fd810ad1f6be21029dfba34316a"
+    },
+    {
+      "path": "tests/character_registration_test.cpp",
+      "size": 5748,
+      "sha256": "0aaa09d47024155c0e26dc03c2661c3d36c5a4fb1cf141a5828756adb4c5c4ad"
+    },
+    {
+      "path": "tests/character_slots_test.cpp",
+      "size": 4431,
+      "sha256": "2171208914c2551fa14a00f3b8e99b104582eb01e58202072da8535ed472996a"
+    },
+    {
+      "path": "tests/controller_input_test.cpp",
+      "size": 3735,
+      "sha256": "fc00fc05b6c6e259be7274adee162115a189fe17374f6f071e2ab02028f23ace"
+    },
+    {
+      "path": "tests/gcl_lengths_test.cpp",
+      "size": 2042,
+      "sha256": "99f09a6da4eb69f60f7d193bfe5b6e99eafe2d239ca8255878b2eac8e6f8ab10"
+    },
+    {
+      "path": "tests/gcx_runtime_test.cpp",
+      "size": 6728,
+      "sha256": "4fa11679e0019d58685c457a87a4802722b603d95915e4b4f8e59b779b6518d3"
+    },
+    {
+      "path": "tests/graphics_settings_test.cpp",
+      "size": 2457,
+      "sha256": "07120438f17b07c4572b9e8107571cebdab111a2130f25307fc97fc06197f0ba"
+    },
+    {
+      "path": "tests/http_text_test.cpp",
+      "size": 2052,
+      "sha256": "122ff171723b3dbc8daed33d62736fd87e770fee38b25f00ecdc3a718cc8865e"
+    },
+    {
+      "path": "tests/login_auth_flow_test.cpp",
+      "size": 3629,
+      "sha256": "76d96adf46d7592aa916a3de68eddf6d0bfa80be6b20697fea26b7c9c72194d0"
+    },
+    {
+      "path": "tests/login_form_test.cpp",
+      "size": 1506,
+      "sha256": "2bdecf582515471e7ffdb93739dee73250fc48f431b8267b92a1c85c9d038b08"
+    },
+    {
+      "path": "tests/login_store_test.cpp",
+      "size": 1879,
+      "sha256": "0131a89c8e0e674a33fbc169c891b1e667705d2bdae869265656c0c2373c8fcc"
+    },
+    {
+      "path": "tests/port_settings_test.cpp",
+      "size": 2865,
+      "sha256": "c1d923e92b44f27e602c8ee44d637e69fd967d74fc7459af31527fc6a2da4cc4"
+    },
+    {
+      "path": "tests/stun_test.cpp",
+      "size": 4484,
+      "sha256": "60799ab00686fe4e29e58e05fd26b44ff67b31a72b7a5b8c1e30dd14d23dcd99"
+    },
+    {
+      "path": "tests/title_animation_test.cpp",
+      "size": 2835,
+      "sha256": "2841edcef10bcc5be1e2543d838e9cc3eb9ccbf6d32d8af73b56c742fa6b52d0"
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES.md",
+      "size": 18023,
+      "sha256": "66bf2b5a775be6921467c61e1396f801dcc79d34c1272d98bef126f43d7ec895"
+    },
+    {
+      "path": "tools/allow_openmgo2.ps1",
+      "size": 4537,
+      "sha256": "7bbd1139abe4f429c0a2590f9602a1efa78e4b8ff9b7b18e69bb06c7b7f53331"
+    },
+    {
+      "path": "tools/allow_openmgo2_account.ps1",
+      "size": 3453,
+      "sha256": "e644f1b43977c9bfe893d57f4bee68795a8a5005e36719093a1ab76e3e14c80c"
+    },
+    {
+      "path": "tools/allow_openmgo2_stun.ps1",
+      "size": 3412,
+      "sha256": "82053eebbe1bbb60bbf73d1a38353e8efff5f58a2cf4ae03868684f60db81996"
+    },
+    {
+      "path": "tools/compile_title_program.cpp",
+      "size": 769,
+      "sha256": "178bcfdc31fc078e57112711ffcdf472bfb94eb60d871aba3fb6196857436769"
+    },
+    {
+      "path": "tools/export_public_review.py",
+      "size": 6383,
+      "sha256": "608c46032116b8b99dd3003554916e57eea6f5e395939e8a7e52fb7ffe091ab0"
+    },
+    {
+      "path": "tools/gcw.py",
+      "size": 156,
+      "sha256": "133bec35edc0196273f2f0ce4c6e8283f28422b54bbfc503143a5f413556d550"
+    },
+    {
+      "path": "tools/gwp.py",
+      "size": 14273,
+      "sha256": "d5778c25257fc4fbe9798f90b995537bd3031d2f40c513f378cfe9cf9920c024"
+    },
+    {
+      "path": "tools/package_title.py",
+      "size": 9592,
+      "sha256": "34b2994cdb0816b1adc7c9a5d524705740da57be1a42f9df5f09d2bf3c8644e2"
+    },
+    {
+      "path": "tools/windows_sdk_probe.cpp",
+      "size": 582,
+      "sha256": "3d018dcf4d812499191ef66f8602dce98345bd1c8d1a81be44804c9a34a7627a"
+    }
+  ],
+  "exclusions": [
+    "all game assets and converted assets",
+    "original ELF/IDA databases",
+    "assembly/decompilation dumps and research outputs",
+    "PDFs and private logs",
+    "reference source copies without verified license",
+    "historical crypto/decompiler helpers",
+    "third-party executable/DLL tools",
+    "asset conversion scripts pending origin review"
+  ],
+  "remaining": [
+    "source origin and redistribution rights review",
+    "project license selection",
+    "clean-machine executable test",
+    "portable game-dump asset preparation"
+  ],
+  "release_resources": "Converted resources are separate Release attachments, not Git blobs."
+}

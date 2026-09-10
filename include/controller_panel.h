@@ -1,0 +1,25 @@
+#pragma once
+#include "controller_input.h"
+#include <memory>
+#include <vector>
+namespace mgo2win {
+class ControllerPanel {
+ std::filesystem::path path_;std::shared_ptr<ControllerInput> input_;InputConfig draft_;
+ int focus_=0,page_=0,capture_=-1;bool armed_=false,dirty_=false,back_=false,connected_=false;
+ std::wstring notice_=L"機器を選び、変更する項目を決定してください。";std::vector<unsigned> cues_;
+ uint32_t held_=0;
+ void activate();void select_device(int);void bind(unsigned);void save();
+public:
+ ControllerPanel(std::filesystem::path,std::shared_ptr<ControllerInput>);
+ bool message(HWND,UINT,WPARAM,LPARAM);
+ bool sample(const PadSample&); // True consumes the sample while capturing.
+ void draw(HDC,const std::vector<HFONT>&);
+ void cancel_capture(){capture_=-1;armed_=false;}
+ bool capturing()const{return capture_>=0;}
+ bool back()const{return back_;}
+ void clear_back(){back_=false;}
+ std::vector<unsigned> cues(){auto r=std::move(cues_);cues_.clear();return r;}
+ unsigned slot()const{return draft_.slot;}
+ void report()const;
+};
+}
