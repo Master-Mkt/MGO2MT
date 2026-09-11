@@ -1,4 +1,4 @@
-// Partial title preview with optional native GCX subset; full game boot is pending.
+﻿// Partial title preview with optional native GCX subset; full game boot is pending.
 #include <windows.h>
 #include <d3d11.h>
 #include <d3dcompiler.h>
@@ -83,13 +83,14 @@ static void capture(ID3D11Device* device,ID3D11DeviceContext* context,ID3D11Text
 int run_title_preview(int argc,wchar_t**argv){try{
  if(argc<4)throw std::runtime_error("Usage: mgo2win_title_preview scene seconds capture.bmp [--audio] [--scripted-input] [--gcx file --entry procedure --wav file]");
  double seconds=std::stod(argv[2]);if(!(seconds>0&&seconds<=600))throw std::runtime_error("Duration limit");
- bool sound=false,scripted=false,scriptedNo=false,scriptedLogin=false,scriptedPorts=false,scriptedStun=false,scriptedControls=false,scriptedGraphics=false,scriptedCharacters=false,scriptedSlots=false,scriptedAppearance=false,scriptedCreation=false,safeGraphics=false,saveCaptures=true;std::filesystem::path gcxPath,wavPath,sePath,loadingPath,menuConfirmPath,menuMovePath,agreementBackgroundPath,lobbyMusicPath,motionPath,loginPath,networkKeys,modelPath,catalogPath,voiceDirectory;std::wstring policyUrl;uint32_t entry=18;
+ bool sound=false,scripted=false,scriptedNo=false,scriptedLogin=false,scriptedPorts=false,scriptedStun=false,scriptedControls=false,scriptedGraphics=false,scriptedCharacters=false,scriptedSlots=false,scriptedSelection=false,scriptedAppearance=false,scriptedCreation=false,safeGraphics=false,saveCaptures=true;std::filesystem::path gcxPath,wavPath,sePath,loadingPath,menuConfirmPath,menuMovePath,agreementBackgroundPath,lobbyMusicPath,motionPath,loginPath,networkKeys,modelPath,catalogPath,voiceDirectory;std::wstring policyUrl;uint32_t entry=18;
  for(int i=4;i<argc;++i){std::wstring arg=argv[i];if(arg==L"--audio")sound=true;else if(arg==L"--scripted-input")scripted=true;else if(arg==L"--scripted-no"){scripted=true;scriptedNo=true;}
   else if(arg==L"--scripted-login"){scripted=true;scriptedLogin=true;}
   else if(arg==L"--scripted-ports"){scripted=true;scriptedPorts=true;}
   else if(arg==L"--scripted-stun"){scripted=true;scriptedStun=true;}
   else if(arg==L"--scripted-slots"){scripted=true;scriptedSlots=true;}
   else if(arg==L"--scripted-creation"){scripted=true;scriptedCreation=true;}
+  else if(arg==L"--scripted-selection"){scripted=true;scriptedSelection=true;}
   else if(arg==L"--scripted-appearance"){scripted=true;scriptedAppearance=true;}
   else if(arg==L"--scripted-characters"){scripted=true;scriptedCharacters=true;}
   else if(arg==L"--character-catalog"&&i+1<argc)catalogPath=argv[++i];
@@ -257,7 +258,7 @@ int run_title_preview(int argc,wchar_t**argv){try{
     login=std::make_unique<mgo2win::LoginScreen>(store,!scripted,mgo2win::authenticate,true,controllerInput,graphics,networkKeys);Window::login=login.get();loginFrames=0;++loginVisits;
     login->character_catalog(characterCatalog.get());
     if(scriptedSlots||scriptedCreation)login->show_character_preview(true);
-    if(scriptedCharacters||scriptedAppearance)login->show_character_preview();
+    if(scriptedCharacters||scriptedAppearance||scriptedSelection)login->show_character_preview(false,scriptedSelection);
     if(scriptedPorts)login->show_port_preview();
     if(scriptedControls||scriptedGraphics)login->show_port_preview();
     if(scriptedStun)login->show_port_preview(true);
@@ -303,6 +304,7 @@ int run_title_preview(int argc,wchar_t**argv){try{
      if(loginFrames==385){key(VK_ESCAPE);key(VK_LEFT);key(VK_RETURN);}
      if(loginFrames==410)key(VK_ESCAPE);
     }
+    if(scriptedSelection){auto key=[&](WPARAM k){SendMessageW(window.handle,WM_KEYDOWN,k,0);};if(loginFrames==110)key(VK_RETURN);if(loginFrames==190)key(VK_NEXT);if(loginFrames==230||loginFrames==280||loginFrames==340||loginFrames==390||loginFrames==440||loginFrames==490||loginFrames==540)key(VK_RIGHT);if(loginFrames==570)key(VK_RETURN);if(loginFrames==620||loginFrames==660||loginFrames==720||loginFrames==760||loginFrames==770)key(VK_RETURN);if(loginFrames==710)key(VK_DOWN);if(loginFrames==750){for(auto c:L"abc")if(c)SendMessageW(window.handle,WM_CHAR,c,0);}if(loginFrames==830)key(VK_NEXT);if(loginFrames==860)key(VK_F5);if(loginFrames==700||loginFrames==820||loginFrames==920||loginFrames==950||loginFrames==990||loginFrames==1160)key(VK_ESCAPE);if(loginFrames==1040)key(VK_F2);if(loginFrames==1100)key(VK_F3);}
     if(scriptedAppearance){auto key=[&](WPARAM k){SendMessageW(window.handle,WM_KEYDOWN,k,0);};if(loginFrames==150||loginFrames==240||loginFrames==330)key(VK_DOWN);if(loginFrames==430)key(VK_ESCAPE);}
     if(scriptedCharacters){auto key=[&](WPARAM k){SendMessageW(window.handle,WM_KEYDOWN,k,0);};if(loginFrames==110){key(VK_DOWN);key(VK_DOWN);}if(loginFrames==145)key(VK_END);if(loginFrames==160)key(VK_UP);if(loginFrames==230)key(VK_RETURN);if(loginFrames==350)key(VK_ESCAPE);}
     if(scriptedGraphics){
@@ -391,7 +393,11 @@ int run_title_preview(int argc,wchar_t**argv){try{
    quads.clear();
    auto appendMotion=[&](mgo2win::TitleAnimation& m){m.tick(5,0);auto v=m.geometry();for(auto&q:v)if(q.atlas>=0)q.atlas+=motionOffset;quads.insert(quads.end(),v.begin(),v.end());};
    if(motionBack)appendMotion(*motionBack);
-   const auto&frame=login&&!login->port_visible()?loginBackground:agreementBackground;quads.insert(quads.end(),frame.begin(),frame.end());
+   const bool loginFrame=login&&!login->port_visible();
+   const auto&frame=loginFrame?loginBackground:agreementBackground;
+   // l_free_2_bg LA2 nodes 121/122 are the literal ONLINE MODE heading.
+   // Keep the original frame; native screen-specific headings replace only those glyphs.
+   for(const auto&q:frame)if(loginFrame||(q.node!=121&&q.node!=122))quads.push_back(q);
    if(motionFront)appendMotion(*motionFront);
    if(characterRenderer&&login&&login->model_preview_visible()){
     // A translucent black panel separates the character from the animated backdrop.
@@ -429,6 +435,7 @@ int run_title_preview(int argc,wchar_t**argv){try{
   if(saveCaptures&&login&&(loginFrames==0||loginFrames==21||loginFrames==51||loginFrames==101))capture(device.Get(),context.Get(),back.Get(),std::filesystem::path(argv[3]).parent_path()/(L"login_"+std::to_wstring(loginVisits)+L"_"+std::to_wstring(loginFrames)+L".bmp"));
   if(saveCaptures&&scriptedSlots&&slotStep!=slotCaptured&&(slotStep==1||slotStep==2||slotStep==4||slotStep==6||slotStep==10||slotStep==11||slotStep==12)){capture(device.Get(),context.Get(),back.Get(),std::filesystem::path(argv[3]).parent_path()/(L"slots_"+std::to_wstring(slotStep)+L".bmp"));slotCaptured=slotStep;}
   if(saveCaptures&&scriptedCreation&&login&&(loginFrames==120||loginFrames==150||loginFrames==180||loginFrames==210||loginFrames==250||loginFrames==290||loginFrames==350||loginFrames==375||loginFrames==400))capture(device.Get(),context.Get(),back.Get(),std::filesystem::path(argv[3]).parent_path()/(L"creation_"+std::to_wstring(loginFrames)+L".bmp"));
+  if(saveCaptures&&scriptedSelection&&login&&(loginFrames==120||loginFrames==175||loginFrames==215||loginFrames==260||loginFrames==310||loginFrames==360||loginFrames==415||loginFrames==465||loginFrames==515||loginFrames==610||loginFrames==645||loginFrames==685||loginFrames==740||loginFrames==800||loginFrames==840||loginFrames==890||loginFrames==935||loginFrames==975||loginFrames==1020||loginFrames==1080||loginFrames==1140||loginFrames==1200))capture(device.Get(),context.Get(),back.Get(),std::filesystem::path(argv[3]).parent_path()/(L"selection_"+std::to_wstring(loginFrames)+L".bmp"));
   if(saveCaptures&&scriptedAppearance&&login&&(loginFrames==90||loginFrames==120||loginFrames==180||loginFrames==270||loginFrames==360||loginFrames==440))capture(device.Get(),context.Get(),back.Get(),std::filesystem::path(argv[3]).parent_path()/(L"appearance_"+std::to_wstring(loginFrames)+L".bmp"));
   if(saveCaptures&&scriptedCharacters&&login&&(loginFrames==10||loginFrames==100||loginFrames==120||loginFrames==240||loginFrames==320||loginFrames==360))capture(device.Get(),context.Get(),back.Get(),std::filesystem::path(argv[3]).parent_path()/(L"characters_"+std::to_wstring(loginFrames)+L".bmp"));
   if(saveCaptures&&scriptedPorts&&login&&(loginFrames==21||loginFrames==36||loginFrames==51||loginFrames==81||loginFrames==101||loginFrames==131||loginFrames==151))capture(device.Get(),context.Get(),back.Get(),std::filesystem::path(argv[3]).parent_path()/(L"ports_"+std::to_wstring(loginFrames)+L".bmp"));

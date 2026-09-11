@@ -92,7 +92,7 @@ static fs::path executable_folder() {
 }
 
 static void verify_assets(const fs::path& root) {
-    std::set<std::string> required{"character/appearance.gwc","network.gnk","login/frame.m2pv","motion/animated.m2an","agreement/frame.m2pv","audio/lobby.gwa","audio/93.gwa","audio/94.gwa","launch.cfg", "title.gwp", "audio/title.gwa", "title/animated.m2an", "audio/start.gwa", "loading/loading.m2an", "loading/images/0.dds", "loading/images/1.dds"};
+    std::set<std::string> required{"lobbies.cfg","character/appearance.gwc","network.gnk","login/frame.m2pv","motion/animated.m2an","agreement/frame.m2pv","audio/lobby.gwa","audio/93.gwa","audio/94.gwa","launch.cfg", "title.gwp", "audio/title.gwa", "title/animated.m2an", "audio/start.gwa", "loading/loading.m2an", "loading/images/0.dds", "loading/images/1.dds"};
     for(int i=0;i<6;++i)required.insert("login/images/"+std::to_string(i)+".dds");
     for(int g=0;g<2;++g)for(int v=0;v<8;++v)required.insert("voice/"+std::to_string(g)+"_"+std::to_string(v)+".gwa");
     for(int i=0;i<8;++i)required.insert("motion/images/"+std::to_string(i)+".dds");
@@ -118,6 +118,7 @@ static void verify_assets(const fs::path& root) {
 int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR command, int) {
     const std::wstring mode = command ? command : L"";
     const bool smokeCreation=mode==L"--smoke-creation";
+    const bool smokeSelection=mode==L"--smoke-selection";
     const bool smokeAppearance=mode==L"--smoke-appearance";
     const bool smokeSlots=mode==L"--smoke-slots";
     const bool smokeCharacters=mode==L"--smoke-characters",probeGate=mode==L"--probe-gate";
@@ -127,7 +128,7 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR command, int) {
     const bool smokeStun=mode==L"--smoke-stun",probeStun=mode==L"--probe-stun";
     const bool probeAuth=mode==L"--probe-auth",probeAccount=mode==L"--probe-account";
     const bool smokeNo=mode==L"--smoke-no";
-    const bool smoke = mode == L"--smoke-test"||smokeNo||smokeLogin||smokePorts||smokeStun||smokeControls||smokeGraphics||smokeCharacters||smokeSlots||smokeAppearance||smokeCreation, checkOnly = mode == L"--check";
+    const bool smoke = mode == L"--smoke-test"||smokeNo||smokeLogin||smokePorts||smokeStun||smokeControls||smokeGraphics||smokeCharacters||smokeSlots||smokeAppearance||smokeCreation||smokeSelection, checkOnly = mode == L"--check";
     std::ofstream log;
     auto* oldOut = std::cout.rdbuf(); auto* oldError = std::cerr.rdbuf();
     int result = 1;
@@ -156,7 +157,7 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR command, int) {
         log.open(run/L"run.log");
         if (!log) throw std::runtime_error("Cannot create the title log");
         std::cout.rdbuf(log.rdbuf()); std::cerr.rdbuf(log.rdbuf());
-        std::cout << "{\"desktop_package\":true,\"verified_files\":62,\"smoke_test\":" << (smoke?"true":"false") << "}" << std::endl;
+        std::cout << "{\"desktop_package\":true,\"verified_files\":63,\"smoke_test\":" << (smoke?"true":"false") << "}" << std::endl;
         if(probeAccount){result=inspect_account(data/L"network.gnk");std::cout.rdbuf(oldOut);std::cerr.rdbuf(oldError);return result;}
         if(probeGate){std::atomic_bool cancel{false};auto r=mgo2win::probe_character_gate(data/L"network.gnk",cancel);result=r.status==mgo2win::CharacterStatus::success?0:1;std::cout<<"{\"gate_probe\":true,\"status\":"<<int(r.status)<<",\"stage\":"<<int(r.stage)<<",\"error\":"<<r.error<<",\"account_port\":"<<r.account_port<<"}"<<std::endl;std::cout.rdbuf(oldOut);std::cerr.rdbuf(oldError);return result;}
         if(probeAuth){
@@ -173,13 +174,13 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR command, int) {
             std::cout.rdbuf(oldOut);std::cerr.rdbuf(oldError);return result;
         }
         std::vector<std::wstring> arguments{L"MGO2WIN", (data/L"title/animated.m2an").wstring(),
-            smokeCreation?L"25":smokeAppearance?L"25":smokeSlots?L"25":smokeGraphics?L"32":smokeCharacters?L"20":smoke?L"15":std::to_wstring(seconds), (run/L"title.bmp").wstring(),
+            smokeSelection?L"35":smokeCreation?L"25":smokeAppearance?L"25":smokeSlots?L"25":smokeGraphics?L"32":smokeCharacters?L"20":smoke?L"15":std::to_wstring(seconds), (run/L"title.bmp").wstring(),
             L"--gcx", (data/L"title.gwp").wstring(), L"--entry", std::to_wstring(entry),
             L"--wav", (data/L"audio/title.gwa").wstring(),L"--se",(data/L"audio/start.gwa").wstring(),L"--loading",(data/L"loading/loading.m2an").wstring()};
         arguments.insert(arguments.end(),{L"--voice-directory",(data/L"voice").wstring(),L"--character-catalog",(data/L"character/appearance.gwc").wstring(),L"--network-keys",(data/L"network.gnk").wstring(),L"--login-background",(data/L"login/frame.m2pv").wstring(),L"--agreement-motion",(data/L"motion/animated.m2an").wstring(),L"--agreement-background",(data/L"agreement/frame.m2pv").wstring(),L"--lobby-music",(data/L"audio/lobby.gwa").wstring(),L"--policy-url",policyUrl,L"--menu-confirm",(data/L"audio/93.gwa").wstring(),L"--menu-move",(data/L"audio/94.gwa").wstring()});
         if (sound) arguments.push_back(L"--audio");
         if(safeGraphics)arguments.push_back(L"--safe-graphics");
-        arguments.push_back(smokeCreation?L"--scripted-creation":smokeAppearance?L"--scripted-appearance":smokeSlots?L"--scripted-slots":smokeCharacters?L"--scripted-characters":smokeGraphics?L"--scripted-graphics":smokeControls?L"--scripted-controls":smokeNo?L"--scripted-no":smokeStun?L"--scripted-stun":smokePorts?L"--scripted-ports":smokeLogin?L"--scripted-login":smoke?L"--scripted-input":L"--no-capture");
+        arguments.push_back(smokeSelection?L"--scripted-selection":smokeCreation?L"--scripted-creation":smokeAppearance?L"--scripted-appearance":smokeSlots?L"--scripted-slots":smokeCharacters?L"--scripted-characters":smokeGraphics?L"--scripted-graphics":smokeControls?L"--scripted-controls":smokeNo?L"--scripted-no":smokeStun?L"--scripted-stun":smokePorts?L"--scripted-ports":smokeLogin?L"--scripted-login":smoke?L"--scripted-input":L"--no-capture");
         std::vector<wchar_t*> pointers;
         for (auto& argument : arguments) pointers.push_back(argument.data());
         result = run_title_preview(static_cast<int>(pointers.size()), pointers.data());

@@ -29,6 +29,7 @@ public:
  unsigned input_slot()const{return controls_tab_?controls_->slot():input_->config.slot;}
  bool message(HWND,UINT,WPARAM,LPARAM);const void* draw();
  bool back()const{return back_;}std::vector<unsigned> cues(){auto r=std::move(cues_);cues_.clear();return r;}
+ uintptr_t game_socket()const{return !pending_&&result_.status==PortStatus::available?reservation_.native_socket():~uintptr_t(0);}
  void report()const;
 };
 }

@@ -10,13 +10,18 @@ from gwp import ROOT, record
 from package_title import DOCUMENTS
 
 SOURCE_FILES = (
+    'include/host_protocol.h','src/host_protocol.cpp','include/host_session.h','src/host_session.cpp',
+    'include/host_match.h','src/host_match.cpp','tests/host_match_test.cpp',
+    'include/host_roster.h','src/host_roster.cpp','tests/host_roster_test.cpp',
+    'tests/host_protocol_test.cpp','tests/host_session_test.cpp','tests/host_room_ui_test.cpp','tests/host_replay_test.cpp',
+    'include/menu_theme.h','include/lobby_groups.h','tests/character_selection_test.cpp',
     'tools/compile_title_program.cpp',
     'tests/character_registration_test.cpp',
     'include/character_creation.h','src/character_creation.cpp','tests/character_creation_test.cpp',
     'include/character_catalog.h','src/character_catalog.cpp','tests/character_catalog_test.cpp',
     'include/character_model.h','src/character_model.cpp','include/character_renderer.h','src/character_renderer.cpp','tests/character_model_test.cpp',
     'include/character_slots.h','tests/character_slots_test.cpp',
-    'src/character_client.cpp','include/character_client.h','src/character_screen.cpp','include/character_screen.h','tests/character_client_test.cpp','tools/allow_openmgo2_account.ps1',
+    'src/room_detail.cpp','src/room_screen.cpp','tests/room_join_test.cpp','src/character_client.cpp','include/character_client.h','src/character_screen.cpp','include/character_screen.h','tests/character_client_test.cpp','tools/allow_openmgo2_account.ps1',
     'src/graphics_settings.cpp','include/graphics_settings.h','tests/graphics_settings_test.cpp',
     'src/controller_input.cpp','include/controller_input.h','src/controller_panel.cpp','include/controller_panel.h','tests/controller_input_test.cpp',
     'src/stun.cpp','include/stun.h','tests/stun_test.cpp','tools/allow_openmgo2_stun.ps1',

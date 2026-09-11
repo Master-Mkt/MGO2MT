@@ -28,6 +28,27 @@ def unique_object(pairs):
         result[key] = value
     return result
 
+def lobby_membership_text(document):
+    """Compile the reviewed ID/port membership snapshot; no name heuristics."""
+    m = document.get('lobby_membership', {'host':'49.212.132.180', 'rows':[]})
+    if not isinstance(m,dict) or set(m) != {'host','rows'} or m['host'] != '49.212.132.180':
+        raise ValueError('invalid lobby membership host/settings')
+    rows = m['rows']
+    if not isinstance(rows,list) or len(rows)>256:
+        raise ValueError('invalid lobby membership count')
+    ids = set()
+    lines = ['MGO2WIN.LOBBIES 1', m['host'], str(len(rows))]
+    for row in rows:
+        if not isinstance(row,dict) or set(row) != {'id','port','subtype'}:
+            raise ValueError('invalid lobby membership row')
+        for key,low,high in [('id',1,65535),('port',1,65535),('subtype',0,255)]:
+            if type(row[key]) is not int or not low <= row[key] <= high:
+                raise ValueError('invalid lobby membership '+key)
+        if row['id'] in ids:raise ValueError('duplicate lobby membership ID')
+        ids.add(row['id'])
+        lines.append(f"{row['id']} {row['port']} {row['subtype']}")
+    return '\n'.join(lines)+'\n'
+
 def load(path):
     path = Path(path).resolve()
     if path.suffix.lower() not in ('.gwp', '.gcw') or path.stat().st_size > 1024 * 1024:
@@ -36,6 +57,7 @@ def load(path):
     expected_format = {'.gwp':'MGO2WIN.GWP', '.gcw':'MGO2WIN.GCW'}[path.suffix.lower()]
     if d['format'] != expected_format or type(d['version']) is not int or d['version'] != 1:
         raise ValueError('unsupported GWP format/version')
+    lobby_membership_text(d)
     runtime = d['runtime']
     if runtime['adapter'] != 'native_title_gcx_subset_v1':
         raise ValueError('unsupported native adapter')
@@ -185,7 +207,12 @@ def main():
     if 'character_catalog' in assets:command.extend(['--character-catalog',str(assets['character_catalog'])])
     if 'voice0_0' in assets:command.extend(['--voice-directory',str(assets['voice0_0'].parent)])
     if 'character_model' in assets:command.extend(['--character-model',str(assets['character_model'])])
-    if 'network_keys' in assets:command.extend(['--network-keys',str(assets['network_keys'])])
+    if 'network_keys' in assets:
+        # Keep the same sibling layout as a desktop package for direct GWP runs.
+        launch_keys=out/'network.gnk';launch_keys.write_bytes(assets['network_keys'].read_bytes())
+        membership=out/'lobbies.cfg';membership.write_text(lobby_membership_text(d),encoding='ascii')
+        inputs.append({'role':'lobby_membership',**record(membership)})
+        command.extend(['--network-keys',str(launch_keys)])
     if 'agreement_motion' in assets:command.extend(['--agreement-motion',str(assets['agreement_motion'])])
     if args.scripted_input:
         command.append('--scripted-input')

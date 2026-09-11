@@ -2,7 +2,11 @@
 
 [日本語](README.ja.md) · [Trial downloads](https://github.com/Master-Mkt/MGO2WIN/releases)
 
-A native Windows client experiment for OpenMGO2, using Direct3D 11 and converted local game resources. This is an early preview of the title, account and character screens; playable matches are not implemented.
+A native Windows client experiment for OpenMGO2, using Direct3D 11 and converted local game resources. This is an early preview of the title, account, character, lobby and room screens; playable matches are not implemented.
+
+## Source update — 2026-09-11
+
+The source now includes lobby entry, host admission, participant updates and stage metadata. The downloadable `v0.1.0-preview.1` executable predates these changes; this source update does not replace that Release ZIP.
 
 ## Try it
 
@@ -19,9 +23,16 @@ Enter starts the title; choose YES on the downloaded OpenMGO2 policy, then enter
 - Character creation form, Unicode name input, sex, equipment, eight voices per sex and pitch −7 to +7. Explicit YES submits a real registration request.
 - Restored clothing textures and mode2 accessory RGB, including goggles. Names currently require at least four Unicode code points and at most 16 UTF-8 bytes.
 
+- Six lobby categories, room browsing/details, password entry and host admission with cancellation, timeout and rejection handling.
+- Up to 24 replicated participant slots, join/leave updates and host/self labels.
+- Stage information showing the host-selected map/rule IDs and rotation position, with round/map transition tracking.
+- Cut-corner translucent orange menu highlights and shared headings inspired by the original screens.
+
 ## Current limits
 
-Character selection and deletion transport, matches, slot purchases and payment are not implemented. The delete confirmation is UI only. Four free slots are the client specification; server enforcement changes are still an undeployed candidate. Creation was tested with simulated responses; successful creation with this release has not been confirmed on a real account. Do not interpret an uncertain registration response as permission to retry immediately.
+Real-account PC selection, Free Battle lobby entry and joining/leaving an existing user-hosted room have been verified in earlier local builds. The latest participant-update and stage-information changes pass offline UI tests and original-packet replay, but have not yet been verified in a live room. Stage metadata does not mean a playable map has loaded: world asset loading, loading-complete notifications, player movement, peer mesh and host migration remain unimplemented.
+
+PC deletion transport, slot purchases and payment remain unimplemented; deletion confirmation is UI only. Four free slots are the client specification, with matching server enforcement deployed. Character creation was tested with simulated responses; successful creation with the distributed executable has not been confirmed on a real account. Do not retry an uncertain registration response without checking the character list. Japanese names of up to 16 characters remain a future coordinated client/server change; the current 16 UTF-8-byte limit is unchanged.
 
 Seventeen model entries, mode3 material parameters, original reflection/transparency, accessory motion and exact PS3 visual parity remain incomplete. Shadow-buffer and bandwidth selections are stored settings pending gameplay integration. Video playback is deferred.
 

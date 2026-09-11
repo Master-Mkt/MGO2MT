@@ -1,3 +1,4 @@
+﻿#include "menu_theme.h"
 #include "controller_panel.h"
 #include <iostream>
 #include <syncstream>
@@ -49,8 +50,8 @@ bool ControllerPanel::message(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
  }return false;
 }
 void ControllerPanel::draw(HDC dc,const std::vector<HFONT>& fonts){
- auto fill=[&](int x,int y,int w,int h,COLORREF c){RECT r{x,y,x+w,y+h};auto b=CreateSolidBrush(c);FillRect(dc,&r,b);DeleteObject(b);};
- auto text=[&](std::wstring s,int x,int y,int w,int h,int font,COLORREF color){RECT r{x,y,x+w,y+h};SelectObject(dc,fonts[font]);SetTextColor(dc,color);SetBkMode(dc,TRANSPARENT);DrawTextW(dc,s.c_str(),int(s.size()),&r,DT_LEFT|DT_NOPREFIX);};
+ auto fill=[&](int x,int y,int w,int h,COLORREF c){menu_fill(dc,x,y,w,h,c);};
+ auto text=[&](std::wstring s,int x,int y,int w,int h,int font,COLORREF color){RECT r{x,y,x+w,y+h};SelectObject(dc,fonts[font]);SetTextColor(dc,menu_text_color(color));SetBkMode(dc,TRANSPARENT);DrawTextW(dc,s.c_str(),int(s.size()),&r,DT_LEFT|DT_NOPREFIX);};
  auto box=[&](int i,std::wstring label,int x,int y,int w,int h){bool a=focus_==i;fill(x,y,w,h,a?RGB(151,168,126):RGB(37,53,42));text(label,x+12,y+8,w-24,h-6,2,a?RGB(18,28,19):RGB(232,237,218));};
  text(L"使用する入力機器",125,227,280,30,1,RGB(224,232,212));box(0,draft_.device?L"XInput  ◀ ▶":L"キーボード  ◀ ▶",410,217,350,40);
  box(1,L"XInput #"+std::to_wstring(draft_.slot+1)+(connected_?L"  接続中":L"  未接続"),810,217,350,40);

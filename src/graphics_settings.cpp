@@ -1,3 +1,4 @@
+﻿#include "menu_theme.h"
 #include "graphics_settings.h"
 #include <fstream>
 #include <stdexcept>
@@ -44,8 +45,8 @@ bool GraphicsSettings::message(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
  if(msg==WM_LBUTTONUP){RECT r{};GetClientRect(hwnd,&r);if(!r.right||!r.bottom)return true;int x=int(short(LOWORD(lp)))*1280/r.right,y=int(short(HIWORD(lp)))*720/r.bottom;if(x>=500&&x<1160&&y>=221&&y<491){focus_=(y-221)/54;change(x<570?-1:1);}else if(y>=599&&y<644){if(x>=120&&x<440)focus_=5;else if(x>=470&&x<800)focus_=6;else if(x>=830&&x<1160)focus_=7;else return true;activate();}SetFocus(hwnd);return true;}return false;
 }
 void GraphicsSettings::draw(HDC dc,const std::vector<HFONT>& fonts){
- auto fill=[&](int x,int y,int w,int h,COLORREF c){RECT r{x,y,x+w,y+h};auto b=CreateSolidBrush(c);FillRect(dc,&r,b);DeleteObject(b);};
- auto text=[&](std::wstring s,int x,int y,int w,int h,int font,COLORREF c){RECT r{x,y,x+w,y+h};SelectObject(dc,fonts[font]);SetTextColor(dc,c);SetBkMode(dc,TRANSPARENT);DrawTextW(dc,s.c_str(),int(s.size()),&r,DT_LEFT|DT_NOPREFIX|DT_WORDBREAK);};
+ auto fill=[&](int x,int y,int w,int h,COLORREF c){menu_fill(dc,x,y,w,h,c);};
+ auto text=[&](std::wstring s,int x,int y,int w,int h,int font,COLORREF c){RECT r{x,y,x+w,y+h};SelectObject(dc,fonts[font]);SetTextColor(dc,menu_text_color(c));SetBkMode(dc,TRANSPARENT);DrawTextW(dc,s.c_str(),int(s.size()),&r,DT_LEFT|DT_NOPREFIX|DT_WORDBREAK);};
  std::wstring hz=L"自動（モニター推奨）";if(!draft.fullscreen)hz=L"Windowsの設定に従う";else if(draft.refresh_num){wchar_t b[50];swprintf_s(b,L"%.3f Hz",double(draft.refresh_num)/draft.refresh_den);hz=b;}
  const wchar_t* labels[]={L"表示モード",L"解像度",L"リフレッシュレート",L"影のバッファサイズ",L"垂直同期 (VSync)"};std::wstring values[]={draft.fullscreen?L"フルスクリーン":L"ウィンドウ",std::to_wstring(draft.width)+L" × "+std::to_wstring(draft.height),hz,std::to_wstring(draft.shadow)+L" × "+std::to_wstring(draft.shadow),draft.vsync?L"ON":L"OFF"};
  for(int i=0;i<5;++i){int y=221+i*54;text(labels[i],125,y+12,365,32,1,RGB(224,232,212));fill(500,y,660,43,focus_==i?RGB(70,93,59):RGB(23,33,27));text(L"◀  "+values[i]+L"  ▶",516,y+10,630,32,1,RGB(232,237,218));}

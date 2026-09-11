@@ -3,12 +3,15 @@
 #include <windows.h>
 #include <bcrypt.h>
 #include "character_client.h"
+#include "lobby_groups.h"
 #include "character_creation.h"
+#include "stun.h"
 #include <fstream>
 #include <algorithm>
 #include <stdexcept>
 #include <set>
 #include <cstring>
+#include <thread>
 namespace mgo2win {
 namespace {
 uint32_t be(std::span<const uint8_t> b,size_t at,unsigned n=4){if(at+n>b.size())throw std::runtime_error("truncated lobby data");uint32_t r=0;for(unsigned i=0;i<n;++i)r=(r<<8)|b[at+i];return r;}
@@ -24,16 +27,19 @@ struct Failure {CharacterStatus status;unsigned code;};
 void result(std::span<const uint8_t> b){if(b.size()!=4)throw std::runtime_error("lobby result extent");auto r=be(b,0);if(r!=0&&r!=0xc0ffee00)throw Failure{CharacterStatus::server_error,r};}
 struct Wsa {Wsa(){WSADATA d{};int e=WSAStartup(MAKEWORD(2,2),&d);if(e)throw Failure{CharacterStatus::network_error,unsigned(e)};}~Wsa(){WSACleanup();}};
 class Connection {
- SOCKET s_=INVALID_SOCKET;const NetworkKeys& keys_;const std::atomic_bool& cancel_;ULONGLONG deadline_;uint32_t tx_=1,rx_=1;
+ SOCKET s_=INVALID_SOCKET;const NetworkKeys& keys_;const std::atomic_bool& cancel_;ULONGLONG deadline_;uint32_t tx_=1,rx_=1;bool cleanup_=false;
  void wait(bool write){
-  for(;;){if(cancel_)throw Failure{CharacterStatus::cancelled,0};if(GetTickCount64()>=deadline_)throw Failure{CharacterStatus::network_error,WSAETIMEDOUT};fd_set f,e;FD_ZERO(&f);FD_ZERO(&e);FD_SET(s_,&f);FD_SET(s_,&e);timeval t{0,50000};int n=select(0,write?nullptr:&f,write?&f:nullptr,&e,&t);if(n<0)throw Failure{CharacterStatus::network_error,unsigned(WSAGetLastError())};if(n>0){int err=0,len=sizeof(err);if(getsockopt(s_,SOL_SOCKET,SO_ERROR,reinterpret_cast<char*>(&err),&len)||err)throw Failure{CharacterStatus::network_error,unsigned(err?err:WSAGetLastError())};return;}}
+  for(;;){if(cancel_&&!cleanup_)throw Failure{CharacterStatus::cancelled,0};if(GetTickCount64()>=deadline_)throw Failure{CharacterStatus::network_error,WSAETIMEDOUT};fd_set f,e;FD_ZERO(&f);FD_ZERO(&e);FD_SET(s_,&f);FD_SET(s_,&e);timeval t{0,50000};int n=select(0,write?nullptr:&f,write?&f:nullptr,&e,&t);if(n<0)throw Failure{CharacterStatus::network_error,unsigned(WSAGetLastError())};if(n>0){int err=0,len=sizeof(err);if(getsockopt(s_,SOL_SOCKET,SO_ERROR,reinterpret_cast<char*>(&err),&len)||err)throw Failure{CharacterStatus::network_error,unsigned(err?err:WSAGetLastError())};return;}}
  }
  void receive(std::span<uint8_t>b){size_t at=0;while(at<b.size()){wait(false);int n=recv(s_,reinterpret_cast<char*>(b.data()+at),int(b.size()-at),0);if(n<0&&WSAGetLastError()==WSAEWOULDBLOCK)continue;if(n<=0)throw Failure{CharacterStatus::network_error,unsigned(n?WSAGetLastError():WSAECONNRESET)};at+=n;}}
 public:
  Connection(const NetworkKeys&k,const std::atomic_bool&c):keys_(k),cancel_(c),deadline_(GetTickCount64()+8000){}
  ~Connection(){if(s_!=INVALID_SOCKET)closesocket(s_);}
- void connect_to(uint16_t port){if(port!=5731&&port!=5732)throw std::runtime_error("unreviewed lobby port");s_=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);if(s_==INVALID_SOCKET)throw Failure{CharacterStatus::network_error,unsigned(WSAGetLastError())};u_long nonblocking=1;if(ioctlsocket(s_,FIONBIO,&nonblocking))throw Failure{CharacterStatus::network_error,unsigned(WSAGetLastError())};sockaddr_in peer{};peer.sin_family=AF_INET;peer.sin_port=htons(port);InetPtonW(AF_INET,L"49.212.132.180",&peer.sin_addr);if(connect(s_,reinterpret_cast<sockaddr*>(&peer),sizeof(peer))&&WSAGetLastError()!=WSAEWOULDBLOCK)throw Failure{CharacterStatus::network_error,unsigned(WSAGetLastError())};wait(true);}
+ void reset_deadline(bool cleanup=false){cleanup_=cleanup;deadline_=GetTickCount64()+(cleanup?1500:8000);}
+ std::array<uint8_t,4> local_address()const{sockaddr_in a{};int n=sizeof(a);if(getsockname(s_,reinterpret_cast<sockaddr*>(&a),&n))throw Failure{CharacterStatus::network_error,unsigned(WSAGetLastError())};std::array<uint8_t,4>b;std::copy_n(reinterpret_cast<const uint8_t*>(&a.sin_addr),4,b.begin());return b;}
+ void connect_to(uint16_t port){if(port<5731||port>5739)throw std::runtime_error("unreviewed lobby port");s_=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);if(s_==INVALID_SOCKET)throw Failure{CharacterStatus::network_error,unsigned(WSAGetLastError())};u_long nonblocking=1;if(ioctlsocket(s_,FIONBIO,&nonblocking))throw Failure{CharacterStatus::network_error,unsigned(WSAGetLastError())};sockaddr_in peer{};peer.sin_family=AF_INET;peer.sin_port=htons(port);InetPtonW(AF_INET,L"49.212.132.180",&peer.sin_addr);if(connect(s_,reinterpret_cast<sockaddr*>(&peer),sizeof(peer))&&WSAGetLastError()!=WSAEWOULDBLOCK)throw Failure{CharacterStatus::network_error,unsigned(WSAGetLastError())};wait(true);}
  void send_packet(uint16_t cmd,std::span<const uint8_t> payload={}){auto b=encode_lobby(keys_,cmd,tx_++,payload);struct Wipe{std::vector<uint8_t>&v;~Wipe(){SecureZeroMemory(v.data(),v.size());}}wipe{b};size_t at=0;while(at<b.size()){wait(true);int n=send(s_,reinterpret_cast<char*>(b.data()+at),int(b.size()-at),0);if(n<0&&WSAGetLastError()==WSAEWOULDBLOCK)continue;if(n<=0)throw Failure{CharacterStatus::network_error,unsigned(n?WSAGetLastError():WSAECONNRESET)};at+=n;}}
+ bool alive()const{char value;int n=recv(s_,&value,1,MSG_PEEK);return n>0||(n==SOCKET_ERROR&&WSAGetLastError()==WSAEWOULDBLOCK);}
  LobbyPacket read(){std::vector<uint8_t>b(24);receive(b);unsigned n=((b[2]^keys_.wire[2])<<8)|(b[3]^keys_.wire[3]);if(n>1023)throw std::runtime_error("lobby payload too large");b.resize(24+n);receive(std::span(b).subspan(24));return decode_lobby(keys_,b,rx_++);}
 };
 uint16_t gateway(Connection&c){c.connect_to(5731);c.send_packet(0x2005);auto p=c.read();if(p.command!=0x2002)throw std::runtime_error("gate start command");result(p.payload);uint16_t port=0;for(unsigned i=0;i<16;++i){p=c.read();if(p.command==0x2004){result(p.payload);if(!port)throw std::runtime_error("no reviewed account endpoint");return port;}if(p.command!=0x2003)throw std::runtime_error("gate list command");auto found=account_endpoint(p.payload);if(found){if(port)throw std::runtime_error("ambiguous account endpoint");port=found;}}throw std::runtime_error("too many gate packets");}
@@ -56,6 +62,134 @@ uint16_t account_endpoint(std::span<const uint8_t>b){if(b.empty()||b.size()%46)t
 CharacterList parse_characters(std::span<const uint8_t>b){if(b.size()!=471||be(b,0)!=0||b[5]>8)throw std::runtime_error("character list extent");CharacterList out;out.slots=b[4];size_t at=7;std::set<uint32_t>ids;for(unsigned i=0;i<b[5];++i){if(i&&be(b,at)!=i)throw std::runtime_error("character index");at+=i?4:17;CharacterEntry e;e.id=be(b,at);if(!e.id||!ids.insert(e.id).second)throw std::runtime_error("character ID");auto str=b.subspan(at+4,16);auto end=std::find(str.begin(),str.end(),0);int n=int(end-str.begin());if(!n)throw std::runtime_error("empty character name");int len=MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,reinterpret_cast<const char*>(str.data()),n,nullptr,0);if(!len)throw std::runtime_error("character name encoding");e.name.resize(len);MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,reinterpret_cast<const char*>(str.data()),n,e.name.data(),len);for(auto c:e.name)if(c<32||c==127)throw std::runtime_error("character name controls");e.main=e.name.front()==L'*';if(e.main)e.name.erase(0,1);std::copy_n(b.begin()+at+20,28,e.appearance.begin());out.entries.push_back(std::move(e));at+=48;}return out;}
 CharacterReply fetch_characters(const std::filesystem::path&p,const AuthReply&a,const std::atomic_bool&c){return run(p,&a,c);}
 CharacterReply probe_character_gate(const std::filesystem::path&p,const std::atomic_bool&c){return run(p,nullptr,c);}
+LobbyDirectory read_lobby_directory(const std::function<LobbyPacket()>&read){
+ LobbyDirectory out;auto p=read();if(p.command!=0x2002)throw std::runtime_error("directory start");result(p.payload);
+ std::set<uint16_t> ids;unsigned records=0;
+ auto string=[](std::span<const uint8_t>b){auto end=std::find(b.begin(),b.end(),0);int n=int(end-b.begin());if(!n)throw std::runtime_error("empty directory string");int len=MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,reinterpret_cast<const char*>(b.data()),n,nullptr,0);if(!len)throw std::runtime_error("directory encoding");std::wstring s(len,0);MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,reinterpret_cast<const char*>(b.data()),n,s.data(),len);for(auto c:s)if(c<32||c==127)throw std::runtime_error("directory controls");return s;};
+ // Bounded multi-packet stream; absence of the terminator is never success.
+ for(unsigned packets=0;packets<16;++packets){p=read();if(p.command==0x2004){result(p.payload);if(!out.account_port)throw std::runtime_error("directory account missing");return out;}
+  if(p.command!=0x2003||p.payload.empty()||p.payload.size()%46)throw std::runtime_error("directory record extent");
+  for(size_t at=0;at<p.payload.size();at+=46){auto b=std::span(p.payload).subspan(at,46);if(++records>256||be(b,0)!=records-1)throw std::runtime_error("directory record index");auto type=be(b,4);if(type>2)throw std::runtime_error("directory type");
+   auto name=string(b.subspan(8,16)),ip=string(b.subspan(24,15));auto port=uint16_t(be(b,39,2)),id=uint16_t(be(b,43,2));if(!port||!id||!ids.insert(id).second)throw std::runtime_error("directory identity");
+   if(type==1){if(out.account_port||ip!=L"49.212.132.180"||port!=5732)throw std::runtime_error("unreviewed account endpoint");out.account_port=port;}
+   if(type==2){if(ip!=L"49.212.132.180")throw std::runtime_error("unreviewed game host");out.games.push_back({id,port,uint16_t(be(b,41,2)),std::move(name),b[45]});}
+  }
+ }
+ throw std::runtime_error("directory packet limit");
+}
+CharacterSelectionReply exchange_character_selection(uint32_t id,const CharacterExchange&exchange,const std::atomic_bool&cancel,CharacterSelectionContract contract){
+ CharacterSelectionReply reply;
+ if(contract!=CharacterSelectionContract::channel_snapshot_v1){reply.status=CharacterSelectionStatus::unavailable;return reply;}
+ try{
+  if(!id)throw std::runtime_error("selection requires stable ID");
+  if(cancel){reply.status=CharacterSelectionStatus::cancelled;return reply;}
+  auto packet=exchange(0x3048,{});if(packet.command!=0x3049)throw std::runtime_error("selection preflight command");if(packet.payload.size()==4)result(packet.payload);
+  auto current=parse_characters(packet.payload);auto found=std::find_if(current.entries.begin(),current.entries.end(),[id](const auto&e){return e.id==id;});
+  if(found==current.entries.end()){reply.status=CharacterSelectionStatus::missing;return reply;}
+  reply.character=*found;const uint8_t index=uint8_t(found-current.entries.begin());
+  if(cancel){reply.status=CharacterSelectionStatus::cancelled;return reply;}
+  reply.request_may_have_been_sent=true;packet=exchange(0x3103,std::span(&index,1));
+  if(packet.command!=0x3104||packet.payload.size()!=4)throw std::runtime_error("selection reply command/extent");
+  reply.error=be(packet.payload,0);reply.status=reply.error?CharacterSelectionStatus::rejected:CharacterSelectionStatus::success;
+ }catch(const Failure&f){reply.error=f.code;reply.status=reply.request_may_have_been_sent?CharacterSelectionStatus::outcome_unknown:f.status==CharacterStatus::cancelled?CharacterSelectionStatus::cancelled:f.status==CharacterStatus::server_error?CharacterSelectionStatus::rejected:CharacterSelectionStatus::network_error;}
+ catch(...){reply.status=reply.request_may_have_been_sent?CharacterSelectionStatus::outcome_unknown:CharacterSelectionStatus::protocol_error;}
+ return reply;
+}
+CharacterSelectionReply select_character(const std::filesystem::path&path,const AuthReply&auth,uint32_t id,const std::atomic_bool&cancel,CharacterSelectionContract contract){
+ CharacterSelectionReply reply;
+ // No setting or server-advertised field can lift this deployment prerequisite.
+ if(contract!=CharacterSelectionContract::channel_snapshot_v1){reply.status=CharacterSelectionStatus::unavailable;return reply;}
+ try{
+  if(!id)throw std::runtime_error("selection requires ID");if(cancel){reply.status=CharacterSelectionStatus::cancelled;return reply;}
+  auto membership=load_lobby_membership(path.parent_path()/L"lobbies.cfg");
+  auto keys=NetworkKeys::load(path);Wsa wsa;LobbyDirectory directory;
+  {Connection gate(keys,cancel);gate.connect_to(5731);gate.send_packet(0x2005);directory=read_lobby_directory([&]{return gate.read();});}
+  apply_lobby_membership(directory.games,membership);
+  Connection account(keys,cancel);account.connect_to(directory.account_port);
+  auto payload=session_payload(keys,auth);struct Wipe{std::vector<uint8_t>&v;~Wipe(){SecureZeroMemory(v.data(),v.size());}}wipe{payload};
+  account.send_packet(0x3003,payload);SecureZeroMemory(payload.data(),payload.size());auto p=account.read();if(p.command!=0x3004)throw std::runtime_error("selection session reply");result(p.payload);
+  reply=exchange_character_selection(id,[&](uint16_t cmd,std::span<const uint8_t>b){account.send_packet(cmd,b);return account.read();},cancel,contract);
+  if(reply.status==CharacterSelectionStatus::success)reply.lobbies=std::move(directory.games);
+ }catch(const Failure&f){reply.error=f.code;reply.status=f.status==CharacterStatus::cancelled?CharacterSelectionStatus::cancelled:f.status==CharacterStatus::server_error?CharacterSelectionStatus::rejected:CharacterSelectionStatus::network_error;}
+ catch(...){reply.status=CharacterSelectionStatus::protocol_error;}
+ return reply;
+}
+std::vector<uint8_t> game_session_payload(const NetworkKeys&keys,const AuthReply&auth,uint32_t id){
+ if(!id)throw std::runtime_error("game session requires selected PC");AuthReply selected=auth;selected.user=id;return session_payload(keys,selected);
+}
+std::vector<RoomEntry> read_room_directory(const std::function<LobbyPacket()>&read){
+ auto p=read();if(p.command!=0x4301)throw std::runtime_error("room list start");result(p.payload);
+ std::vector<RoomEntry> rooms;std::set<uint32_t> ids;
+ // Original F117F4 consumes 55 wire bytes into a 68-byte internal record,
+ // maximum 1000 entries; deployed Games.getList emits at most 18 per packet.
+ for(unsigned packet=0;packet<64;++packet){p=read();if(p.command==0x4303){result(p.payload);return rooms;}
+  if(p.command!=0x4302||p.payload.empty()||p.payload.size()%55||p.payload.size()>990)throw std::runtime_error("room list extent");
+  for(size_t at=0;at<p.payload.size();at+=55){auto b=std::span(p.payload).subspan(at,55);RoomEntry room;room.id=be(b,0);
+   if(!room.id||!ids.insert(room.id).second||rooms.size()>=1000)throw std::runtime_error("room list identity/limit");
+   auto str=b.subspan(4,16);auto end=std::find(str.begin(),str.end(),0);int n=int(end-str.begin());if(!n)throw std::runtime_error("empty room name");
+   int len=MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,reinterpret_cast<const char*>(str.data()),n,nullptr,0);if(!len)throw std::runtime_error("room name encoding");
+   room.name.resize(len);MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,reinterpret_cast<const char*>(str.data()),n,room.name.data(),len);
+   for(auto c:room.name)if(c<32||c==127)throw std::runtime_error("room name controls");
+   room.password=(b[20]&1)!=0;room.rule=b[22];room.map=b[23];room.capacity=b[25];room.players=b[29];rooms.push_back(std::move(room));
+  }
+ }throw std::runtime_error("room list terminator missing");
+}
+void run_game_lobby(const std::filesystem::path&path,const AuthReply&auth,uint32_t id,const GameLobbyEntry&lobby,const std::atomic_bool&cancel,std::atomic_bool&refresh,const RoomPublish&publish,RoomRequests& requests,uintptr_t udpSocket){
+ try{
+  if(cancel)return;auto rows=load_lobby_membership(path.parent_path()/L"lobbies.cfg");
+  if(lobby.port<5733||lobby.port>5739||std::none_of(rows.begin(),rows.end(),[&](const auto&r){return r.id==lobby.id&&r.port==lobby.port&&r.subtype==lobby.subtype;}))throw std::runtime_error("unreviewed game endpoint");
+  auto keys=NetworkKeys::load(path);Wsa wsa;Connection game(keys,cancel);game.connect_to(lobby.port);
+  auto payload=game_session_payload(keys,auth,id);struct Wipe{std::vector<uint8_t>&v;~Wipe(){SecureZeroMemory(v.data(),v.size());}}wipe{payload};
+  game.send_packet(0x3003,payload);SecureZeroMemory(payload.data(),payload.size());auto p=game.read();if(p.command!=0x3004)throw std::runtime_error("game session reply");result(p.payload);
+  while(!cancel){refresh=false;game.reset_deadline();constexpr uint8_t normalList[]={0,0,0,2};game.send_packet(0x4300,normalList);
+   auto rooms=read_room_directory([&]{return game.read();});if(cancel)return;publish({RoomStatus::ready,rooms,0});
+   auto next=GetTickCount64()+10000;while(!cancel&&!refresh&&GetTickCount64()<next){
+    if(auto action=requests.take()){
+     if(std::none_of(rooms.begin(),rooms.end(),[&](const RoomEntry&r){return r.id==action->id;})){RoomReply r;r.event=action->event;r.requested_room=action->id;r.status=RoomStatus::rejected;r.error=0xc0ffee03;publish(std::move(r));continue;}
+     host::Local local;std::vector<uint8_t> profile;
+     if(action->event==RoomEvent::join){
+      RoomReply progress;progress.event=RoomEvent::join;progress.requested_room=action->id;progress.status=RoomStatus::connecting;progress.join_status=RoomJoinStatus::host_connecting;publish(progress);
+      // Refresh the mapping on the SAME reserved socket before advertising it.
+      if(udpSocket==~uintptr_t(0)){progress.status=RoomStatus::ready;progress.join_status=RoomJoinStatus::host_unavailable;publish(progress);continue;}
+      auto stun=check_stun(udpSocket,cancel);
+      if(cancel)return;if(requests.cancel_join){progress.status=RoomStatus::ready;progress.join_status=RoomJoinStatus::host_cancelled;publish(progress);continue;}
+      if(stun.status!=StunStatus::success){progress.status=RoomStatus::ready;progress.join_status=stun.status==StunStatus::timeout?RoomJoinStatus::host_timeout:RoomJoinStatus::host_network_error;progress.error=unsigned(stun.error);publish(progress);continue;}
+      sockaddr_in bound{};int boundSize=sizeof(bound);if(getsockname(SOCKET(udpSocket),reinterpret_cast<sockaddr*>(&bound),&boundSize))throw Failure{CharacterStatus::network_error,unsigned(WSAGetLastError())};
+      local={udpSocket,{game.local_address(),ntohs(bound.sin_port)},{stun.address,stun.mapped_port},id};
+      if(!host::valid_endpoint(local.private_endpoint)||!host::valid_endpoint(local.public_endpoint))throw std::runtime_error("local UDP endpoint");
+      game.reset_deadline();game.send_packet(0x4100);
+      std::vector<uint8_t> info,personal,skills;unsigned macros=0;bool settings=false,gear=false,skillSets=false,gearSets=false;
+      for(unsigned i=0;i<12;++i){auto packet=game.read();if(packet.payload.size()==4)result(packet.payload);
+       switch(packet.command){case 0x4101:if(!info.empty())throw std::runtime_error("duplicate profile");info=std::move(packet.payload);break;
+       case 0x4120:if(settings)throw std::runtime_error("duplicate settings");settings=true;break;
+       case 0x4121:if(++macros>2)throw std::runtime_error("duplicate macros");break;
+       case 0x4122:if(!personal.empty())throw std::runtime_error("duplicate personal");personal=std::move(packet.payload);break;
+       case 0x4124:if(gear)throw std::runtime_error("duplicate gear");gear=true;break;
+       case 0x4125:if(!skills.empty())throw std::runtime_error("duplicate skills");skills=std::move(packet.payload);break;
+       case 0x4140:if(skillSets)throw std::runtime_error("duplicate skill sets");skillSets=true;break;
+       case 0x4142:if(gearSets)throw std::runtime_error("duplicate gear sets");gearSets=true;break;
+       default:throw std::runtime_error("profile response command");}
+       if(!info.empty()&&!personal.empty()&&!skills.empty()&&settings&&macros==2&&gear&&skillSets&&gearSets)break;
+      }
+      if(!settings||macros!=2||!gear||!skillSets||!gearSets)throw std::runtime_error("incomplete profile replies");profile=host::profile_payload(id,info,personal,skills);
+      if(cancel)return;if(requests.cancel_join){progress.status=RoomStatus::ready;progress.join_status=RoomJoinStatus::host_cancelled;publish(progress);continue;}
+      // F0Dxxx/Characters.updateConnectionInfo: private portBE + IP16 + public
+      // portBE + reserved16; encrypted to 24 bytes. Public IP is server-observed.
+      std::vector<uint8_t> connection(24);put(connection,0,local.private_endpoint.port,2);char ip[16]{};IN_ADDR ipAddress{};std::copy(local.private_endpoint.address.begin(),local.private_endpoint.address.end(),reinterpret_cast<uint8_t*>(&ipAddress));if(!InetNtopA(AF_INET,&ipAddress,ip,sizeof(ip)))throw std::runtime_error("private IP format");std::copy_n(reinterpret_cast<const uint8_t*>(ip),strlen(ip),connection.begin()+2);put(connection,18,local.public_endpoint.port,2);network_block(connection,keys.packet,true);game.reset_deadline();game.send_packet(0x4700,connection);auto updated=game.read();if(updated.command!=0x4701)throw std::runtime_error("endpoint update command");result(updated.payload);
+     }
+     auto reply=exchange_room_action(*action,[&](uint16_t command,std::span<const uint8_t> plain){game.reset_deadline(command==0x4322||command==0x4380);auto wire=room_action_wire_payload(keys,command,plain);Wipe wipe{wire};game.send_packet(command,wire);return game.read();},*requests.uncertain,requests.cancel_join,action->event==RoomEvent::join?HostConnect([&](const host::Admission& admission){
+      if(admission.character==id)return host::Result{host::Stage::unavailable};
+      auto progress=[&](host::Result result){if(!host::active(result.stage))return;RoomReply r;r.event=RoomEvent::join;r.requested_room=action->id;r.status=result.stage==host::Stage::joined?RoomStatus::ready:RoomStatus::connecting;r.join_status=room_host_status(result.stage);r.host_roster=std::move(result.roster);r.host_match=std::move(result.match);publish(std::move(r));};
+      return host::run(local,admission,profile,cancel,requests.cancel_join,progress,[&]{return game.alive();});
+     }):HostConnect{});
+     bool lost=reply.status==RoomStatus::protocol_error&&reply.join_status!=RoomJoinStatus::invalid_input;publish(std::move(reply));if(lost||*requests.uncertain)return;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+   }
+  }
+ }catch(const Failure&f){if(!cancel)publish({f.status==CharacterStatus::server_error?RoomStatus::rejected:RoomStatus::network_error,{},f.code});}
+ catch(...){if(!cancel)publish({RoomStatus::protocol_error,{},0});}
+}
 CharacterCreateRequest character_create_request(std::wstring name,const std::array<uint8_t,28>&a,int pitch){
  if(a[0]>1||a[7]>7||pitch< -7||pitch>7||!CharacterCreation::name_error(name).empty())throw std::invalid_argument("Invalid creation draft");
  CharacterCreateRequest r;r.name=std::move(name);std::copy_n(a.begin(),27,r.wire_appearance.begin());auto&w=r.wire_appearance;

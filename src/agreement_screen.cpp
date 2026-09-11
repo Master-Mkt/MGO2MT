@@ -1,3 +1,4 @@
+﻿#include "menu_theme.h"
 #include "agreement_screen.h"
 #include <algorithm>
 #include <cstring>
@@ -12,7 +13,7 @@ AgreementScreen::AgreementScreen(std::wstring url):url_(std::move(url)){
  info.bmiHeader.biPlanes=1;info.bmiHeader.biBitCount=32;info.bmiHeader.biCompression=BI_RGB;
  bitmap_=CreateDIBSection(dc_,&info,DIB_RGB_COLORS,&pixels_,nullptr,0);
  if(!bitmap_){DeleteDC(dc_);dc_=nullptr;throw std::runtime_error("Text surface failure");}old_=SelectObject(dc_,bitmap_);
- for(int size:{30,22,19,16})fonts_.push_back(CreateFontW(-size,0,0,0,FW_NORMAL,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,ANTIALIASED_QUALITY,FIXED_PITCH,L"MS Gothic"));
+ for(int size:{30,24,26,17})fonts_.push_back(CreateFontW(-size,0,0,0,FW_NORMAL,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,ANTIALIASED_QUALITY,FIXED_PITCH,L"MS Gothic"));
 }
 AgreementScreen::~AgreementScreen(){cancel_=true;if(worker_.joinable())worker_.join();if(dc_){SelectObject(dc_,old_);DeleteObject(bitmap_);DeleteDC(dc_);}for(auto f:fonts_)DeleteObject(f);}
 void AgreementScreen::start(){
@@ -41,11 +42,12 @@ int AgreementScreen::input(unsigned b,bool& close){
  return -1;
 }
 const void* AgreementScreen::draw(){
- auto fill=[&](int x,int y,int w,int h,COLORREF c){RECT r{x,y,x+w,y+h};auto brush=CreateSolidBrush(c);FillRect(dc_,&r,brush);DeleteObject(brush);};
- auto text=[&](const std::wstring& s,int x,int y,int w,int h,int f,COLORREF c,UINT flags=DT_LEFT|DT_TOP){RECT r{x,y,x+w,y+h};SelectObject(dc_,fonts_[f]);SetTextColor(dc_,c);SetBkMode(dc_,TRANSPARENT);DrawTextW(dc_,s.c_str(),static_cast<int>(s.size()),&r,flags|DT_NOPREFIX);};
+ auto fill=[&](int x,int y,int w,int h,COLORREF c){menu_fill(dc_,x,y,w,h,c);};
+ auto text=[&](const std::wstring& s,int x,int y,int w,int h,int f,COLORREF c,UINT flags=DT_LEFT|DT_TOP){RECT r{x,y,x+w,y+h};SelectObject(dc_,fonts_[f]);SetTextColor(dc_,menu_text_color(c));SetBkMode(dc_,TRANSPARENT);DrawTextW(dc_,s.c_str(),static_cast<int>(s.size()),&r,flags|DT_NOPREFIX);};
  // Transparent native overlay; the original lobby frame is rendered underneath.
  std::memset(pixels_,0,1280*720*4);
- text(L"OpenMGO2  /  AGREEMENT",740,78,438,35,1,RGB(224,228,213),DT_RIGHT);
+ menu_heading(dc_,fonts_[0],L"AGREEMENT");
+ text(L"OpenMGO2",840,78,338,35,1,RGB(224,228,213),DT_RIGHT);
  text(L"お知らせ・同意確認",100,157,660,38,1,RGB(236,240,226));
  std::wstring body;
  if(!ready())body=L"OpenMGO2からテキストを取得しています…";
@@ -58,16 +60,16 @@ const void* AgreementScreen::draw(){
  text(body,100,209-scroll_,1050,std::max(318,int(measure.bottom)),2,RGB(225,229,222),DT_WORDBREAK|DT_EXPANDTABS);RestoreDC(dc_,saved);
  if(maximum_){fill(1179,209,4,318,RGB(49,57,53));int h=std::max(24,318*318/(maximum_+318));int y=209+(318-h)*scroll_/maximum_;fill(1179,y,4,h,RGB(183,194,167));}
  text(L"↑ ↓ / PgUp PgDn：スクロール",91,555,640,28,3,RGB(176,189,170));
- text(accepted_?L"YESを選択しました。この試作はここまでです。":L"内容を確認しましたか？ / Do you agree?",86,606,810,36,1,RGB(232,235,222));
+ text(accepted_?L"YESを選択しました。この試作はここまでです。":L"同意しますか？",100,574,810,36,1,RGB(248,206,99));
  if(!accepted_){
-  for(int i=0;i<2;++i){bool selected=i==0?yes_:!yes_;int x=887+i*151;
-   fill(x,603,135,40,selected?RGB(141,157,117):RGB(51,61,54));
-   text(i==0?L"YES":L"NO",x,610,135,30,1,i==0&&!ok()?RGB(91,104,96):selected?RGB(14,21,15):RGB(225,229,215),DT_CENTER);
+  for(int i=0;i<2;++i){bool selected=i==0?yes_:!yes_;int x=100+i*550;
+   fill(x,618,520,40,selected?RGB(141,157,117):RGB(51,61,54));
+   text(i==0?L"はい / YES":L"いいえ / NO",x,623,520,30,1,i==0&&!ok()?RGB(91,104,96):selected?RGB(14,21,15):RGB(225,229,215),DT_CENTER);
   }
  }
  text(L"← →：選択    Enter：決定    Esc：終了",83,690,960,25,3,RGB(174,185,165));
 
- GdiFlush();auto* p=static_cast<unsigned char*>(pixels_);for(size_t i=3;i<1280*720*4;i+=4)p[i]=(p[i-3]||p[i-2]||p[i-1])?255:0;
+ finish_menu_surface(pixels_);
  return pixels_;
 }
 }

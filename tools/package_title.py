@@ -12,7 +12,7 @@ import shutil
 import subprocess
 import sys
 
-from gwp import ROOT, load, record
+from gwp import ROOT, load, record, lobby_membership_text
 
 DESTINATIONS = {'character_catalog':'character/appearance.gwc','network_keys':'network.gnk','login_background':'login/frame.m2pv',**{f'login_texture{i}':f'login/images/{i}.dds' for i in range(6)},'agreement_motion':'motion/animated.m2an',**{f'motion_texture{i}':f'motion/images/{i}.dds' for i in range(8)},'agreement_background':'agreement/frame.m2pv','lobby_bgm':'audio/lobby.gwa',**{f'agreement_texture{i}':f'agreement/images/{i}.dds' for i in range(6)},'menu93':'audio/93.gwa','menu94':'audio/94.gwa','scenario': 'title.gwp', 'animation': 'title/animated.m2an',
                 'bgm23': 'audio/title.gwa', 'start18999':'audio/start.gwa','loading':'loading/loading.m2an','loading_texture0':'loading/images/0.dds','loading_texture1':'loading/images/1.dds', **{f'texture{i}': f'title/images/{i}.dds' for i in range(10)}}
@@ -74,6 +74,8 @@ def package(gwp_path, exe, output, seconds=None):
             subprocess.run([str(compiler),str(source),str(target)],check=True)
         else:shutil.copyfile(source, target)
         hashes[name] = record(target)['sha256']
+    (data/'lobbies.cfg').write_text(lobby_membership_text(document), encoding='ascii')
+    hashes['lobbies.cfg'] = record(data/'lobbies.cfg')['sha256']
     runtime = document['runtime']
     duration = runtime['preview_seconds'] if seconds is None else seconds
     (data/'launch.cfg').write_text(f"MGO2WIN.TITLE 7\n{duration} {runtime['entry_procedure']} {int(runtime['audio_enabled'])}\n{document['network']['policy_url']}\n", encoding='ascii')
@@ -101,7 +103,7 @@ def package(gwp_path, exe, output, seconds=None):
                 'packager_sha256': record(Path(__file__))['sha256'],
                 'input_asset_hashes': {x['role']: x['sha256'] for x in inputs if 'role' in x},
                 'runtime': gwp['runtime'], 'files': files,
-                'limitations': ['START native stereo mix, original DSP parity pending', 'OpenMGO2 login and native TCP character-list adapter implemented; real-account list validation and remote selection pending', 'selected appearance and original lobby motion implemented; some equipment/materials and exact original clip assignment pending', 'no PS3 audiovisual parity claim'],
+                'limitations': ['START native stereo mix, original DSP parity pending', 'OpenMGO2 login, character selection and live host admission implemented; gameplay, peer mesh and live roster updates pending', 'selected appearance and original lobby motion implemented; some equipment/materials and exact original clip assignment pending', 'no PS3 audiovisual parity claim'],
                 'runtime_dependencies': ['Windows 10/11 x64 system D3D11, D3DCompiler, XAudio2, BCrypt; MSVC runtime statically linked'],
                 'not_bundled': ['IDA', 'vgmstream/FFmpeg DLLs', 'Noesis', 'Drebin', 'Python', 'SDK installers']}
     (output/'package.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')

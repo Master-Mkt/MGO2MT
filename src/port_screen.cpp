@@ -1,3 +1,4 @@
+﻿#include "menu_theme.h"
 #include "port_screen.h"
 #include <cstring>
 #include <iostream>
@@ -128,8 +129,9 @@ bool PortScreen::message(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
 const void* PortScreen::draw(){
  update_probe();
  std::memset(pixels_,0,1280*720*4);
- auto fill=[&](int x,int y,int w,int h,COLORREF c){RECT r{x,y,x+w,y+h};auto b=CreateSolidBrush(c);FillRect(dc_,&r,b);DeleteObject(b);};
- auto text=[&](std::wstring_view s,int x,int y,int w,int h,int font,COLORREF c,UINT flags=DT_LEFT){RECT r{x,y,x+w,y+h};SelectObject(dc_,fonts_[font]);SetTextColor(dc_,c);SetBkMode(dc_,TRANSPARENT);DrawTextW(dc_,s.data(),int(s.size()),&r,flags|DT_NOPREFIX);};
+ auto fill=[&](int x,int y,int w,int h,COLORREF c){menu_fill(dc_,x,y,w,h,c);};
+ auto text=[&](std::wstring_view s,int x,int y,int w,int h,int font,COLORREF c,UINT flags=DT_LEFT){RECT r{x,y,x+w,y+h};SelectObject(dc_,fonts_[font]);SetTextColor(dc_,menu_text_color(c));SetBkMode(dc_,TRANSPARENT);DrawTextW(dc_,s.data(),int(s.size()),&r,flags|DT_NOPREFIX);};
+ menu_heading(dc_,fonts_[0],L"OPTION");
  if(graphics_tab_){graphics_->draw(dc_,fonts_);for(auto c:graphics_->cues())if(cues_.size()<32)cues_.push_back(c);}
  else if(controls_tab_){controls_->draw(dc_,fonts_);for(auto c:controls_->cues())if(cues_.size()<32)cues_.push_back(c);}
  else {
@@ -170,7 +172,7 @@ const void* PortScreen::draw(){
  }
  }
  for(int i=0;i<3;++i){bool selected=i==2?graphics_tab_:i==1?controls_tab_:!graphics_tab_&&!controls_tab_;int x=120+i*355,w=330;fill(x,153,w,44,selected?RGB(91,113,73):RGB(34,47,38));const wchar_t* labels[]={L"ネットワーク [F1]",L"コントローラー [F2]",L"画質 [F3]"};text(labels[i],x+12,162,w-24,34,1,RGB(233,239,222));}
- GdiFlush();auto*p=static_cast<unsigned char*>(pixels_);for(size_t i=3;i<1280*720*4;i+=4)p[i]=(p[i-3]||p[i-2]||p[i-1])?255:0;return pixels_;
+ finish_menu_surface(pixels_);return pixels_;
 }
 void PortScreen::report()const{controls_->report();std::osyncstream(std::cout)<<"{\"port_settings_report\":true,\"checks\":"<<checks_<<",\"saved\":"<<(saved_?"true":"false")<<",\"restored\":"<<(restored_?"true":"false")<<",\"returned\":"<<(back_?"true":"false")<<",\"bandwidth_kbps\":"<<settings_.bandwidth_kbps<<",\"external_reachability_tested\":false}"<<std::endl;}
 }

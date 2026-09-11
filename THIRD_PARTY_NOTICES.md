@@ -25,6 +25,8 @@ The generated title EXE links the project's C++ modules and Microsoft libraries.
 
 The native GCX/LA2 behavior implementation was informed by disassembly and experiments. Public release needs a source-origin review; do not describe the current work as a completed clean-room implementation. / GCX/LA2動作の実装は逆アセンブルと実験を根拠としています。公開前の出典レビューが必要であり、完了したクリーンルーム実装とは称しません。
 
+Host networking / ホスト通信: `host_protocol.cpp` and `host_session.cpp` are native implementations informed by the local retail PPC transport routines (264C78/2666C8, EFD840, 270E00, 281AF8, 27E8B0) and the reviewed OpenMGO2 server. Windows BCrypt supplies MD5 and random bytes; the bounded 512-byte-window decompressor is implemented locally, with no additional third-party codec dependency. Private legacy packet fixtures used for comparison are excluded from source exports and packages. / 元PPCとサーバー実装を照合して作成したネイティブ通信処理です。比較用の私的パケットやIDAデータベースは配布しません。実ホストでの互換性とゲームプレイ全体の再現を保証するものではありません。
+
 ## START sound and loading screen / START音とロード画面
 
 The START converter uses reviewed PPU/SPU instructions and coefficient tables from the local game binary. It decodes SSWF PCM16BE and SSW2 float predictors, preserves 23 note events, and produces a native stereo mix. It does not invoke or incorporate the Drebin decoder. Drebin AudioTool/MTA2 were consulted for comparison; the actual SSW2 SPU coefficients, sample ordering and compressed silence differ. IDA's installed SPU processor module was used for local instruction decoding and is not redistributed.

@@ -21,6 +21,8 @@ class LoginScreen {
  std::unique_ptr<PortScreen> ports_;
  std::unique_ptr<CharacterScreen> characters_;std::filesystem::path networkKeys_;
  std::shared_ptr<CharacterRegistrationState> registrationState_=std::make_shared<CharacterRegistrationState>();
+ std::shared_ptr<CharacterSelectionState> selectionState_=std::make_shared<CharacterSelectionState>();
+ std::shared_ptr<std::atomic_bool> roomJoinUncertain_=std::make_shared<std::atomic_bool>(false);
  const CharacterCatalog* catalog_=nullptr;
  void open_characters();
  bool externalPorts_=true;
@@ -47,7 +49,7 @@ public:
  float model_yaw()const{return characters_?characters_->model_yaw():0;}
  void model_available(bool v){if(characters_)characters_->model_available(v);}
  void model_rendered(){if(characters_)characters_->model_rendered();}
- void show_character_preview(bool slots=false);
+ void show_character_preview(bool slots=false,bool selection=false);
  // Only the isolated scripted UI path may open settings without authentication.
  void show_port_preview(bool external=false);
  const void* draw();
