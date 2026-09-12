@@ -62,10 +62,12 @@ CharacterSelectionReply select_character(const std::filesystem::path&,const Auth
 struct RoomEntry {uint32_t id=0;std::wstring name;uint8_t players=0,capacity=0,rule=0,map=0;bool password=false;};
 enum class RoomStatus {connecting,ready,network_error,protocol_error,rejected,cancelled};
 struct RoomPlayer {uint32_t id=0;std::wstring name;};
-struct RoomDetail {uint32_t id=0;std::wstring name,comment;uint8_t subtype=0,capacity=0,players=0;bool password=false,dedicated=false;std::vector<RoomPlayer> roster;};
+struct RoomDetail {uint32_t id=0;std::wstring name,comment;uint8_t subtype=0,capacity=0,players=0;bool password=false,dedicated=false;std::vector<RoomPlayer> roster;
+ bool environment_known=false;uint32_t briefing_minutes=0;std::array<uint8_t,16> weapon_restrictions{};
+};
 enum class RoomEvent {list,detail,join};
 enum class RoomJoinStatus {none,rejected,permission_checked,outcome_unknown,invalid_input,host_connecting,host_profile,host_sync,joined,host_cancelled,host_timeout,host_rejected,host_disconnected,host_network_error,host_protocol_error,host_unavailable};
-struct RoomReply {RoomStatus status=RoomStatus::connecting;std::vector<RoomEntry> rooms;uint32_t error=0;RoomEvent event=RoomEvent::list;uint32_t requested_room=0;std::optional<RoomDetail> detail;RoomJoinStatus join_status=RoomJoinStatus::none;std::optional<host::Roster> host_roster;std::optional<host::MatchState> host_match;};
+struct RoomReply {RoomStatus status=RoomStatus::connecting;std::vector<RoomEntry> rooms;uint32_t error=0;RoomEvent event=RoomEvent::list;uint32_t requested_room=0;std::optional<RoomDetail> detail;RoomJoinStatus join_status=RoomJoinStatus::none;std::optional<host::Roster> host_roster;std::optional<host::MatchState> host_match;std::optional<host::Placements> host_placements;};
 struct RoomAction {
  RoomEvent event=RoomEvent::detail;uint32_t id=0;uint8_t subtype=0;std::array<wchar_t,17> password{};
  ~RoomAction(){volatile wchar_t*p=password.data();for(size_t i=0;i<password.size();++i)p[i]=0;}

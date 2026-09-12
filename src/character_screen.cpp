@@ -30,7 +30,7 @@ void CharacterScreen::update(){
  if(selecting_){selecting_=false;auto status=selectionReply_.status;
   if((status==CharacterSelectionStatus::success&&(!selectionReply_.request_may_have_been_sent||selectionReply_.character.id!=selectionTarget_))||(selectionReply_.request_may_have_been_sent&&status!=CharacterSelectionStatus::success&&status!=CharacterSelectionStatus::rejected))status=CharacterSelectionStatus::outcome_unknown;
   selectionReply_.status=status;selectionState_->unresolved=status==CharacterSelectionStatus::outcome_unknown;
-  if(status==CharacterSelectionStatus::success){lobbyVisible_=true;lobbyGroup_=0;lobbyFocus_=0;lobbyNotice_.clear();report_lobby_group();}
+  if(status==CharacterSelectionStatus::success){lobbyVisible_=true;lobbyCategories_=false;lobbyGroup_=0;lobbyFocus_=0;lobbyNotice_.clear();report_lobby_group();}
   else notice_=status==CharacterSelectionStatus::unavailable?L"PC選択はサーバー側の対応確認後に利用できます。":status==CharacterSelectionStatus::missing?L"選んだPCが一覧に見つかりません。一覧を再取得してください。":status==CharacterSelectionStatus::rejected?L"PC選択が受け付けられませんでした。ログインからやり直してください。":status==CharacterSelectionStatus::outcome_unknown?L"PC選択の結果を確認できませんでした。再送せずログインからやり直してください。":status==CharacterSelectionStatus::cancelled?L"PC選択を中止しました。":L"PC選択前に通信を確認できませんでした。もう一度お試しください。";
   cues_.push_back(93);std::osyncstream(std::cout)<<"{\"character_selection_result\":true,\"status\":"<<int(status)<<",\"error\":"<<selectionReply_.error<<",\"may_have_been_sent\":"<<(selectionReply_.request_may_have_been_sent?"true":"false")<<",\"lobby_visible\":"<<(lobbyVisible_?"true":"false")<<",\"lobby_count\":"<<selectionReply_.lobbies.size()<<"}"<<std::endl;return;
  }
@@ -67,7 +67,7 @@ void CharacterScreen::begin_selection(){
  catch(...){pending_=selecting_=false;selectionState_->unresolved=false;notice_=L"PC選択を開始できませんでした。";}
 }
 void CharacterScreen::stop_rooms(){
- roomCancel_=true;if(roomWorker_.joinable())roomWorker_.join();std::lock_guard lock(roomMutex_);roomInbox_.clear();roomRequests_.clear();detailVisible_=false;detailBusy_=false;SecureZeroMemory(detailAction_.password.data(),sizeof(detailAction_.password));
+ roomCancel_=true;if(roomWorker_.joinable())roomWorker_.join();std::lock_guard lock(roomMutex_);roomInbox_.clear();roomRequests_.clear();detailVisible_=false;detailBusy_=false;update_weapons();SecureZeroMemory(detailAction_.password.data(),sizeof(detailAction_.password));
 }
 void CharacterScreen::begin_rooms(){
  auto rows=lobby_group_rows(selectionReply_.lobbies,lobbyGroup_);if(roomVisible_||lobbyFocus_>=rows.size())return;
@@ -85,7 +85,7 @@ void CharacterScreen::update_rooms(){
   if(!detailVisible_||next->requested_room!=detailAction_.id)return;
   if(!next->detail)next->detail=detailReply_.detail;
   auto previousStage=detailReply_.join_status;auto previousRequest=detailReply_.host_match?detailReply_.host_match->request:std::optional<host::LoadRequest>{};
-  detailBusy_=next->status==RoomStatus::connecting;detailReply_=std::move(*next);detailNotice_.clear();
+  detailBusy_=next->status==RoomStatus::connecting;detailReply_=std::move(*next);detailNotice_.clear();update_weapons();
   if(detailReply_.join_status!=RoomJoinStatus::joined)matchVisible_=false;
   if(detailReply_.join_status==RoomJoinStatus::permission_checked)detailNotice_=L"参加許可の確認が完了しました。この確認モードではホストへ接続せず、参加予約を解除します。";
   else if(detailReply_.join_status==RoomJoinStatus::outcome_unknown)detailNotice_=L"参加要求の結果を確認できません。再送せず、ログインし直してください。";
@@ -142,7 +142,7 @@ void CharacterScreen::draw_rooms(){
  text(std::wstring(lobby_group_name(unsigned(lobby_group(roomLobby_.subtype))))+L"  /  "+roomLobby_.name,120,211,1040,35,1,RGB(255,208,150));
  auto n=roomReply_.rooms.size(),page=roomFocus_<n?roomFocus_/7:n?(n-1)/7:0;
  text(L"ルーム名",138,258,700,25,3,light);text(L"パスワード",800,258,160,25,3,light,DT_CENTER);text(L"人数",980,258,150,25,3,light,DT_RIGHT);
- for(size_t i=page*7;i<std::min(n,(page+1)*7);++i){auto&r=roomReply_.rooms[i];int y=285+int(i%7)*41;fill(120,y,1040,39,i==roomFocus_?RGB(73,96,60):RGB(35,48,37));text(r.name,138,y+8,650,30,1,light);text(r.password?L"あり":L"なし",800,y+10,160,25,3,light,DT_CENTER);text(std::to_wstring(r.players)+L" / "+std::to_wstring(r.capacity),980,y+8,150,30,2,light,DT_RIGHT);}
+ for(size_t i=page*7;i<std::min(n,(page+1)*7);++i){auto&r=roomReply_.rooms[i];int y=285+int(i%7)*41;menu_row(dc_,120,y,1040,39,i,i==roomFocus_);text(r.name,138,y+8,650,30,1,light);text(r.password?L"あり":L"なし",800,y+10,160,25,3,light,DT_CENTER);text(std::to_wstring(r.players)+L" / "+std::to_wstring(r.capacity),980,y+8,150,30,2,light,DT_RIGHT);}
  if(roomReply_.status!=RoomStatus::ready){auto message=roomReply_.status==RoomStatus::connecting?L"ロビーへ接続し、一覧を取得しています…":roomReply_.status==RoomStatus::rejected?L"ロビーへの接続が受け付けられませんでした。":roomReply_.status==RoomStatus::protocol_error?L"サーバーの応答を確認できませんでした。":L"ロビーとの接続が切れました。通信設定を確認してください。";text(message,138,320,980,80,1,light,DT_WORDBREAK);
   if(roomReply_.status!=RoomStatus::connecting)text(L"ロビー一覧へ戻って選び直してください。  エラー "+std::to_wstring(roomReply_.error),138,420,980,60,2,light,DT_WORDBREAK);
  }else if(!n)text(roomLobby_.subtype==3||roomLobby_.subtype==4||roomLobby_.subtype==10?L"通常ルームはありません。大会・チームの受付画面は今後対応します。":L"現在、このロビーにルームはありません。",138,320,980,90,1,light,DT_WORDBREAK);
@@ -150,6 +150,7 @@ void CharacterScreen::draw_rooms(){
  text(roomNotice_.empty()?L"Enter：ルーム詳細を開く":roomNotice_,120,617,370,55,3,RGB(255,208,150),DT_WORDBREAK);
  for(int i=0;i<2;++i){int x=510+i*340;bool active=roomFocus_==n+i;fill(x,617,310,45,active?RGB(151,168,126):RGB(50,66,52));text(i?L"ロビー一覧へ戻る":L"一覧を更新 [F5]",x,628,310,30,1,active?RGB(30,20,12):light,DT_CENTER);}
  text(L"↑ ↓：項目    PageUp / PageDown：ページ    F5：更新    Esc：ロビー一覧",83,690,1120,25,3,light);
+ if(roomFocus_<n)menu_focus_guides(dc_,120,285+int(roomFocus_%7)*41);else menu_focus_guides(dc_,roomFocus_==n?510:850,617);
 }
 void CharacterScreen::report_lobby_group()const{
  std::osyncstream(std::cout)<<"{\"lobby_group\":"<<lobbyGroup_<<",\"row_count\":"<<lobby_group_rows(selectionReply_.lobbies,lobbyGroup_).size()<<",\"group_count\":"<<lobby_group_count(selectionReply_.lobbies)<<"}"<<std::endl;
@@ -158,50 +159,88 @@ void CharacterScreen::set_lobby_group(unsigned group){
  if(group>=lobby_group_count(selectionReply_.lobbies)||group==lobbyGroup_)return;
  lobbyGroup_=group;lobbyFocus_=0;lobbyNotice_.clear();if(cues_.size()<32)cues_.push_back(94);report_lobby_group();
 }
+namespace {
+int lobby_list_top(unsigned group,size_t count){return std::min(219+int(group)*42,548-int(std::clamp(count,size_t(1),size_t(6)))*42);}
+const wchar_t* lobby_description(unsigned group){
+ static constexpr const wchar_t* descriptions[]={
+ L"対戦相手を自動的に探すロビーです。",
+ L"既に作成されたゲームを選んで参加できます。ホストはルールを設定してゲームを開催できます。",
+ L"ゲームプレイの練習ができるロビーです。操作の練習や戦闘トレーニングを選択できます。",
+ L"チームで連続した対戦に挑戦するロビーです。",
+ L"トーナメントの対戦に参加するロビーです。",
+ L"トーナメントへの参加を受け付けるロビーです。",
+ L"所属するゲーム種別がまだ確認されていないロビーです。"};
+ return descriptions[std::min(group,6u)];
+}
+}
 bool CharacterScreen::lobby_message(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
  if(roomVisible_)return room_message(hwnd,msg,wp,lp);
  const size_t n=lobby_group_rows(selectionReply_.lobbies,lobbyGroup_).size();
  const unsigned groups=lobby_group_count(selectionReply_.lobbies);
  auto leave=[&]{lobbyVisible_=false;notice_=L"PCを選び直せます。";cues_.push_back(93);};
- auto activate=[&]{if(lobbyFocus_==n)leave();else begin_rooms();};
+ auto activate=[&]{if(lobbyCategories_){lobbyCategories_=false;lobbyFocus_=0;cues_.push_back(93);}else if(lobbyFocus_==n)leave();else begin_rooms();};
  if(msg==WM_CHAR||msg==WM_KEYUP)return true;
  if(msg==WM_KEYDOWN){if(lp&(1LL<<30)){if(wp==VK_RETURN||wp==VK_SPACE||wp==VK_ESCAPE)return true;}
-  auto previous=lobbyFocus_;
-  if(wp==VK_LEFT||wp==VK_RIGHT){set_lobby_group((lobbyGroup_+groups+(wp==VK_RIGHT?1:-1))%groups);return true;}
-  if(wp==VK_ESCAPE)leave();else if(wp==VK_HOME)lobbyFocus_=0;else if(wp==VK_END)lobbyFocus_=n;
-  else if(wp==VK_UP||(wp==VK_TAB&&(GetKeyState(VK_SHIFT)&0x8000)))lobbyFocus_=(lobbyFocus_+n)%(n+1);
-  else if(wp==VK_DOWN||wp==VK_TAB)lobbyFocus_=(lobbyFocus_+1)%(n+1);
-  else if(wp==VK_NEXT)lobbyFocus_=std::min(n,lobbyFocus_+6);else if(wp==VK_PRIOR)lobbyFocus_=lobbyFocus_>=6?lobbyFocus_-6:0;
+  auto previous=lobbyFocus_;bool oldColumn=lobbyCategories_;
+  if(wp==VK_ESCAPE)leave();
+  else if(wp==VK_LEFT)lobbyCategories_=true;
+  else if(wp==VK_RIGHT)lobbyCategories_=false;
+  else if(wp==VK_TAB)lobbyCategories_=!lobbyCategories_;
   else if(wp==VK_RETURN||wp==VK_SPACE)activate();
-  if(previous!=lobbyFocus_&&cues_.size()<32)cues_.push_back(94);return true;
+  else if(lobbyCategories_){
+   if(wp==VK_UP)set_lobby_group((lobbyGroup_+groups-1)%groups);
+   else if(wp==VK_DOWN)set_lobby_group((lobbyGroup_+1)%groups);
+   else if(wp==VK_HOME)set_lobby_group(0);else if(wp==VK_END)set_lobby_group(groups-1);
+  }else{
+   if(wp==VK_HOME)lobbyFocus_=0;else if(wp==VK_END)lobbyFocus_=n;
+   else if(wp==VK_UP)lobbyFocus_=(lobbyFocus_+n)%(n+1);
+   else if(wp==VK_DOWN)lobbyFocus_=(lobbyFocus_+1)%(n+1);
+   else if(wp==VK_NEXT)lobbyFocus_=std::min(n,lobbyFocus_+6);else if(wp==VK_PRIOR)lobbyFocus_=lobbyFocus_>=6?lobbyFocus_-6:0;
+  }
+  if((previous!=lobbyFocus_||oldColumn!=lobbyCategories_)&&cues_.size()<32)cues_.push_back(94);return true;
  }
  if(msg==WM_LBUTTONUP){RECT r{};GetClientRect(hwnd,&r);if(!r.right||!r.bottom)return true;int x=int(short(LOWORD(lp)))*1280/r.right,y=int(short(HIWORD(lp)))*720/r.bottom;
-  if(x>=120&&x<1160&&y>=245&&y<283)set_lobby_group(unsigned(x-120)*groups/1040);
-  else if(x>=120&&x<1160&&y>=319&&y<571){size_t page=lobbyFocus_<n?lobbyFocus_/6:n?(n-1)/6:0;size_t row=page*6+(y-319)/42;
-   if(row<n){if(row!=lobbyFocus_&&cues_.size()<32)cues_.push_back(94);lobbyFocus_=row;}}
+  int top=lobby_list_top(lobbyGroup_,n);
+  if(x>=120&&x<635&&y>=219&&y<219+int(groups)*42){lobbyCategories_=true;set_lobby_group(unsigned(y-219)/42);}
+  else if(x>=640&&x<1160&&y>=top&&y<top+int(std::min(n,size_t(6)))*42){size_t page=lobbyFocus_<n?lobbyFocus_/6:n?(n-1)/6:0;size_t row=page*6+(y-top)/42;
+   if(row<n){if((row!=lobbyFocus_||lobbyCategories_)&&cues_.size()<32)cues_.push_back(94);lobbyFocus_=row;lobbyCategories_=false;if(x>=1110)begin_rooms();}}
+  else if(n>6&&y>=552&&y<585){if(x>=955&&x<1000)lobbyFocus_=lobbyFocus_>=6?lobbyFocus_-6:0;else if(x>=1120&&x<1160)lobbyFocus_=std::min(n-1,(lobbyFocus_<n?lobbyFocus_/6+1:0)*6);lobbyCategories_=false;}
   else if(x>=850&&x<1160&&y>=617&&y<662)leave();SetFocus(hwnd);return true;
  }
  return false;
 }
 void CharacterScreen::draw_lobbies(){
  if(roomVisible_){draw_rooms();return;}
- auto fill=[&](int x,int y,int w,int h,COLORREF c){menu_fill(dc_,x,y,w,h,c);};
  auto text=[&](std::wstring_view s,int x,int y,int w,int h,int font,COLORREF c,UINT flags=DT_LEFT){RECT r{x,y,x+w,y+h};SelectObject(dc_,fonts_[font]);SetTextColor(dc_,menu_text_color(c));SetBkMode(dc_,TRANSPARENT);DrawTextW(dc_,s.data(),int(s.size()),&r,flags|DT_NOPREFIX);};
- menu_heading(dc_,fonts_[0],L"LOBBY SELECT");
+ menu_heading(dc_,fonts_[0],L"MAIN MENU");
  const auto&games=selectionReply_.lobbies;auto rows=lobby_group_rows(games,lobbyGroup_);size_t n=rows.size(),page=lobbyFocus_<n?lobbyFocus_/6:n?(n-1)/6:0;
- text(L"OpenMGO2",850,82,310,30,1,RGB(215,227,200),DT_RIGHT);text(L"ロビー一覧",120,160,1040,42,0,RGB(229,238,214));
- text(L"PC："+selectionReply_.character.name,120,207,800,30,1,RGB(237,221,181));
- auto groups=lobby_group_count(games);
- for(unsigned g=0;g<groups;++g){int x=120+1040*g/groups,w=1040*(g+1)/groups-1040*g/groups;bool active=g==lobbyGroup_;
-  fill(x,245,w-2,38,active?RGB(151,168,126):RGB(45,59,46));text(lobby_group_name(g),x+2,254,w-6,25,3,active?RGB(18,28,19):RGB(228,234,215),DT_CENTER|DT_SINGLELINE);}
- text(L"ロビー名",138,293,710,25,3,RGB(186,200,173));text(L"人数",960,293,175,25,3,RGB(186,200,173),DT_RIGHT);
- for(size_t i=page*6;i<std::min(n,(page+1)*6);++i){const auto&game=games[rows[i]];int y=319+int(i%6)*42;fill(120,y,1040,40,i==lobbyFocus_?RGB(73,96,60):RGB(35,48,37));text(game.name,138,y+8,780,30,1,RGB(233,240,220));text(std::to_wstring(game.players),960,y+9,175,28,2,RGB(233,240,220),DT_RIGHT);}
- if(!n)text(L"このカテゴリには現在ロビーがありません。",138,348,980,70,1,RGB(237,221,181),DT_WORDBREAK);
- text(std::to_wstring(n)+L" ロビー",138,585,500,25,3,RGB(186,200,173));
- text(std::to_wstring(page+1)+L" / "+std::to_wstring(std::max(size_t(1),(n+5)/6)),970,585,165,25,3,RGB(186,200,173),DT_RIGHT);
- text(lobbyNotice_.empty()?L"ロビーを選んでEnterで入場。人数は一覧取得時点の情報です。":lobbyNotice_,120,617,700,50,2,RGB(237,221,181),DT_WORDBREAK);
- bool active=lobbyFocus_==n;fill(850,617,310,45,active?RGB(151,168,126):RGB(50,66,52));text(L"PC一覧へ戻る",850,627,310,32,1,active?RGB(18,28,19):RGB(228,234,215),DT_CENTER);
- text(L"← →：カテゴリ    ↑ ↓：項目    PageUp / PageDown：ページ    Esc：PC一覧",83,690,1120,25,3,RGB(174,185,165));
+ text(L"OpenMGO2",850,82,310,30,1,RGB(215,227,200),DT_RIGHT);
+ text(selectionReply_.character.name,640,139,520,26,3,RGB(186,200,173),DT_RIGHT);
+ text(L"GAME TYPE",138,145,470,25,3,RGB(187,215,214));
+ menu_cursor(dc_,120,172,515,42);text(L"ロビー選択",140,178,470,35,0,RGB(240,244,232));
+ text(L"LOBBY",660,177,340,25,3,RGB(187,215,214));text(L"PC",1050,177,85,25,3,RGB(187,215,214),DT_RIGHT);
+ auto groups=lobby_group_count(games);int selectedY=219+int(lobbyGroup_)*42;
+ menu_rect(dc_,112,172,7,42+int(groups)*42,RGB(255,178,88));
+ for(unsigned g=0;g<groups;++g){int y=219+int(g)*42;bool active=g==lobbyGroup_;
+  menu_row(dc_,120,y,515,40,g,active);text(lobby_group_name(g),140,y+7,480,30,1,active?RGB(249,245,230):RGB(190,199,190));}
+ int top=lobby_list_top(lobbyGroup_,n);
+ for(size_t i=page*6;i<std::min(n,(page+1)*6);++i){const auto&game=games[rows[i]];int y=top+int(i%6)*42;bool active=!lobbyCategories_&&i==lobbyFocus_;
+  menu_row(dc_,640,y,520,40,i,active);if(active)menu_rect(dc_,640,y,7,40,RGB(255,178,88));
+  text(game.name,660,y+8,340,30,1,RGB(233,240,220),DT_SINGLELINE|DT_END_ELLIPSIS);
+  text(std::to_wstring(game.players),1010,y+9,90,28,2,RGB(233,240,220),DT_RIGHT);
+  if(active)text(L"→",1110,y+5,42,32,1,RGB(238,242,232),DT_CENTER);
+ }
+ if(!n)text(L"現在ロビーがありません。",660,top+9,480,70,1,RGB(237,221,181),DT_WORDBREAK);
+ text(std::to_wstring(n)+L" ロビー",660,560,280,25,3,RGB(186,200,173));
+ text(std::to_wstring(page+1)+L" / "+std::to_wstring(std::max(size_t(1),(n+5)/6)),1000,560,110,25,3,RGB(186,200,173),DT_CENTER);
+ if(n>6){text(L"◀",955,558,45,28,2,RGB(233,240,220),DT_CENTER);text(L"▶",1120,558,40,28,2,RGB(233,240,220),DT_CENTER);}
+ menu_description(dc_,fonts_[3],120,586,1040);
+ text(lobbyNotice_.empty()?lobby_description(lobbyGroup_):lobbyNotice_,120,617,700,62,2,RGB(237,238,225),DT_WORDBREAK);
+ bool active=!lobbyCategories_&&lobbyFocus_==n;menu_row(dc_,850,617,310,45,0,active);text(L"PC一覧へ戻る",850,627,310,32,1,RGB(233,239,222),DT_CENTER);
+ text(L"← → / Tab：列   ↑ ↓：選択   Enter / 右端の矢印：入場   PgUp / PgDn：ページ   Esc：戻る",83,690,1120,25,3,RGB(174,185,165));
+ if(lobbyCategories_)menu_focus_guides(dc_,120,selectedY);
+ else if(lobbyFocus_<n)menu_focus_guides(dc_,640,top+int(lobbyFocus_%6)*42);
+ else menu_focus_guides(dc_,850,617);
 }
 void CharacterScreen::tick_hold(){if(!pending_&&!lobbyVisible_&&slots_.tick(clock_())){++deleteDialogs_;cues_.push_back(93);}}
 void CharacterScreen::confirm_delete(){if(slots_.confirm()){++deleteYes_;notice_=L"PC削除の通信は準備中です。キャラクターは削除していません。";}cues_.push_back(93);}
@@ -236,7 +275,7 @@ const void* CharacterScreen::draw(){update();tick_hold();memset(pixels_,0,1280*7
  text(L"4キャラまで無料 ／ 5キャラ目以降はPCスロットを購入",120,202,1040,22,3,RGB(192,204,178));
  // Worker owns reply_ until done/join. Never read it while pending.
  int n=pending_?0:int(slots_.count());
- if(!pending_&&reply_.status==CharacterStatus::success){for(int i=0;i<n;++i){int y=225+39*i;bool occupied=i<int(reply_.list.entries.size());if(i==int(slots_.selected()))fill(120,y,570,37,RGB(73,96,60));text(std::to_wstring(i+1),130,y+8,35,28,2,RGB(192,211,173));text(occupied?reply_.list.entries[i].name:i>=int(slots_.capacity())?L"PCスロットを購入":i<4?L"PC新規登録（無料）":L"PC新規登録（追加枠）",180,y+7,420,31,1,RGB(233,240,220));if(occupied&&reply_.list.entries[i].main)text(L"MAIN",604,y+9,76,27,3,RGB(224,213,164),DT_RIGHT);}if(!n)text(L"利用可能なプレイヤースロットはありません。",120,245,1040,42,1,RGB(228,235,213));
+ if(!pending_&&reply_.status==CharacterStatus::success){for(int i=0;i<n;++i){int y=225+39*i;bool occupied=i<int(reply_.list.entries.size());menu_row(dc_,120,y,570,37,i,i==focus_);text(std::to_wstring(i+1),130,y+8,35,28,2,RGB(192,211,173));text(occupied?reply_.list.entries[i].name:i>=int(slots_.capacity())?L"PCスロットを購入":i<4?L"PC新規登録（無料）":L"PC新規登録（追加枠）",180,y+7,420,31,1,RGB(233,240,220));if(occupied&&reply_.list.entries[i].main)text(L"MAIN",604,y+9,76,27,3,RGB(224,213,164),DT_RIGHT);}if(!n)text(L"利用可能なプレイヤースロットはありません。",120,245,1040,42,1,RGB(228,235,213));
   // Occupancy gates the selected account appearance.
   if(slots_.occupied())text(modelAvailable_?(modelPartial_?L"外見表示（一部の装備・色は未対応）":L"キャラクター表示"):L"3Dモデル未読込",720,196,440,24,3,RGB(186,200,173),DT_CENTER);
   menu_description(dc_,fonts_[3],120,545,570);
@@ -247,7 +286,10 @@ const void* CharacterScreen::draw(){update();tick_hold();memset(pixels_,0,1280*7
  for(int i=0;i<2;++i){int x=510+i*340;bool active=!pending_&&focus_==n+1+i;fill(x,617,310,45,active?RGB(151,168,126):RGB(50,66,52));text(i?L"設定へ戻る":pending_?L"取得中…":L"再取得",x,627,310,32,1,active?RGB(18,28,19):RGB(228,234,215),DT_CENTER);}
  if(!pending_&&slots_.occupied()){text(L"Backspace 3秒長押し：PC削除の確認",720,582,440,32,3,RGB(212,220,195),DT_CENTER);auto elapsed=slots_.held_ms(clock_());if(elapsed){fill(750,611,380,5,RGB(52,67,47));fill(750,611,int(380*elapsed/3000),5,RGB(222,231,202));}}
  if(slots_.dialog()){fill(300,252,680,235,RGB(135,156,113));fill(303,255,674,229,RGB(25,37,28));menu_section(dc_,fonts_[3],L"CONFIRM",303,255,674);text(L"PCを削除しますか？",330,286,620,43,0,RGB(237,241,226),DT_CENTER);text(reply_.list.entries[slots_.selected()].name,330,339,620,36,1,RGB(237,221,181),DT_CENTER);for(int i=0;i<2;++i){int x=i?670:390;bool active=slots_.yes()==!i;fill(x,395,220,54,active?RGB(151,168,126):RGB(50,66,52));text(i?L"NO":L"YES",x,409,220,34,1,active?RGB(18,28,19):RGB(228,234,215),DT_CENTER);}}
- text(slots_.dialog()?L"← →：YES / NO    Enter：決定    Esc：取り消し":L"↑ ↓：項目移動    ← →：モデル回転    Enter：決定    Esc：設定へ戻る",83,690,1120,25,3,RGB(174,185,165));finish_menu_surface(pixels_);return pixels_;
+ text(slots_.dialog()?L"← →：YES / NO    Enter：決定    Esc：取り消し":L"↑ ↓：項目移動    ← →：モデル回転    Enter：決定    Esc：設定へ戻る",83,690,1120,25,3,RGB(174,185,165));
+ if(slots_.dialog())menu_focus_guides(dc_,slots_.yes()?390:670,395);
+ else if(!pending_){if(focus_<n)menu_focus_guides(dc_,120,225+focus_*39);else menu_focus_guides(dc_,focus_==n?120:focus_==n+1?510:850,617);}
+ finish_menu_surface(pixels_);return pixels_;
 }
 void CharacterScreen::report()const{if(pending_)return;std::osyncstream(std::cout)<<"{\"character_list_result\":true,\"status\":"<<int(reply_.status)<<",\"stage\":"<<int(reply_.stage)<<",\"error\":"<<reply_.error<<",\"count\":"<<reply_.list.entries.size()<<",\"slots\":"<<slots_.capacity()<<",\"display_rows\":"<<slots_.count()<<",\"server_slots\":"<<reply_.list.slots<<",\"purchase_required\":"<<(slots_.purchase_required()?"true":"false")<<",\"occupied_slot\":"<<(slots_.occupied()?"true":"false")<<",\"delete_dialogs\":"<<deleteDialogs_<<",\"delete_yes\":"<<deleteYes_<<",\"requests\":"<<requests_<<",\"selection_sent\":"<<(selectionReply_.request_may_have_been_sent?"true":"false")<<",\"deletion_sent\":false,\"model_rendered\":"<<(modelRendered_?"true":"false")<<"}"<<std::endl;}
 }

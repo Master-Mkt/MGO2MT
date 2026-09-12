@@ -10,6 +10,44 @@ from gwp import ROOT, record
 from package_title import DOCUMENTS
 
 SOURCE_FILES = (
+    'include/dedicated_peer.h',
+    'include/dedicated_service.h',
+    'include/host_briefing.h',
+    'include/host_options.h',
+    'include/host_placements.h',
+    'include/host_room.h',
+    'include/host_rules.h',
+    'include/stage_cbox.h',
+    'include/weapon_catalog.h',
+    'include/weapon_restrictions.h',
+    'include/weapon_selection.h',
+    'src/dedicated_peer.cpp',
+    'src/host_briefing.cpp',
+    'src/host_desktop_main.cpp',
+    'src/host_options.cpp',
+    'src/host_placements.cpp',
+    'src/host_room.cpp',
+    'src/host_rules.cpp',
+    'src/stage_cbox.cpp',
+    'src/weapon_catalog.cpp',
+    'src/weapon_restrictions.cpp',
+    'src/weapon_screen.cpp',
+    'src/weapon_selection.cpp',
+    'tests/dedicated_peer_test.cpp',
+    'tests/host_briefing_test.cpp',
+    'tests/host_placements_test.cpp',
+    'tests/host_room_test.cpp',
+    'tests/host_rules_test.cpp',
+    'tests/stage_cbox_test.cpp',
+    'tests/weapon_catalog_test.cpp',
+    'tests/weapon_restrictions_test.cpp',
+    'tests/weapon_selection_test.cpp',
+    'tests/weapon_fixture.h',
+    'include/pcm_wave.h','include/stage_music.h','src/stage_music.cpp','include/stage_debug.h','tests/stage_music_test.cpp',
+    'include/stage_round.h','src/stage_round.cpp','tests/stage_round_test.cpp',
+    'include/stage_lighting.h','src/stage_lighting.cpp','tests/stage_lighting_test.cpp',
+    'include/stage_collision.h','src/stage_collision.cpp','tests/stage_collision_test.cpp',
+    'include/stage_assets.h','src/stage_assets.cpp','tests/stage_assets_test.cpp','tests/stage_render_test.cpp',
     'include/host_protocol.h','src/host_protocol.cpp','include/host_session.h','src/host_session.cpp',
     'include/host_match.h','src/host_match.cpp','tests/host_match_test.cpp',
     'include/host_roster.h','src/host_roster.cpp','tests/host_roster_test.cpp',
@@ -72,9 +110,9 @@ def export(output, root=ROOT):
     (output/'scenes').mkdir()
     (output/'scenes/README.md').write_text(
         '# Local assets / ローカル資産\n\n'
-        'Supply your own prepared `nttitle.gwp` and its 61 assets. They are not distributed here. '
+        'Supply your own prepared `nttitle.gwp` and its required runtime assets. They are not distributed here. '
         'You can also pass `--gwp` to the packager. See README.\n\n'
-        '準備済みのnttitle.gwpと61資産をローカルで指定してください。配布物には含みません。'
+        '準備済みのnttitle.gwpと必須実行資産をローカルで指定してください。配布物には含みません。'
         '出力ツールの--gwpでも指定できます。READMEを参照してください。\n', encoding='utf-8')
     (output/'.gitignore').write_text(
         '/build/\n/dist/\n/work/\n/outputs/\n/publication/\n/data/\n/tools/vendor/\n'

@@ -80,6 +80,15 @@ def load(path):
     if any(node['status'] not in ('implemented', 'partial', 'pending') for node in d['flow']):
         raise ValueError('invalid progress status')
     assets = d['assets']
+    prop_roles={'stage_placements20',*[f'stage_prop{i}' for i in range(6)]}
+    item_roles={'stage_item113','stage_item140'}
+    if set(assets)&item_roles and (not item_roles<=set(assets) or 'stage_preview20' not in assets):
+        raise ValueError('Complete stage item model bundle required')
+    if set(assets)&prop_roles and (not prop_roles<=set(assets) or 'stage_preview20' not in assets):
+        raise ValueError('Complete stage placement bundle required')
+    if 'stage_cbox20' in assets and 'stage_preview20' not in assets:
+        raise ValueError('Stage CBOX layout requires the stage preview')
+    asset_roles=set(assets)-prop_roles-item_roles-{'bgm_catalog','stage_cbox20'}
     required = {'scenario', 'animation', 'bgm23', *[f'texture{i}' for i in range(10)]}
     extra={'start18999','loading','loading_texture0','loading_texture1'}
     agreement_roles={'menu93','menu94'}
@@ -87,7 +96,8 @@ def load(path):
     motion_roles={'agreement_motion',*[f'motion_texture{i}' for i in range(8)]}
     original_roles={'agreement_background','lobby_bgm',*[f'agreement_texture{i}' for i in range(6)]}
     voice_roles={f'voice{g}_{v}' for g in range(2) for v in range(8)}
-    if set(assets) not in (required,required|extra,required|extra|agreement_roles,required|extra|agreement_roles|original_roles,required|extra|agreement_roles|original_roles|motion_roles,required|extra|agreement_roles|original_roles|motion_roles|login_roles,required|extra|agreement_roles|original_roles|motion_roles|login_roles|{'network_keys'},required|extra|agreement_roles|original_roles|motion_roles|login_roles|{'network_keys','character_model'},required|extra|agreement_roles|original_roles|motion_roles|login_roles|{'network_keys','character_catalog'},required|extra|agreement_roles|original_roles|motion_roles|login_roles|{'network_keys','character_catalog'}|voice_roles):
+    stage_roles={'stage_lighting20','stage_collision20',*[f'stage_env{i}' for i in (1,4,5,7,8)]}
+    if asset_roles not in (required,required|extra,required|extra|agreement_roles,required|extra|agreement_roles|original_roles,required|extra|agreement_roles|original_roles|motion_roles,required|extra|agreement_roles|original_roles|motion_roles|login_roles,required|extra|agreement_roles|original_roles|motion_roles|login_roles|{'network_keys'},required|extra|agreement_roles|original_roles|motion_roles|login_roles|{'network_keys','character_model'},required|extra|agreement_roles|original_roles|motion_roles|login_roles|{'network_keys','character_catalog'},required|extra|agreement_roles|original_roles|motion_roles|login_roles|{'network_keys','character_catalog'}|voice_roles,required|extra|agreement_roles|original_roles|motion_roles|login_roles|{'network_keys','character_catalog','stage_preview20'}|voice_roles,required|extra|agreement_roles|original_roles|motion_roles|login_roles|{'network_keys','character_catalog','stage_preview20'}|voice_roles|stage_roles):
         raise ValueError('missing or unknown GWP asset role')
     if 'menu93' in assets:
         network=d.get('network',{})

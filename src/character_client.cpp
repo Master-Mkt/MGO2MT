@@ -6,6 +6,9 @@
 #include "lobby_groups.h"
 #include "character_creation.h"
 #include "stun.h"
+#include "dedicated_service.h"
+#include "dedicated_peer.h"
+#include "host_briefing.h"
 #include <fstream>
 #include <algorithm>
 #include <stdexcept>
@@ -179,7 +182,7 @@ void run_game_lobby(const std::filesystem::path&path,const AuthReply&auth,uint32
      }
      auto reply=exchange_room_action(*action,[&](uint16_t command,std::span<const uint8_t> plain){game.reset_deadline(command==0x4322||command==0x4380);auto wire=room_action_wire_payload(keys,command,plain);Wipe wipe{wire};game.send_packet(command,wire);return game.read();},*requests.uncertain,requests.cancel_join,action->event==RoomEvent::join?HostConnect([&](const host::Admission& admission){
       if(admission.character==id)return host::Result{host::Stage::unavailable};
-      auto progress=[&](host::Result result){if(!host::active(result.stage))return;RoomReply r;r.event=RoomEvent::join;r.requested_room=action->id;r.status=result.stage==host::Stage::joined?RoomStatus::ready:RoomStatus::connecting;r.join_status=room_host_status(result.stage);r.host_roster=std::move(result.roster);r.host_match=std::move(result.match);publish(std::move(r));};
+      auto progress=[&](host::Result result){if(!host::active(result.stage))return;RoomReply r;r.event=RoomEvent::join;r.requested_room=action->id;r.status=result.stage==host::Stage::joined?RoomStatus::ready:RoomStatus::connecting;r.join_status=room_host_status(result.stage);r.host_roster=std::move(result.roster);r.host_match=std::move(result.match);r.host_placements=std::move(result.placements);publish(std::move(r));};
       return host::run(local,admission,profile,cancel,requests.cancel_join,progress,[&]{return game.alive();});
      }):HostConnect{});
      bool lost=reply.status==RoomStatus::protocol_error&&reply.join_status!=RoomJoinStatus::invalid_input;publish(std::move(reply));if(lost||*requests.uncertain)return;
@@ -189,6 +192,82 @@ void run_game_lobby(const std::filesystem::path&path,const AuthReply&auth,uint32
   }
  }catch(const Failure&f){if(!cancel)publish({f.status==CharacterStatus::server_error?RoomStatus::rejected:RoomStatus::network_error,{},f.code});}
  catch(...){if(!cancel)publish({RoomStatus::protocol_error,{},0});}
+}
+void run_dedicated_lobby(const std::filesystem::path&path,const AuthReply&auth,const CharacterEntry&character,const GameLobbyEntry&lobby,const host::Settings&settings,const std::atomic_bool&cancel,const DedicatedPublish&publish,uintptr_t udpSocket){
+ DedicatedReply progress;
+ try{
+  auto rows=load_lobby_membership(path.parent_path()/L"lobbies.cfg");
+  if(!character.id||udpSocket==~uintptr_t(0)||lobby.port<5733||lobby.port>5739||lobby.subtype!=1||std::none_of(rows.begin(),rows.end(),[&](const auto&r){return r.id==lobby.id&&r.port==lobby.port&&r.subtype==1;}))throw std::runtime_error("dedicated lobby identity");
+  host::settings_payload(settings); // Validate all settings before connecting.
+  auto keys=NetworkKeys::load(path);Wsa wsa;Connection game(keys,cancel);publish(progress);game.connect_to(lobby.port);
+  auto session=game_session_payload(keys,auth,character.id);struct Wipe{std::vector<uint8_t>&v;~Wipe(){SecureZeroMemory(v.data(),v.size());}}wipe{session};
+  game.send_packet(0x3003,session);SecureZeroMemory(session.data(),session.size());auto packet=game.read();if(packet.command!=0x3004)throw std::runtime_error("dedicated session reply");result(packet.payload);
+  progress.status=DedicatedStatus::mapping;publish(progress);auto stun=check_stun(udpSocket,cancel);
+  if(cancel){progress.status=DedicatedStatus::cancelled;publish(progress);return;}
+  if(stun.status!=StunStatus::success){progress.status=DedicatedStatus::network_error;progress.error=stun.error;publish(progress);return;}
+  sockaddr_in bound{};int size=sizeof(bound);if(getsockname(SOCKET(udpSocket),reinterpret_cast<sockaddr*>(&bound),&size))throw Failure{CharacterStatus::network_error,unsigned(WSAGetLastError())};
+  host::Endpoint privateEndpoint{game.local_address(),ntohs(bound.sin_port)},publicEndpoint{stun.address,stun.mapped_port};
+  progress.local_port=privateEndpoint.port;progress.public_port=publicEndpoint.port;
+  if(!host::valid_endpoint(privateEndpoint)||!host::valid_endpoint(publicEndpoint))throw std::runtime_error("dedicated mapping");
+  std::vector<uint8_t>connection(24);put(connection,0,privateEndpoint.port,2);char ip[16]{};IN_ADDR address{};std::copy(privateEndpoint.address.begin(),privateEndpoint.address.end(),reinterpret_cast<uint8_t*>(&address));if(!InetNtopA(AF_INET,&address,ip,sizeof(ip)))throw std::runtime_error("dedicated IP");std::copy_n(reinterpret_cast<const uint8_t*>(ip),strlen(ip),connection.begin()+2);put(connection,18,publicEndpoint.port,2);network_block(connection,keys.packet,true);game.reset_deadline();game.send_packet(0x4700,connection);packet=game.read();if(packet.command!=0x4701)throw std::runtime_error("dedicated endpoint reply");result(packet.payload);
+  host::Lifecycle room;
+  auto exchange=[&](uint16_t command,std::span<const uint8_t>plain){game.reset_deadline(command==0x4380);auto wire=host::host_room_wire_payload(keys,command,plain);Wipe wipe{wire};game.send_packet(command,wire);return game.read();};
+  auto close=[&]{if(room.room_may_exist()){auto reply=room.close(exchange);progress.room_may_exist=room.room_may_exist();if(reply.status!=host::RoomControlStatus::success){progress.status=DedicatedStatus::outcome_unknown;progress.error=reply.error;}}};
+  try{
+   progress.status=DedicatedStatus::creating;publish(progress);auto made=room.create(settings,exchange,cancel);progress.room=made.room;progress.error=made.error;progress.room_may_exist=made.room_may_exist;
+   if(made.status!=host::RoomControlStatus::success){progress.status=made.status==host::RoomControlStatus::outcome_unknown?DedicatedStatus::outcome_unknown:made.status==host::RoomControlStatus::cancelled?DedicatedStatus::cancelled:DedicatedStatus::rejected;close();publish(progress);return;}
+   uint32_t seed=0;if(BCryptGenRandom(nullptr,reinterpret_cast<PUCHAR>(&seed),4,BCRYPT_USE_SYSTEM_PREFERRED_RNG)<0)throw std::runtime_error("dedicated RNG");
+   host::Hello hello{character.id,seed,2,1,{publicEndpoint,privateEndpoint}};
+   auto text=[](std::wstring_view s){int n=WideCharToMultiByte(CP_UTF8,WC_ERR_INVALID_CHARS,s.data(),int(s.size()),nullptr,0,nullptr,nullptr);if(n<=0||n>23)throw std::runtime_error("dedicated PC name");std::string out(n,0);WideCharToMultiByte(CP_UTF8,WC_ERR_INVALID_CHARS,s.data(),int(s.size()),out.data(),n,nullptr,nullptr);return out;};
+   host::Player own{0,0x100,character.id,text(character.name),{}};
+   host::RoundRules briefing({uint64_t(settings.briefing_minutes)*60000,1,settings.rotations.front().flags==2});
+   briefing.join({own.slot,own.instance,own.character},host::ParticipantRole::dedicated_host,GetTickCount64());
+   struct Peer {sockaddr_in address;host::DedicatedPeer wire;std::optional<host::Player> player;uint32_t clan=0;bool synced=false;uint64_t syncTicket=0;bool snapshotReceived=false;};
+   std::map<uint32_t,Peer>peers;uint16_t instance=0x101;uint64_t lastNew=0,heartbeat=GetTickCount64()+5000;
+   u_long nonblocking=1;if(ioctlsocket(SOCKET(udpSocket),FIONBIO,&nonblocking))throw Failure{CharacterStatus::network_error,unsigned(WSAGetLastError())};
+   auto send=[&](Peer&p,std::span<const uint8_t>b){int n=sendto(SOCKET(udpSocket),reinterpret_cast<const char*>(b.data()),int(b.size()),0,reinterpret_cast<const sockaddr*>(&p.address),sizeof(p.address));if(n==SOCKET_ERROR&&WSAGetLastError()!=WSAEWOULDBLOCK)throw Failure{CharacterStatus::network_error,unsigned(WSAGetLastError())};};
+   auto notify=[&]{progress.players.clear();progress.synchronized_players=0;for(auto&[id,p]:peers)if(p.player){progress.players.push_back(*p.player);if(p.snapshotReceived)++progress.synchronized_players;}progress.phase=briefing.phase();progress.briefing_remaining_ms.reset();if(auto deadline=briefing.deadline()){auto now=GetTickCount64();progress.briefing_remaining_ms=*deadline>now?*deadline-now:0;}publish(progress);};
+   uint64_t nextBriefingPublish=0;
+   progress.status=DedicatedStatus::hosting;notify();
+   while(!cancel){
+    auto now=GetTickCount64();if(!game.alive())throw Failure{CharacterStatus::network_error,WSAECONNRESET};
+    if(now>=heartbeat){auto r=room.heartbeat(exchange);if(r.status!=host::RoomControlStatus::success)throw std::runtime_error("dedicated lease reply");heartbeat=GetTickCount64()+5000;}
+    std::array<uint8_t,2049>bytes{};sockaddr_in from{};int len=sizeof(from);int n=recvfrom(SOCKET(udpSocket),reinterpret_cast<char*>(bytes.data()),int(bytes.size()),0,reinterpret_cast<sockaddr*>(&from),&len);
+    if(n>0&&from.sin_family==AF_INET){auto raw=std::span(bytes).first(size_t(n));auto peer=std::find_if(peers.begin(),peers.end(),[&](auto&p){return p.second.address.sin_addr.s_addr==from.sin_addr.s_addr&&p.second.address.sin_port==from.sin_port;});
+     if(peer==peers.end()&&peers.size()<size_t(settings.capacity-1)&&now-lastNew>=250){
+      try{auto p=host::decode(raw);if(p.messages.size()!=1)throw host::Invalid(host::Error::message);auto&m=p.messages[0];if(m.channel||!m.reliable||m.ack||m.serial||m.payload.size()<16)throw host::Invalid(host::Error::message);uint32_t id=uint32_t(m.payload[0])|(uint32_t(m.payload[1])<<8)|(uint32_t(m.payload[2])<<16)|(uint32_t(m.payload[3])<<24);auto remote=host::decode_hello(m.payload,id);if(id==character.id||peers.contains(id))throw host::Invalid(host::Error::identity);lastNew=now;peer=peers.emplace(id,Peer{from,host::DedicatedPeer(hello,remote,now)}).first;}catch(const host::Invalid&){}
+     }
+     if(peer!=peers.end())peer->second.wire.receive(raw,now);
+    }else if(n==SOCKET_ERROR){auto error=WSAGetLastError();if(error!=WSAEWOULDBLOCK&&error!=WSAEMSGSIZE&&error!=WSAECONNRESET)throw Failure{CharacterStatus::network_error,unsigned(error)};}
+    for(auto it=peers.begin();it!=peers.end();){auto&peer=it->second;bool remove=peer.wire.closed();
+     for(auto&event:peer.wire.events()){
+      if(event[0]==1){remove=true;break;}
+      if(event[0]==2&&!peer.player){auto names=host::profile_names(event);auto admitted=room.player_connected(it->first,exchange);if(admitted.status!=host::RoomControlStatus::success){if(admitted.status!=host::RoomControlStatus::rejected)throw std::runtime_error("uncertain dedicated admission");remove=true;break;}
+       uint8_t slot=1;while(slot<17&&std::any_of(peers.begin(),peers.end(),[&](const auto&p){return p.second.player&&p.second.player->slot==slot;}))++slot;
+       peer.player=host::Player{slot,instance++,it->first,names.name,names.clan};peer.clan=names.clanId;
+       if(!briefing.join({slot,peer.player->instance,it->first},host::ParticipantRole::player,now))throw std::runtime_error("dedicated briefing identity");
+       peer.wire.queue(host::roster_record(own,hello),now);
+       for(auto&[id,p]:peers)if(p.player)peer.wire.queue(host::roster_record(*p.player,p.wire.hello(),p.clan),now);
+       peer.wire.queue({7,0,0,0,0,0,3},now);
+       for(auto&[id,p]:peers)if(id!=it->first&&p.player)p.wire.queue(host::roster_record(*peer.player,peer.wire.hello(),peer.clan),now);
+       notify();
+      }else if(event[0]==10&&event.size()==1&&peer.player&&!peer.synced){peer.wire.queue(host::room_snapshot(settings.rotations,1),now);peer.syncTicket=peer.wire.queue(host::phase_update(briefing.preparation_started()?2:0),now);peer.synced=true;}
+     }
+     if(!peer.snapshotReceived&&peer.wire.delivery_complete(peer.syncTicket)){peer.snapshotReceived=true;briefing.set_prepared({peer.player->slot,peer.player->instance,peer.player->character},briefing.generation(),true);notify();}
+     for(auto&b:peer.wire.poll(GetTickCount64()))send(peer,b);
+     remove|=peer.wire.closed();if(remove){if(peer.player){auto r=room.player_disconnected(it->first,exchange);if(r.status!=host::RoomControlStatus::success)throw std::runtime_error("dedicated removal reply");briefing.leave({peer.player->slot,peer.player->instance,peer.player->character});for(auto&[id,p]:peers)if(id!=it->first&&p.player)p.wire.queue(host::roster_remove(peer.player->instance),GetTickCount64());}it=peers.erase(it);notify();}else ++it;
+    }
+    // Native briefing prerequisites are room metadata delivery only. Advancing
+    // to rule preparation never acknowledges actor snapshots or starts combat.
+    if(briefing.advance(now)!=host::StartReason::none){for(auto&[id,p]:peers)if(p.player&&p.synced)p.wire.queue(host::phase_update(2),now);notify();}
+    if(briefing.deadline()&&now>=nextBriefingPublish){nextBriefingPublish=now+1000;notify();}
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+   }
+   for(auto&[id,peer]:peers)if(peer.player){peer.wire.queue(host::roster_remove(own.instance),GetTickCount64());for(auto&b:peer.wire.poll(GetTickCount64()))send(peer,b);}
+   progress.status=DedicatedStatus::closed;close();publish(progress);
+  }catch(...){close();throw;}
+ }catch(const Failure&f){progress.status=progress.room_may_exist?DedicatedStatus::outcome_unknown:cancel?DedicatedStatus::cancelled:DedicatedStatus::network_error;progress.error=f.code;publish(progress);}
+ catch(...){progress.status=progress.room_may_exist?DedicatedStatus::outcome_unknown:DedicatedStatus::protocol_error;publish(progress);}
 }
 CharacterCreateRequest character_create_request(std::wstring name,const std::array<uint8_t,28>&a,int pitch){
  if(a[0]>1||a[7]>7||pitch< -7||pitch>7||!CharacterCreation::name_error(name).empty())throw std::invalid_argument("Invalid creation draft");

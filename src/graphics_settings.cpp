@@ -44,17 +44,19 @@ bool GraphicsSettings::message(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
  if(msg==WM_KEYDOWN){if(wp==VK_ESCAPE){draft=active;back_=true;}else if(wp==VK_TAB||wp==VK_UP||wp==VK_DOWN){bool prev=wp==VK_UP||(wp==VK_TAB&&(GetKeyState(VK_SHIFT)&0x8000));focus_=(focus_+(prev?7:1))%8;cues_.push_back(94);}else if(wp==VK_LEFT||wp==VK_RIGHT)change(wp==VK_LEFT?-1:1);else if((wp==VK_RETURN||wp==VK_SPACE)&&!(lp&(1LL<<30)))activate();return true;}
  if(msg==WM_LBUTTONUP){RECT r{};GetClientRect(hwnd,&r);if(!r.right||!r.bottom)return true;int x=int(short(LOWORD(lp)))*1280/r.right,y=int(short(HIWORD(lp)))*720/r.bottom;if(x>=500&&x<1160&&y>=221&&y<491){focus_=(y-221)/54;change(x<570?-1:1);}else if(y>=599&&y<644){if(x>=120&&x<440)focus_=5;else if(x>=470&&x<800)focus_=6;else if(x>=830&&x<1160)focus_=7;else return true;activate();}SetFocus(hwnd);return true;}return false;
 }
-void GraphicsSettings::draw(HDC dc,const std::vector<HFONT>& fonts){
+POINT GraphicsSettings::draw(HDC dc,const std::vector<HFONT>& fonts){
  auto fill=[&](int x,int y,int w,int h,COLORREF c){menu_fill(dc,x,y,w,h,c);};
  auto text=[&](std::wstring s,int x,int y,int w,int h,int font,COLORREF c){RECT r{x,y,x+w,y+h};SelectObject(dc,fonts[font]);SetTextColor(dc,menu_text_color(c));SetBkMode(dc,TRANSPARENT);DrawTextW(dc,s.c_str(),int(s.size()),&r,DT_LEFT|DT_NOPREFIX|DT_WORDBREAK);};
  std::wstring hz=L"自動（モニター推奨）";if(!draft.fullscreen)hz=L"Windowsの設定に従う";else if(draft.refresh_num){wchar_t b[50];swprintf_s(b,L"%.3f Hz",double(draft.refresh_num)/draft.refresh_den);hz=b;}
  const wchar_t* labels[]={L"表示モード",L"解像度",L"リフレッシュレート",L"影のバッファサイズ",L"垂直同期 (VSync)"};std::wstring values[]={draft.fullscreen?L"フルスクリーン":L"ウィンドウ",std::to_wstring(draft.width)+L" × "+std::to_wstring(draft.height),hz,std::to_wstring(draft.shadow)+L" × "+std::to_wstring(draft.shadow),draft.vsync?L"ON":L"OFF"};
- for(int i=0;i<5;++i){int y=221+i*54;text(labels[i],125,y+12,365,32,1,RGB(224,232,212));fill(500,y,660,43,focus_==i?RGB(70,93,59):RGB(23,33,27));text(L"◀  "+values[i]+L"  ▶",516,y+10,630,32,1,RGB(232,237,218));}
+ for(int i=0;i<5;++i){int y=221+i*54;menu_row(dc,120,y,1040,50,i,!pending()&&focus_==i);text(labels[i],125,y+12,365,32,1,RGB(224,232,212));text(L"◀  "+values[i]+L"  ▶",516,y+10,630,32,1,RGB(232,237,218));}
  text(L"影：設定値の保存に対応。3Dの影描画は今後の実装で反映します。",120,502,1040,30,3,RGB(186,204,169));
  std::wstring message=notice;if(pending())message+=L"  残り "+std::to_wstring((until_>GetTickCount64()?(until_-GetTickCount64()+999)/1000:0))+L" 秒";
  text(message,120,545,1040,49,2,RGB(244,218,161));
  auto button=[&](int x,int w,int i,std::wstring label){fill(x,599,w,44,focus_==i?RGB(151,168,126):RGB(37,53,42));text(label,x+15,610,w-30,32,1,focus_==i?RGB(18,28,19):RGB(232,237,218));};
  if(pending()){button(120,480,5,L"この設定を保存 [Enter]");button(660,500,7,L"元に戻す [Esc]");}else{button(120,320,5,L"適用");button(470,330,6,L"初期値に戻す");button(830,330,7,L"ネットワークへ戻る");}
  text(L"F1/F2/F3：タブ   ↑ ↓ / Tab：項目   ← →：変更   Enter：決定",83,690,1120,25,3,RGB(174,185,165));
+ if(pending())return {120,599};
+ return focus_<5?POINT{120,221+focus_*54}:POINT{focus_==5?120:focus_==6?470:830,599};
 }
 }

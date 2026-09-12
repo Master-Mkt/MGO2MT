@@ -9,7 +9,7 @@ CharacterModel::CharacterModel(std::span<const char> b){
  size_t at=4;auto word=[&](){require(at+4<=b.size());uint32_t v=0;for(unsigned i=0;i<4;++i)v|=uint32_t(uint8_t(b[at++]))<<(8*i);return v;};
  auto number=[&](){uint32_t u=word();float v;std::memcpy(&v,&u,4);require(std::isfinite(v)&&std::abs(v)<=1000000);return v;};
  require(word()==1);auto nv=word(),ni=word(),np=word(),nt=word();
- require(nv&&nv<=1000000&&ni&&ni<=3000000&&ni%3==0&&np&&np<=4096&&nt&&nt<=256);
+ require(nv&&nv<=1000000&&ni&&ni<=3000000&&ni%3==0&&np&&np<=4096&&nt&&nt<=1024);
  require(uint64_t(nv)*32+uint64_t(ni)*4+uint64_t(np)*16+uint64_t(nt)*16<=b.size()-48);
  for(auto& x:bounds)x=number();for(int i=0;i<3;++i)require(bounds[i]<=bounds[i+3]);
  require(bounds[4]-bounds[1]>.001f);

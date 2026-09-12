@@ -113,9 +113,9 @@ void CharacterCreation::draw(HDC dc,std::span<const HFONT>fonts)const{
  menu_heading(dc,fonts[0],L"PC EDIT");menu_character_frame(dc,fonts[3]);
  text(L"PCを新規登録",120,153,600,43,0,light);text(L"OpenMGO2",850,82,310,30,1,muted,DT_RIGHT);
  const wchar_t*tabs[]={L"基本設定 [F1]",L"服装 [F2]",L"装備 [F3]"};
- for(unsigned i=0;i<3;++i){fill(120+i*190,205,185,37,tab_==i?selected:RGB(40,55,43));text(tabs[i],120+i*190,213,185,29,2,light,DT_CENTER);}
+ for(unsigned i=0;i<3;++i){menu_tab(dc,120+i*190,205,185,37,tab_==i);text(tabs[i],120+i*190,213,185,29,2,light,DT_CENTER);}
  menu_section(dc,fonts[3],tab_==0?L"CHARACTER":tab_==1?L"CLOTHING":L"EQUIPMENT",120,244,570);
- for(unsigned r=0;r<rows[tab_];++r){int y=270+r*37;bool active=r==row_;fill(120,y,570,34,active?selected:RGB(31,44,34));
+ for(unsigned r=0;r<rows[tab_];++r){int y=270+r*37;bool active=r==row_;menu_row(dc,120,y,570,34,r,active);
   if(tab_==0){const wchar_t*names[]={L"キャラクター名",L"性別",L"顔",L"音声",L"ピッチ",L"音声を試聴 [F4]"};text(names[r],132,y+9,200,27,2,light);
    auto value=r==0?(name_.empty()?L"名前を入力":name_):r==1?(appearance_[0]?L"女性":L"男性"):r==2?type_label(0,appearance_[1]):r==3?L"タイプ "+std::to_wstring(appearance_[7]+1):r==4?L"◀  "+std::wstring(pitch_>0?L"+":L"")+std::to_wstring(pitch_)+L"  ▶":L"再生";
    text(value,346,y+8,330,30,2,r==0&&name_.empty()?muted:light,DT_CENTER);
@@ -140,6 +140,10 @@ void CharacterCreation::draw(HDC dc,std::span<const HFONT>fonts)const{
  }
  if(discard_){fill(300,275,680,220,RGB(21,33,25));menu_section(dc,fonts[3],L"CONFIRM",302,277,676);text(L"作成内容を破棄して戻りますか？",320,305,640,45,1,light,DT_CENTER);
   for(int i=0;i<2;++i){int x=i?670:390;fill(x,409,220,54,yes_==!i?RGB(151,168,126):RGB(50,66,52));text(i?L"NO":L"YES",x,423,220,34,1,yes_==!i?RGB(18,28,19):light,DT_CENTER);}}
+ if(discard_)menu_focus_guides(dc,yes_?390:670,409);
+ else if(confirm_){if(!registrationBusy_)menu_focus_guides(dc,registrationEnabled_?(yes_?320:690):430,590);}
+ else if(row_<rows[tab_])menu_focus_guides(dc,120,270+int(row_)*37);
+ else menu_focus_guides(dc,row_==rows[tab_]?120:510,617);
 }
 void CharacterCreation::report()const{std::osyncstream(std::cout)<<"{\"character_creation\":true,\"tab\":"<<tab_<<",\"gender\":"<<unsigned(appearance_[0])<<",\"voice\":"<<unsigned(appearance_[7])<<",\"pitch\":"<<pitch_<<",\"auditions\":"<<auditions_<<",\"changes\":"<<changes_<<",\"confirmations\":"<<confirmations_<<",\"name_valid\":"<<(name_error(name_).empty()?"true":"false")<<",\"registration_requested\":"<<(registrationRequested_?"true":"false")<<"}"<<std::endl;}
 }

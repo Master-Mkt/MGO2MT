@@ -91,13 +91,18 @@ static fs::path executable_folder() {
     return fs::path(std::wstring(buffer.data(), size)).parent_path();
 }
 
-static void verify_assets(const fs::path& root) {
+static size_t verify_assets(const fs::path& root) {
     std::set<std::string> required{"lobbies.cfg","character/appearance.gwc","network.gnk","login/frame.m2pv","motion/animated.m2an","agreement/frame.m2pv","audio/lobby.gwa","audio/93.gwa","audio/94.gwa","launch.cfg", "title.gwp", "audio/title.gwa", "title/animated.m2an", "audio/start.gwa", "loading/loading.m2an", "loading/images/0.dds", "loading/images/1.dds"};
     for(int i=0;i<6;++i)required.insert("login/images/"+std::to_string(i)+".dds");
     for(int g=0;g<2;++g)for(int v=0;v<8;++v)required.insert("voice/"+std::to_string(g)+"_"+std::to_string(v)+".gwa");
     for(int i=0;i<8;++i)required.insert("motion/images/"+std::to_string(i)+".dds");
     for(int i=0;i<6;++i)required.insert("agreement/images/"+std::to_string(i)+".dds");
     for (int i=0; i<10; ++i) required.insert("title/images/"+std::to_string(i)+".dds");
+    if(fs::exists(root/L"stage/n022a.gwm"))required.insert("stage/n022a.gwm");
+    for(auto name:{"weapon_catalog.tsv","stage/n022a.cbox.cfg"})if(fs::exists(root/name))required.insert(name);
+    for(auto name:{"stage/items/113.gwm","stage/items/140.gwm"})if(fs::exists(root/name))required.insert(name);
+    for(auto name:{"bgm/catalog.json","stage/n022a.placements.cfg","stage/props/0.gwm","stage/props/1.gwm","stage/props/2.gwm","stage/props/3.gwm","stage/props/4.gwm","stage/props/5.gwm"})if(fs::exists(root/name))required.insert(name);
+    for(auto name:{"stage/n022a.lighting.cfg","stage/n022a.collision.cfg","stage/audio/env_s01a30l_01.gwa","stage/audio/env_s01a30l_04.gwa","stage/audio/env_s01a30l_05.gwa","stage/audio/env_s01a30l_07.gwa","stage/audio/env_s01a30l_08.gwa"})if(fs::exists(root/name))required.insert(name);
     const auto expectedCount=required.size();
     std::ifstream manifest(root / L"assets.sha256");
     if (!manifest) throw std::runtime_error("Missing data/assets.sha256. Keep the data folder beside MGO2WIN.exe.");
@@ -113,6 +118,7 @@ static void verify_assets(const fs::path& root) {
         if (digest(root/fs::path(name)) != hash) throw std::runtime_error("Asset hash mismatch: "+name);
     }
     if (!manifest.eof() || !required.empty()) throw std::runtime_error("Incomplete asset manifest");
+    return expectedCount;
 }
 
 int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR command, int) {
@@ -136,7 +142,7 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR command, int) {
     try {
         if (!mode.empty() && !smoke && !checkOnly && !probeAuth && !probeAccount && !probeStun && !safeGraphics && !probeGate) throw std::runtime_error("Supported options: --check, --smoke-test, --smoke-no, --smoke-login, --smoke-ports, --smoke-stun, --probe-auth, --probe-account, --probe-stun");
         const auto root = executable_folder(), data = root/L"data";
-        verify_assets(data);
+        const auto verifiedFiles=verify_assets(data);
         std::ifstream config(data/L"launch.cfg");
         std::string tag, extra, policy; unsigned version=0, entry=0, sound=2; double seconds=0;
         if (!(config >> tag >> version >> seconds >> entry >> sound >> policy) || config >> extra ||
@@ -157,7 +163,7 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR command, int) {
         log.open(run/L"run.log");
         if (!log) throw std::runtime_error("Cannot create the title log");
         std::cout.rdbuf(log.rdbuf()); std::cerr.rdbuf(log.rdbuf());
-        std::cout << "{\"desktop_package\":true,\"verified_files\":63,\"smoke_test\":" << (smoke?"true":"false") << "}" << std::endl;
+        std::cout << "{\"desktop_package\":true,\"verified_files\":" << verifiedFiles << ",\"smoke_test\":" << (smoke?"true":"false") << "}" << std::endl;
         if(probeAccount){result=inspect_account(data/L"network.gnk");std::cout.rdbuf(oldOut);std::cerr.rdbuf(oldError);return result;}
         if(probeGate){std::atomic_bool cancel{false};auto r=mgo2win::probe_character_gate(data/L"network.gnk",cancel);result=r.status==mgo2win::CharacterStatus::success?0:1;std::cout<<"{\"gate_probe\":true,\"status\":"<<int(r.status)<<",\"stage\":"<<int(r.stage)<<",\"error\":"<<r.error<<",\"account_port\":"<<r.account_port<<"}"<<std::endl;std::cout.rdbuf(oldOut);std::cerr.rdbuf(oldError);return result;}
         if(probeAuth){

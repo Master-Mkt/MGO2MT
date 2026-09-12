@@ -31,7 +31,7 @@ public:
  bool confirm();
  void tick(ULONGLONG now,bool foreground);
  bool message(HWND,UINT,WPARAM,LPARAM);
- void draw(HDC,const std::vector<HFONT>&);
+ POINT draw(HDC,const std::vector<HFONT>&); // Active item origin for focus guides.
  bool back(){bool b=back_;back_=false;return b;}
  std::vector<unsigned> cues(){auto c=std::move(cues_);cues_.clear();return c;}
 };

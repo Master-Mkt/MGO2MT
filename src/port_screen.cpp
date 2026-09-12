@@ -132,12 +132,17 @@ const void* PortScreen::draw(){
  auto fill=[&](int x,int y,int w,int h,COLORREF c){menu_fill(dc_,x,y,w,h,c);};
  auto text=[&](std::wstring_view s,int x,int y,int w,int h,int font,COLORREF c,UINT flags=DT_LEFT){RECT r{x,y,x+w,y+h};SelectObject(dc_,fonts_[font]);SetTextColor(dc_,menu_text_color(c));SetBkMode(dc_,TRANSPARENT);DrawTextW(dc_,s.data(),int(s.size()),&r,flags|DT_NOPREFIX);};
  menu_heading(dc_,fonts_[0],L"OPTION");
- if(graphics_tab_){graphics_->draw(dc_,fonts_);for(auto c:graphics_->cues())if(cues_.size()<32)cues_.push_back(c);}
- else if(controls_tab_){controls_->draw(dc_,fonts_);for(auto c:controls_->cues())if(cues_.size()<32)cues_.push_back(c);}
+ POINT guide{120,219};
+ if(graphics_tab_){guide=graphics_->draw(dc_,fonts_);for(auto c:graphics_->cues())if(cues_.size()<32)cues_.push_back(c);}
+ else if(controls_tab_){guide=controls_->draw(dc_,fonts_);for(auto c:controls_->cues())if(cues_.size()<32)cues_.push_back(c);}
  else {
  text(L"OpenMGO2",850,82,310,30,1,RGB(215,227,200),DT_RIGHT);
+ menu_row(dc_,120,219,1040,50,0,focus_==0);
+ menu_row(dc_,120,282,1040,50,1,focus_==1);
+ menu_row(dc_,120,341,1040,42,2,focus_==6);
+ for(int i=0;i<3;++i)menu_band(dc_,120,392+i*31,1040,31,i+3);
  text(L"ポートの選択",125,232,280,34,1,RGB(224,232,212));
- if(focus_==0)fill(410,219,720,45,RGB(56,76,49));
+
  text(settings_.automatic?L"● 自動（使用中なら空き番号を選択）":L"● 手動（指定した番号を使用）",422,232,700,32,1,RGB(229,238,214));
  text(L"UDPポート番号",125,296,280,34,1,RGB(224,232,212));
  fill(410,282,290,50,focus_==1?RGB(161,180,133):RGB(89,105,83));fill(412,284,286,46,selected_?RGB(66,91,55):RGB(23,33,27));
@@ -167,11 +172,18 @@ const void* PortScreen::draw(){
  text(L"Tab / ↑ ↓：項目移動    ← →：選択方式    Enter：決定    Esc：戻る",83,690,1120,25,3,RGB(174,185,165));
  if(speed_open_){
   fill(408,381,294,244,RGB(161,180,133));fill(410,383,290,240,RGB(23,33,27));
-  for(int i=0;i<8;++i){bool active=i==speed_choice_;if(active)fill(411,383+i*30,288,30,RGB(151,168,126));
+  for(int i=0;i<8;++i){bool active=i==speed_choice_;menu_row(dc_,411,383+i*30,288,30,i,active);
    text(std::to_wstring((i+1)*256)+L" kbps",426,387+i*30,260,26,2,active?RGB(18,28,19):RGB(228,234,215));}
  }
+ if(speed_open_)guide={411,383+speed_choice_*30};
+ else if(focus_==0)guide={120,219};
+ else if(focus_==1)guide={120,282};
+ else if(focus_==6)guide={120,341};
+ else if(focus_==7)guide={825,625};
+ else guide={120+(focus_-2)*270,558};
  }
- for(int i=0;i<3;++i){bool selected=i==2?graphics_tab_:i==1?controls_tab_:!graphics_tab_&&!controls_tab_;int x=120+i*355,w=330;fill(x,153,w,44,selected?RGB(91,113,73):RGB(34,47,38));const wchar_t* labels[]={L"ネットワーク [F1]",L"コントローラー [F2]",L"画質 [F3]"};text(labels[i],x+12,162,w-24,34,1,RGB(233,239,222));}
+ for(int i=0;i<3;++i){bool selected=i==2?graphics_tab_:i==1?controls_tab_:!graphics_tab_&&!controls_tab_;int x=120+i*355,w=330;menu_tab(dc_,x,153,w,44,selected);const wchar_t* labels[]={L"ネットワーク [F1]",L"コントローラー [F2]",L"画質 [F3]"};text(labels[i],x+12,162,w-24,34,1,RGB(233,239,222));}
+ menu_focus_guides(dc_,guide.x,guide.y);
  finish_menu_surface(pixels_);return pixels_;
 }
 void PortScreen::report()const{controls_->report();std::osyncstream(std::cout)<<"{\"port_settings_report\":true,\"checks\":"<<checks_<<",\"saved\":"<<(saved_?"true":"false")<<",\"restored\":"<<(restored_?"true":"false")<<",\"returned\":"<<(back_?"true":"false")<<",\"bandwidth_kbps\":"<<settings_.bandwidth_kbps<<",\"external_reachability_tested\":false}"<<std::endl;}

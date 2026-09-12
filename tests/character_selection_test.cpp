@@ -64,10 +64,10 @@ int main(){try{
   ui.selection([&](uint32_t id,const std::atomic_bool& c){++calls;while(!release&&!c)Sleep(1);CharacterSelectionReply r;r.status=uiMode==2?CharacterSelectionStatus::outcome_unknown:uiMode==3?CharacterSelectionStatus::rejected:CharacterSelectionStatus::success;r.request_may_have_been_sent=true;r.character={uiMode==1?92u:id,L"Test"};for(unsigned i=0;i<11;++i)r.lobbies.push_back({uint16_t(i+1),5740,17,L"Preview",0,2});return r;},state);
   ui.message(nullptr,WM_KEYDOWN,VK_RETURN,0);for(int i=0;i<8;++i)ui.message(nullptr,WM_KEYDOWN,VK_RETURN,1LL<<30);check(ui.busy()&&!ui.preview_visible(),"pending selection hides model");release=true;settle(ui);check(calls==1,"rapid confirmation selects once");
   if(!uiMode){check(ui.lobby_visible()&&ui.selected_character_id()==91&&!ui.preview_visible(),"confirmed selection opens directory");ui.message(nullptr,WM_KEYDOWN,VK_NEXT,0);ui.draw();ui.message(nullptr,WM_KEYDOWN,VK_RETURN,0);check(calls==1&&ui.focused_lobby_id()==7,"second page retains filtered ID; cannot connect yet");
-   ui.message(nullptr,WM_KEYDOWN,VK_RIGHT,0);check(ui.current_lobby_group()==1&&ui.focused_lobby_id()==0&&ui.lobby_visible(),"empty group remains visible");ui.draw();
-   ui.message(nullptr,WM_KEYDOWN,VK_LEFT,0);check(ui.focused_lobby_id()==1,"switching group resets row focus");
-   ui.message(nullptr,WM_KEYDOWN,VK_LEFT,0);check(ui.current_lobby_group()==5,"left wraps to registration");
-   ui.message(nullptr,WM_KEYDOWN,VK_RIGHT,0);check(ui.current_lobby_group()==0,"right wraps to automatching");ui.message(nullptr,WM_KEYDOWN,VK_ESCAPE,0);check(!ui.lobby_visible()&&ui.preview_character_id()==91,"back restores PC preview");}
+   ui.message(nullptr,WM_KEYDOWN,VK_LEFT,0);ui.message(nullptr,WM_KEYDOWN,VK_DOWN,0);check(ui.current_lobby_group()==1&&ui.focused_lobby_id()==0&&ui.lobby_visible(),"empty group remains visible");ui.draw();
+   ui.message(nullptr,WM_KEYDOWN,VK_UP,0);check(ui.focused_lobby_id()==1,"switching group resets row focus");
+   ui.message(nullptr,WM_KEYDOWN,VK_UP,0);check(ui.current_lobby_group()==5,"category up wraps to registration");
+   ui.message(nullptr,WM_KEYDOWN,VK_DOWN,0);check(ui.current_lobby_group()==0,"category down wraps to automatching");ui.message(nullptr,WM_KEYDOWN,VK_RIGHT,0);ui.message(nullptr,WM_KEYDOWN,VK_DOWN,0);check(ui.current_lobby_group()==0&&ui.focused_lobby_id()==2,"right column navigates lobbies without changing category");ui.message(nullptr,WM_KEYDOWN,VK_ESCAPE,0);check(!ui.lobby_visible()&&ui.preview_character_id()==91,"back restores PC preview");}
   else{check(!ui.lobby_visible()&&ui.preview_character_id()==91,"bad reply cannot transition");check(state->unresolved==(uiMode!=3),"reject versus uncertain");if(state->unresolved){ui.message(nullptr,WM_KEYDOWN,VK_RETURN,0);check(!ui.busy()&&calls==1,"uncertain selection cannot repeat");}}
  }
  auto state=std::make_shared<CharacterSelectionState>();{
@@ -75,8 +75,10 @@ int main(){try{
  }{CharacterScreen ui(transport);settle(ui);unsigned invoked=0;ui.selection([&](uint32_t,const std::atomic_bool&){++invoked;return CharacterSelectionReply{};},state);ui.message(nullptr,WM_KEYDOWN,VK_RETURN,0);check(!invoked&&!ui.busy(),"uncertainty survives screen recreation");}
  {CharacterScreen ui(transport);settle(ui);ui.selection([](uint32_t id,const std::atomic_bool&){CharacterSelectionReply r;r.status=CharacterSelectionStatus::success;r.character.id=id;r.request_may_have_been_sent=true;r.lobbies={{7,5737,0,L"Test",0,2}};return r;},std::make_shared<CharacterSelectionState>());
   unsigned starts=0;std::atomic_bool ended=false;
-  ui.rooms([&](uint32_t id,const GameLobbyEntry&l,const std::atomic_bool&c,std::atomic_bool&refresh,const RoomPublish&publish,RoomRequests& requests){++starts;check(id==91&&l.id==7,"selected PC and filtered lobby preserved");publish({RoomStatus::ready,{{77,L"Room",1,16}},0});while(!c){if(refresh.exchange(false))publish({RoomStatus::ready,{},0});Sleep(1);}ended=true;});
-  ui.message(nullptr,WM_KEYDOWN,VK_RETURN,0);settle(ui);ui.message(nullptr,WM_KEYDOWN,VK_RETURN,0);
+  ui.rooms([&](uint32_t id,const GameLobbyEntry&l,const std::atomic_bool&c,std::atomic_bool&refresh,const RoomPublish&publish,RoomRequests& requests){++starts;check(id==91&&l.id==7,"mouse arrow preserves selected PC and filtered lobby ID");publish({RoomStatus::ready,{{77,L"Room",1,16}},0});while(!c){if(refresh.exchange(false))publish({RoomStatus::ready,{},0});Sleep(1);}ended=true;});
+  ui.message(nullptr,WM_KEYDOWN,VK_RETURN,0);settle(ui);
+  auto window=CreateWindowW(L"STATIC",L"offline lobby click",WS_POPUP,0,0,1280,720,nullptr,nullptr,GetModuleHandleW(nullptr),nullptr);check(window!=nullptr,"offline click surface");
+  ui.message(window,WM_LBUTTONUP,0,MAKELPARAM(1125,235));DestroyWindow(window);
   auto waitFor=[&](auto predicate){auto until=GetTickCount64()+2000;while(!predicate()&&GetTickCount64()<until){ui.draw();Sleep(1);}check(predicate(),"room UI deadline");};
   waitFor([&]{return ui.room_status()==RoomStatus::ready;});check(ui.room_visible()&&ui.room_count()==1,"acknowledged game session opens room list");
   ui.message(nullptr,WM_KEYDOWN,VK_F5,0);waitFor([&]{return ui.room_count()==0;});check(starts==1,"refresh uses same live session");

@@ -57,6 +57,10 @@ STUN adapter / STUN接続: Newly written C++ using Windows Winsock2 and BCrypt. 
 
 ## Native character-list adapter / キャラクター一覧
 
+Stage restoration references / ステージ復旧の参照: the user-provided local HavenPX/HavenStudio StageEditor supplied secondary GCX, GEOM, MDN, TXN and LT3 structure references. The bounded native readers are independently written; selected lighting/audio behavior was checked against the user's original PPC binary. No HavenPX code or executable is bundled, and redistribution permission for that local reference has not been established. / ローカルStageEditorの構造を参照し、独立した読み込み処理を実装。元PPCで確認した範囲と推定を調査記録で区別しています。参照ツール自体は同梱せず、その再配布許諾を取得したとは扱いません。
+
+The five n022a environmental tracks are decoded using the vgmstream r2117 build credited above, retaining all four channels and original loop points in GWA. GCX cue bindings are preserved; the current scene preview exposes manual audition, while VLM/SDS-driven automatic region switching remains pending. / 環境音5種は上記vgmstreamで変換し、4チャンネルと元ループを保持。現在は試聴操作までで、領域による自動切替は未実装です。元音源、テクスチャ、ステージ形状、派生した照明・当たり判定データはローカル専用で、公開ソースには含めません。
+
 Player-slot controls and the three-second Backspace confirmation are newly written from the user's stated UI requirements. They are not claimed as an IDA-verified recreation. The slot controls introduce no additional third-party library. / スロット操作・3秒長押し確認はユーザー指定の仕様を元に新規実装し、元バイナリとの動作一致は主張しません。
 
 Interoperability reference: the user-authorized local NomadPX/OpenMGO2 candidate sources `packet/Packet.java`, `PacketDecoder.java`, `PacketEncoder.java`, `helper/Hub.java`, `helper/Users.java`, `util/Packets.java`, `util/Util.java`, `crypto/Crypto.java` and `crypto/Constants.java`, plus the PS3-compatible PHP login handler. This is a source-informed native adapter, not a claimed original-ELF decompilation or completed clean-room implementation. A newly written C++ expanded-table block transform is checked against unchanged Java reference classes using synthetic vectors. BCrypt supplies HMAC-MD5 and Winsock2 supplies TCP; no Java, Netty or reference class is bundled in the EXE.
@@ -78,3 +82,24 @@ The local Solideye SLOT/config readers informed the bounded SLOT section extract
 ローカルSolideyeをSLOT区画の形式参照、Noesis用MTCM/MTAR資料をモーションの形式参照として利用しました。参照ファイルのhashとELFの外見対応表、元資産・変換出力はphase19のローカル記録で追跡します。両ツールの版・再配布条件は未確認で、バイナリや元コードはEXEにリンクせず、変換器・GWC・元資産も公開用書き出しから除外します。材質は独自の近似処理で、元機との完全一致は主張しません。
 
 Character voice audition / キャラクター音声試聴: 16 short samples are converted locally from original on_slot_som/sof banks to the existing GWA1 format with the previously reviewed original SSW2 decoder. Original game audio is local-only and excluded from source exports. Native semitone playback is an implementation choice; no PS3 DSP or creation-screen phrase parity is claimed. / 元音声16件はローカル専用で公開対象外。新規形式・外部codecは追加していません。
+
+## Stage BGM conversion and lighting follow-up / ステージBGMと照明の追加対応
+
+vgmstream r2117 (COPYING retained above) decodes the local Konami MTA2 BGM once during private preparation. NumPy performs an independently chosen stereo downmix of each four-channel bank. The executable links only the Windows XAudio2 playback path; no decoder, NumPy or Python runtime is bundled. Standard PCM16 WAV and RIFF smpl metadata are used instead of a private music codec. Original music remains game-derived content; these source notices do not grant rights to it.
+
+元BGMはローカル準備時にvgmstream r2117で復号し、4chバンク単位の独自ステレオミックスをNumPyで作成しています。実行時はWindowsのXAudio2でPCM WAVを再生し、変換ツールは同梱しません。元のBGMセット番号とバンクの対応やPS3ミキサーの完全再現は未確認です。
+
+LT3 point-light activation/range checks were cross-checked against retail PPC at 0x125E90–0x125FAC. n022a's 31 point records have 0x200, whereas this original dynamic evaluation requires 0x100 and rejects 0x8000; the implementation preserves that distinction. Native Lambert diffuse and temporary-light lifetime are implementation choices, not claims of full original lighting parity. HavenStudio remains a local format reference, not a bundled runtime.
+
+Scene replication update / 配置共有更新 (2026-09-12): Item-box models and their common diffuse images are converted from the user's local game files. The stage n022a MDNs refer to texture keys recovered from n012a's ibox_item_small.txn/DLD. No reference-tool binaries or original archives are included. Retail PPC was used to verify channel 592, coordinate quantization, the separate destructible-object snapshot protocol, and light key/disable flags. Native scene composition remains partial; this local package is not a public release. / 原ゲーム由来の派生素材を含むローカル試験版です。破壊actor登録順・照明更新の未接続部分があり、全同期の完成版ではありません。
+
+
+## Dedicated hosting and restriction controls / 専用ホストと武器制限 (2026-09-12)
+
+The dedicated host, briefing tracker, common-settings serialization and restriction editor are newly written C++ components. Interoperability field positions, bit masks and category groupings were checked against the user-authorized local NomadPX/OpenMGO2 candidate, especially `HostGameEnvFactory.java`, `Hosts.java` and `HostGameEnvWire.java`, and original PPC where established. The reference sources and their compiled classes are not bundled. Existing licensing uncertainty for those local references remains unchanged; no clean-room or new license grant is claimed. Ordinary weapon eligibility/DP annotations are distinct from host restriction bits; recovered runtime tables and original weapon images are not part of this source update.
+
+専用ホスト、待機管理、共通設定の送信、武器制限画面は新規C++実装です。参照したローカルNomadPX/OpenMGO2候補と、確認できた範囲の元PPCで配置・ビット・分類を照合しました。元のJavaソースやクラスは同梱せず、参照物への新しい許諾やクリーンルーム実装を主張しません。装備資格・DP表示とホスト制限は別の情報として扱い、実行用の復旧武器表や元画像はこのソース更新に含めません。
+
+Folder-shaped tabs, alternating row shades, orange focus guides and the two-column lobby layout are native GDI implementations informed by user-provided screenshots. The screenshots themselves are not included. Source-only UI tests use independently specified synthetic values. Dedicated hosting adds no third-party runtime beyond the Windows libraries already listed.
+
+フォルダー形タブ・行の濃淡・オレンジのクロス・左右2列のロビーは、利用者の参考画像を元にGDIで描く独自実装です。参考画像自体は含めません。公開ソースの画面検証には独自の模擬値を使い、既出のWindowsライブラリ以外の実行環境は追加していません。

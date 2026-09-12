@@ -2,13 +2,14 @@
 #include "host_protocol.h"
 #include "host_roster.h"
 #include "host_match.h"
+#include "host_placements.h"
 #include <atomic>
 #include <functional>
 #include <map>
 #include <optional>
 namespace mgo2win::host {
 enum class Stage {connecting,profile,synchronizing,joined,cancelled,timeout,rejected,disconnected,network_error,protocol_error,unavailable};
-struct Result {Stage stage=Stage::unavailable;unsigned error=0;bool profile_sent=false,was_joined=false;Roster roster;MatchState match;};
+struct Result {Stage stage=Stage::unavailable;unsigned error=0;bool profile_sent=false,was_joined=false;Roster roster;MatchState match;Placements placements;};
 bool active(Stage);
 // The caller owns the checked UDP socket for the entire worker lifetime.
 struct Local {uintptr_t socket=~uintptr_t(0);Endpoint private_endpoint,public_endpoint;uint32_t character=0;};
@@ -23,6 +24,8 @@ class Machine {
  Stage stage_=Stage::connecting;unsigned error_=0;
  Roster roster_;
  MatchState match_;
+ PlacementReceiver placements_;std::map<uint8_t,Message> itemReordered_;
+ uint8_t itemSerial_=0;uint16_t generationPacket_=0;
  struct Pending {Message message;uint64_t next=0;unsigned tries=0;};
  std::map<uint8_t,Pending> pending_;std::map<uint8_t,Message> reordered_;
  std::vector<Message> acks_;uint64_t hello_next_=0;
@@ -34,7 +37,7 @@ public:
  void receive(std::span<const uint8_t>,uint64_t);
  std::vector<std::vector<uint8_t>> poll(uint64_t);
  void cancel();
- Result result()const{return {stage_,error_,profile_sent_,was_joined_,roster_,match_};}
+ Result result()const{return {stage_,error_,profile_sent_,was_joined_,roster_,match_,placements_.result()};}
  std::optional<std::vector<uint8_t>> leave_packet();
 };
 Result run(const Local&,const Admission&,std::span<const uint8_t> profile,const std::atomic_bool& stop,const std::atomic_bool& cancel,const std::function<void(Result)>& publish,const std::function<bool()>& lobbyAlive={});

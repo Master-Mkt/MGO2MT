@@ -9,12 +9,12 @@ class CharacterRenderer {
  Ptr<ID3D11Buffer> vertices_,indices_,constants_;Ptr<ID3D11VertexShader> vs_;Ptr<ID3D11PixelShader> ps_;Ptr<ID3D11InputLayout> layout_;
  Ptr<ID3D11SamplerState> sampler_;Ptr<ID3D11RasterizerState> raster_;Ptr<ID3D11DepthStencilState> depthState_;
  std::vector<Ptr<ID3D11ShaderResourceView>>textures_;std::vector<ModelPart>parts_;std::array<float,6>bounds_;
- size_t vertexCount_=0;
+ size_t vertexCount_=0;std::array<float,6> overviewBounds_{};bool hasOverviewBounds_=false;
 public:
  CharacterRenderer(ID3D11Device*,const CharacterModel&);
  void update_vertices(ID3D11DeviceContext*,std::span<const ModelVertex>);
  // Owns the offscreen pass state. Caller restores its complete 2D pass state.
- void render(ID3D11DeviceContext*,float yaw);
+ void render(ID3D11DeviceContext*,float yaw,bool overview=false);
  ID3D11ShaderResourceView* view()const{return view_.Get();}
 };
 }

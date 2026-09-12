@@ -29,6 +29,30 @@ inline void menu_cursor(HDC dc,int x,int y,int w,int h,bool emphasis=false){
  menu_rect(dc,x+1,y+h-2,w-2,1,RGB(125,88,47));
  RestoreDC(dc,saved);DeleteObject(region);
 }
+// Alternating translucent rows retain the original animated background.
+inline void menu_band(HDC dc,int x,int y,int w,int h,size_t row){
+ menu_rect(dc,x,y,w,h,row%2?RGB(66,70,65):RGB(35,43,43));
+}
+inline void menu_row(HDC dc,int x,int y,int w,int h,size_t row,bool selected){
+ if(selected)menu_cursor(dc,x,y,w,h,true);else menu_band(dc,x,y,w,h,row);
+}
+inline void menu_tab(HDC dc,int x,int y,int w,int h,bool selected){
+ if(w<36||h<20)return;int shoulder=x+w*2/3;
+ POINT shape[]={{x,y+h},{x,y+6},{x+7,y},{shoulder,y},{shoulder+8,y+8},{x+w-7,y+8},{x+w,y+15},{x+w,y+h}};
+ auto region=CreatePolygonRgn(shape,8,WINDING);auto saved=SaveDC(dc);ExtSelectClipRgn(dc,region,RGN_AND);
+ menu_rect(dc,x,y,w,h,selected?RGB(125,88,47):RGB(38,48,49));
+ if(selected)for(int i=0;i<16;++i){int top=y+2+(h-3)*i/16,bottom=y+2+(h-3)*(i+1)/16,shade=15-i;menu_rect(dc,x+2,top,w-4,bottom-top,RGB(154+3*shade,105+2*shade,53+shade));}
+ menu_rect(dc,x+7,y,shoulder-x-7,1,selected?RGB(219,170,107):RGB(108,124,125));
+ menu_rect(dc,x,y+h-1,w,1,selected?RGB(219,170,107):RGB(108,124,125));
+ RestoreDC(dc,saved);DeleteObject(region);
+}
+// The reference cross meets the selected item's leading/top edge, avoiding
+// its text. Call once, after panels and modal content, on the 1280x720 canvas.
+inline void menu_focus_guides(HDC dc,int x,int y){
+ if(x<0||x>=1280||y<0||y>=720)return;
+ constexpr COLORREF amber=RGB(203,126,49);
+ menu_rect(dc,0,y,1280,1,amber);menu_rect(dc,x,0,1,720,amber);
+}
 inline void menu_fill(HDC dc,int x,int y,int w,int h,COLORREF previous){
  auto g=GetGValue(previous);
  if(h>=24&&h<=64&&w>=60&&g>=70&&g<200){menu_cursor(dc,x,y,w,h,g>=130);return;}
@@ -66,6 +90,9 @@ inline void finish_menu_surface(void* pixels){
  GdiFlush();auto*p=static_cast<unsigned char*>(pixels);
  for(size_t i=0;i<1280*720*4;i+=4){auto c=RGB(p[i+2],p[i+1],p[i]);unsigned alpha=255;
   if(!c)alpha=0;
+  else if(c==RGB(35,43,43))alpha=82;
+  else if(c==RGB(66,70,65))alpha=106;
+  else if(c==RGB(203,126,49))alpha=100;
   else if(c==RGB(38,48,49))alpha=90;
   else if(c==RGB(48,59,61))alpha=230;
   else if(c==RGB(99,75,47))alpha=110;

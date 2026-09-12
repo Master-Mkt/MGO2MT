@@ -1,9 +1,11 @@
-﻿#pragma once
+#pragma once
+#include "stage_assets.h"
 #include <windows.h>
 #include "character_client.h"
 #include "lobby_groups.h"
 #include "character_slots.h"
 #include "character_creation.h"
+#include "weapon_selection.h"
 #include <memory>
 #include <thread>
 #include <optional>
@@ -27,10 +29,15 @@ class CharacterScreen {
  std::function<CharacterSelectionReply(uint32_t,const std::atomic_bool&)> selectTransport_;
  std::shared_ptr<CharacterSelectionState> selectionState_=std::make_shared<CharacterSelectionState>();
  CharacterSelectionReply selectionReply_;bool selecting_=false,lobbyVisible_=false;uint32_t selectionTarget_=0;size_t lobbyFocus_=0;std::wstring lobbyNotice_;
- unsigned lobbyGroup_=0;void set_lobby_group(unsigned);void report_lobby_group()const;
+ bool lobbyCategories_=false;unsigned lobbyGroup_=0;void set_lobby_group(unsigned);void report_lobby_group()const;
  RoomTransport roomTransport_;std::thread roomWorker_;std::atomic_bool roomCancel_{false},roomRefresh_{false};std::mutex roomMutex_;std::deque<RoomReply> roomInbox_;
- RoomRequests roomRequests_;bool detailVisible_=false,detailBusy_=false,matchVisible_=false;unsigned detailFocus_=1;RoomReply detailReply_;RoomAction detailAction_;std::wstring detailNotice_;
+ RoomRequests roomRequests_;bool detailVisible_=false,detailBusy_=false,matchVisible_=false;stage::Status stageStatus_=stage::Status::idle;unsigned detailFocus_=1;RoomReply detailReply_;RoomAction detailAction_;std::wstring detailNotice_;
  void open_room_detail();void request_room_join();bool detail_message(HWND,UINT,WPARAM,LPARAM);void draw_room_detail();void draw_room_match();
+ std::shared_ptr<const weapons::Catalog> weaponCatalog_;
+ std::unique_ptr<weapons::Selection> weaponSelection_;std::optional<host::LoadRequest> weaponRequest_;
+ bool weaponsVisible_=false;unsigned weaponCategory_=0;size_t weaponFocus_=0;
+ std::wstring weaponNotice_;void open_weapons();void update_weapons();
+ bool weapon_message(HWND,UINT,WPARAM,LPARAM);void draw_room_weapons();
  RoomReply roomReply_;GameLobbyEntry roomLobby_;bool roomVisible_=false;size_t roomFocus_=0;ULONGLONG roomRefreshAt_=0;std::wstring roomNotice_;
  void begin_rooms();void stop_rooms();void update_rooms();bool room_message(HWND,UINT,WPARAM,LPARAM);void draw_rooms();
  void begin_selection();bool lobby_message(HWND,UINT,WPARAM,LPARAM);void draw_lobbies();
@@ -53,7 +60,20 @@ public:
  void room_guard(std::shared_ptr<std::atomic_bool> state){roomRequests_.uncertain=std::move(state);}
  bool room_detail_visible()const{return detailVisible_;}bool room_detail_busy()const{return detailBusy_;}
  RoomJoinStatus room_join_status()const{return detailReply_.join_status;}
+ std::optional<host::LoadRequest> stage_load_request()const {return detailVisible_&&detailReply_.join_status==RoomJoinStatus::joined&&detailReply_.host_match?detailReply_.host_match->request:std::nullopt;}
+ std::optional<host::LoadRequest> stage_request()const {return matchVisible_?stage_load_request():std::nullopt;}
+ const std::optional<host::Placements>& stage_placements()const{return detailReply_.host_placements;}
+ void stage_feedback(stage::Status s){stageStatus_=s;}
+ std::wstring stageAudioNotice_;
+ std::wstring stageDebugNotice_;
+ bool stageResetConfirm_=false,stageResetYes_=false;
+ void stage_reset_feedback(bool open,bool yes){stageResetConfirm_=open;stageResetYes_=yes;}
+ void stage_debug_feedback(std::wstring s){stageDebugNotice_=std::move(s);}
+ void stage_audio_feedback(std::wstring s){stageAudioNotice_=std::move(s);}
  bool room_match_visible()const{return matchVisible_;}
+ void weapon_catalog(const std::filesystem::path&);
+ bool weapon_visible()const{return weaponsVisible_;}
+ const weapons::Selection* weapon_draft()const{return weaponSelection_.get();}
  const std::optional<host::MatchState>& room_host_match()const{return detailReply_.host_match;}
  const std::optional<host::Roster>& room_host_roster()const{return detailReply_.host_roster;}
  unsigned current_lobby_group()const{return lobbyGroup_;}

@@ -41,6 +41,13 @@ public:
  bool character_visible()const{return bool(characters_);}
  bool creation_visible()const{return characters_&&characters_->creation_visible();}
  std::optional<CharacterVoicePreview> take_audition(){return characters_?characters_->take_audition():std::nullopt;}
+ std::optional<host::LoadRequest> stage_request()const{return characters_?characters_->stage_request():std::nullopt;}
+ std::optional<host::LoadRequest> stage_load_request()const{return characters_?characters_->stage_load_request():std::nullopt;}
+ std::optional<host::Placements> stage_placements()const{return characters_?characters_->stage_placements():std::nullopt;}
+ void stage_feedback(stage::Status s){if(characters_)characters_->stage_feedback(s);}
+ void stage_audio_feedback(std::wstring s){if(characters_)characters_->stage_audio_feedback(std::move(s));}
+ void stage_reset_feedback(bool open,bool yes){if(characters_)characters_->stage_reset_feedback(open,yes);}
+ void stage_debug_feedback(std::wstring s){if(characters_)characters_->stage_debug_feedback(std::move(s));}
  bool model_preview_visible()const{return characters_&&characters_->preview_visible();}
  void character_catalog(const CharacterCatalog*c){catalog_=c;if(characters_)characters_->catalog(c);}
  uint32_t preview_character_id()const{return characters_?characters_->preview_character_id():0;}

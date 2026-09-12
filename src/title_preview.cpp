@@ -14,6 +14,10 @@
 #include "agreement_screen.h"
 #include "login_screen.h"
 #include "character_renderer.h"
+#include "stage_assets.h"
+#include "stage_music.h"
+#include "stage_debug.h"
+#include <future>
 #include "character_catalog.h"
 #include <stdexcept>
 #include <thread>
@@ -37,6 +41,9 @@ using mgo2win::Quad;
 static_assert(sizeof(Quad)==140);
 struct Window {
  static inline uint32_t pressed=0;
+ static inline bool stageAudition=false;
+ static inline mgo2win::stage::DebugControls debug;
+ static inline std::optional<mgo2win::host::LoadRequest> resetRequest;
  static inline unsigned agreementInput=0;
  static inline mgo2win::LoginScreen* login=nullptr;
  static inline mgo2win::ControllerInput* input=nullptr;
@@ -46,6 +53,15 @@ struct Window {
  static LRESULT CALLBACK proc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
   if(msg==WM_LBUTTONUP){RECT r{};GetClientRect(hwnd,&r);if(r.right&&r.bottom){float x=float(short(LOWORD(lp)))/r.right,y=float(short(HIWORD(lp)))/r.bottom;if(x<viewX||y<viewY||x>=viewX+viewW||y>=viewY+viewH)return 0;lp=MAKELPARAM(int((x-viewX)/viewW*r.right),int((y-viewY)/viewH*r.bottom));}}
   if(!login&&input&&msg==WM_KEYDOWN&&!(lp&(1LL<<25))&&wp!=VK_ESCAPE&&wp!=VK_RETURN&&!(wp>=VK_LEFT&&wp<=VK_DOWN)){auto mapped=input->keyboard_menu(unsigned(wp));if(mapped)wp=mapped;}
+  if(msg==WM_KILLFOCUS)debug.focus_lost();
+  auto currentStage=login?login->stage_request():std::nullopt;
+  if((debug.confirmReset||debug.reset)&&resetRequest!=currentStage)debug.cancel_reset();
+  if(msg==WM_KEYDOWN){bool wasOpen=debug.confirmReset;if(debug.key(unsigned(wp),bool(lp&(1LL<<30)),bool(currentStage))){if(!wasOpen&&debug.confirmReset)resetRequest=currentStage;return 0;}}
+  if(debug.confirmReset){
+   if(msg==WM_LBUTTONUP){RECT r{};GetClientRect(hwnd,&r);if(r.right&&r.bottom)debug.click(int(short(LOWORD(lp)))*1280/r.right,int(short(HIWORD(lp)))*720/r.bottom);return 0;}
+   if(msg==WM_LBUTTONDOWN||msg==WM_MOUSEWHEEL||msg==WM_CHAR||msg==WM_KEYUP)return 0;
+  }
+  if(login&&msg==WM_KEYDOWN&&wp==VK_F6&&!(lp&(1LL<<30))&&login->stage_request()){stageAudition=true;return 0;}
   if(login&&login->message(hwnd,msg,wp,lp))return 0;
   if(msg==WM_CLOSE || (msg==WM_KEYDOWN&&wp==VK_ESCAPE)){PostQuitMessage(0);return 0;}
   if(msg==WM_MOUSEWHEEL){agreementInput |= static_cast<short>(HIWORD(wp))>0?8:16;return 0;}
@@ -65,7 +81,7 @@ struct AudioThread {
  mgo2win::AudioControl control;
  ~AudioThread(){stop=true;if(thread.joinable())thread.join();}
  void start(const std::filesystem::path& wav,const std::wstring& seconds,unsigned cue=0,const char* stream=nullptr){control.cue=cue;control.stream=stream?stream:(wav.stem()==L"lobby"||wav.stem()==L"bgm_mgo_lobby01")?"lobby_bgm":"other";thread=std::thread([this,wav,seconds]{
-  std::vector<std::wstring> args{L"audio",wav.wstring(),seconds};if(wav.extension()!=L".gwa")args.insert(args.end(),{L"369920",L"3028480",L"0"});std::vector<wchar_t*> pointers;for(auto& a:args)pointers.push_back(a.data());result=run_audio_probe(static_cast<int>(args.size()),pointers.data(),&stop,&control);
+  std::vector<std::wstring> args{L"audio",wav.wstring(),seconds};std::vector<wchar_t*> pointers;for(auto& a:args)pointers.push_back(a.data());result=run_audio_probe(static_cast<int>(args.size()),pointers.data(),&stop,&control);
  });}
 };
 static void capture(ID3D11Device* device,ID3D11DeviceContext* context,ID3D11Texture2D* source,const std::filesystem::path& output){
@@ -164,6 +180,8 @@ int run_title_preview(int argc,wchar_t**argv){try{
  std::unique_ptr<mgo2win::CharacterCatalog> characterCatalog; mgo2win::PreparedCharacter prepared;
  std::optional<std::array<uint8_t,28>> preparedAppearance;uint32_t preparedId=0;ULONGLONG modelBegan=0;unsigned appearanceChanges=0;
  if(!catalogPath.empty()){characterCatalog=std::make_unique<mgo2win::CharacterCatalog>(file(catalogPath));std::osyncstream(std::cout)<<"{\"character_catalog_loaded\":true,\"meshes\":"<<characterCatalog->mesh_count()<<",\"motion_clip\":"<<characterCatalog->clip()<<"}"<<std::endl;}
+ mgo2win::stage::Assets stageAssets(networkKeys.empty()?std::filesystem::path{}:networkKeys.parent_path()/"stage");
+ std::unique_ptr<mgo2win::CharacterRenderer> stageRenderer;std::shared_ptr<const mgo2win::CharacterModel> stageModel;unsigned stageFrames=0;
  std::unique_ptr<mgo2win::CharacterRenderer> characterRenderer;unsigned modelFrames=0,emptyModelFrames=0;bool lastModelVisible=false;
  if(!modelPath.empty()){mgo2win::CharacterModel model(file(modelPath));characterRenderer=std::make_unique<mgo2win::CharacterRenderer>(device.Get(),model);std::osyncstream(std::cout)<<"{\"character_model_loaded\":true,\"vertices\":"<<model.vertices.size()<<",\"triangles\":"<<model.indices.size()/3<<",\"textures\":"<<model.textures.size()<<"}"<<std::endl;}
  auto titleTextures=textureCount;if(loading)textureCount+=loading->texture_count();auto backgroundOffset=textureCount;textureCount+=backgroundTextures;auto motionOffset=textureCount;if(motionBack)textureCount+=motionBack->texture_count();auto loginOffset=textureCount;textureCount+=loginTextures;
@@ -206,6 +224,12 @@ int run_title_preview(int argc,wchar_t**argv){try{
  if(!scripted&&!safeGraphics&&graphics->draft!=graphics->active){if(graphics->apply(graphics->draft)){graphics->active=graphics->draft;std::osyncstream(std::cout)<<"{\"graphics_restored\":true}"<<std::endl;}else{check(graphics->apply(graphics->active)?S_OK:E_FAIL);graphics->draft=graphics->active;}}
  AudioThread audio;if(sound&&(!gcx||gcx->bgm_requested()))audio.start(wavPath.empty()?path.parent_path().parent_path()/L"audio/bgm_mgo_title01.wav":wavPath,argv[2],23);
  AudioThread effect,lobbyAudio;bool seStarted=false,lobbyMusicStarted=false;
+ std::unique_ptr<AudioThread> stageAudio;unsigned stageAudioIndex=0;
+ std::unique_ptr<AudioThread> stageMusic;
+ mgo2win::stage::MusicLibrary musicLibrary;mgo2win::stage::MusicSelection musicSelection;
+ auto musicRoot=networkKeys.empty()?std::filesystem::path{}:networkKeys.parent_path()/"bgm";
+ auto musicScan=std::async(std::launch::async,[musicRoot]{return musicRoot.empty()?mgo2win::stage::MusicLibrary{}:mgo2win::stage::MusicLibrary::scan(musicRoot);});
+ bool musicReady=false,musicPlaying=false,debugTitle=false;size_t musicIndex=0;mgo2win::stage::MusicPlayback musicPlayback;std::wstring musicError;
  if(gcx&&sound&&!sePath.empty())gcx->set_se_handler([&](uint32_t cue){
   if(seStarted)throw std::runtime_error("Duplicate START sound");seStarted=true;
   std::osyncstream(std::cout)<<"{\"start_sound\":true,\"cue\":"<<cue<<",\"tick\":"<<animation->ticks()<<"}"<<std::endl;
@@ -386,10 +410,73 @@ int run_title_preview(int argc,wchar_t**argv){try{
       for(const auto&problem:prepared.issues)std::osyncstream(std::cout)<<"{\"appearance_issue\":true,\"gender\":"<<prepared.gender<<",\"slot\":"<<problem.slot<<",\"item\":"<<problem.id<<",\"color\":"<<problem.color<<",\"texture\":"<<problem.texture<<",\"reason\":\""<<problem.reason<<"\"}"<<std::endl;}
     }
    }
+   auto requestedStage=login?login->stage_request():std::nullopt;
+   if((Window::debug.confirmReset||Window::debug.reset)&&Window::resetRequest!=requestedStage)Window::debug.cancel_reset();
+   // Admission starts background loading. Switching between roster and preview
+   // must not discard received state or restart preparation for the same round.
+   stageAssets.select(login?login->stage_load_request():std::nullopt);
+   if(Window::debug.reset&&login&&login->stage_request())stageAssets.reset();
+   stageAssets.receive(login?login->stage_placements():std::nullopt);
+   auto stageResult=stageAssets.result();
+   if(!musicReady&&musicScan.wait_for(std::chrono::seconds(0))==std::future_status::ready){try{musicLibrary=musicScan.get();}catch(...){musicError=L"BGM一覧の読み込みに失敗しました。";}musicReady=true;
+    if(auto t=musicLibrary.find("original:bgm_mgo_action01")){musicSelection.choose(musicLibrary,t->id,true,false);musicIndex=size_t(t-musicLibrary.tracks.data());}
+   }
+   bool hasStage=login&&bool(login->stage_request());
+   if(musicReady&&Window::debug.enabled&&!debugTitle)musicLibrary.reload_titles(musicRoot);
+   if(hasStage&&Window::debug.enabled&&musicReady){
+    if(Window::debug.musicStep&&!musicLibrary.tracks.empty()){
+     auto n=int(musicLibrary.tracks.size());musicIndex=size_t((int(musicIndex)+Window::debug.musicStep%n+n)%n);
+     musicSelection.choose(musicLibrary,musicLibrary.tracks[musicIndex].id,true,false);musicPlaying=true;musicError.clear();
+    }
+    if(Window::debug.toggleMusic){musicPlaying=!musicPlaying;musicError.clear();}
+   }
+   if(!hasStage){stageMusic.reset();musicPlayback.clear();musicPlaying=false;musicSelection.force(std::nullopt);}
+   auto musicChoice=musicSelection.resolve(musicLibrary);
+   if(hasStage&&musicPlaying&&sound&&musicChoice.track&&musicPlayback.select(musicChoice.track)){
+    stageMusic.reset();stageMusic=std::make_unique<AudioThread>();stageMusic->control.loopWhole=true;
+    stageMusic->start(musicChoice.track->path,argv[2],0,"stage_bgm");
+   }
+   if(!musicPlaying){stageMusic.reset();musicPlayback.clear();}
+   if(stageMusic&&stageMusic->result.load()!=-1){bool failed=stageMusic->result.load()!=0;stageMusic.reset();musicPlayback.clear();musicPlaying=false;musicError=failed?L"曲を再生できません。別の曲を選んでください。":L"再生終了";}
+   if(login){std::wstring notice;
+    if(Window::debug.enabled&&hasStage){notice=L"F5：ローカル再初期化  #"+std::to_wstring(stageResult.generation)+L"  参考配置 "+std::to_wstring(stageResult.round.objects.size())+L"件\nF7 / F8：曲選択   F9：再生／停止\n";
+     if(stageResult.received)notice+=L"受信配置 "+std::to_wstring(stageResult.received->items.size())+L"件 / モデル未対応 "+std::to_wstring(stageResult.missingItemModels)+L"件\n";
+     if(stageResult.cboxLayout)notice+=L"箱の配置選択 "+std::to_wstring(stageResult.cboxes.size())+L"件 / 共有世代 "+std::to_wstring(stageResult.request->generation)+L"（状態・描画は未接続）\n";
+     if(!musicReady)notice+=L"BGM一覧を読み込み中…";
+     else if(musicLibrary.tracks.empty())notice+=L"BGMなし（data/bgm にPCM WAVを配置）";
+     else{auto&t=musicLibrary.tracks[musicIndex];notice+=(t.additional?L"追加曲 ":L"原曲 ")+std::to_wstring(musicIndex+1)+L" / "+std::to_wstring(musicLibrary.tracks.size())+L"\n"+t.title+L"\n"+(stageMusic?L"再生中":L"停止中");}
+     if(musicChoice.missingForced)notice+=L"\n指定BGMがありません。ローカル曲へ復帰。";
+     if(!sound)notice+=L"\n音声は無効です。";
+     if(!musicError.empty())notice+=L"\n"+musicError;
+     if(musicLibrary.rejected||musicLibrary.overflow)notice+=L"\n未対応・重複 "+std::to_wstring(musicLibrary.rejected)+L" / 上限超過 "+std::to_wstring(musicLibrary.overflow);
+     if(musicLibrary.playlistErrors)notice+=L"\n曲名ファイルの無効な記述："+std::to_wstring(musicLibrary.playlistErrors);
+    }login->stage_debug_feedback(std::move(notice));login->stage_reset_feedback(hasStage&&Window::debug.confirmReset,Window::debug.resetYes);
+   }
+   Window::debug.clear_actions();
+   auto displayStage=Window::debug.enabled&&stageResult.debugModel?stageResult.debugModel:(stageResult.receivedModel?stageResult.receivedModel:stageResult.model);
+   if(stageModel!=displayStage){stageModel=displayStage;stageRenderer.reset();if(stageModel){try{stageRenderer=std::make_unique<mgo2win::CharacterRenderer>(device.Get(),*stageModel);}catch(...){stageResult.status=mgo2win::stage::Status::graphics_error;}}}
+   if(stageModel&&!stageRenderer)stageResult.status=mgo2win::stage::Status::graphics_error;
+   if(login)login->stage_feedback(stageResult.status);
+   if(!stageModel||!login||!login->stage_request()){
+    stageAudio.reset();stageAudioIndex=0;Window::stageAudition=false;lobbyAudio.control.gain=1;if(login)login->stage_audio_feedback(L"");
+   }else if(Window::stageAudition){
+    Window::stageAudition=false;stageAudio.reset();stageAudioIndex=(stageAudioIndex+1)%6;
+    // Audition is explicitly user selected. Registration order does not prove
+    // the original VLM/SDS listener-region selection or its crossfade behavior.
+    constexpr unsigned cues[]={64,67,68,117,115};constexpr const wchar_t*files[]={L"env_s01a30l_01.gwa",L"env_s01a30l_04.gwa",L"env_s01a30l_05.gwa",L"env_s01a30l_07.gwa",L"env_s01a30l_08.gwa"};
+    auto path=networkKeys.parent_path()/L"stage/audio"/(stageAudioIndex?files[stageAudioIndex-1]:L"");
+    if(stageAudioIndex&&sound&&std::filesystem::is_regular_file(path)){stageAudio=std::make_unique<AudioThread>();stageAudio->start(path,argv[2],cues[stageAudioIndex-1],"stage_ambience_audition");login->stage_audio_feedback(L"試聴 "+std::to_wstring(stageAudioIndex)+L" / 5");}
+    else{login->stage_audio_feedback(stageAudioIndex?L"環境音を再生できません（音声設定／ファイルを確認）。":L"試聴停止");stageAudioIndex=0;}
+    lobbyAudio.control.gain=stageAudio?0.f:1.f;
+   }
+   if(stageAudio&&stageAudio->result.load()!=-1){auto failed=stageAudio->result.load()!=0;stageAudio.reset();lobbyAudio.control.gain=1;stageAudioIndex=0;if(login)login->stage_audio_feedback(failed?L"環境音の再生に失敗しました。":L"試聴終了");if(failed)std::osyncstream(std::cout)<<"{\"stage_ambience_error\":true}\n";}
+   lobbyAudio.control.gain=(stageAudio||stageMusic)?0.f:1.f;
    if(login){login->model_available(bool(characterRenderer));login->model_partial(prepared.missingModels||prepared.missingColors);}
    context->UpdateSubresource(agreementTexture.Get(),0,nullptr,login?login->draw():agreement->draw(),1280*4,0);
    bool portNow=login&&login->port_visible();if(portNow!=portTitle){portTitle=portNow;SetWindowTextW(window.handle,portNow?L"OpenMGO2 - Port settings | Esc: back":L"OpenMGO2 - Login | Enter: select | Esc: back");}
    bool charNow=login&&login->character_visible();if(charNow!=charTitle){charTitle=charNow;SetWindowTextW(window.handle,charNow?L"OpenMGO2 - Characters | Esc: settings":L"OpenMGO2 - Settings | Esc: back");}
+   if(Window::debug.enabled)SetWindowTextW(window.handle,L"OpenMGO2 - DEBUG | F12: close | F5: local stage reset | F7/F8: BGM | F9: play/stop");
+   else if(debugTitle)SetWindowTextW(window.handle,L"OpenMGO2 | F12: debug");debugTitle=Window::debug.enabled;
    quads.clear();
    auto appendMotion=[&](mgo2win::TitleAnimation& m){m.tick(5,0);auto v=m.geometry();for(auto&q:v)if(q.atlas>=0)q.atlas+=motionOffset;quads.insert(quads.end(),v.begin(),v.end());};
    if(motionBack)appendMotion(*motionBack);
@@ -409,6 +496,13 @@ int run_title_preview(int argc,wchar_t**argv){try{
     const float xy[4][2]={{632,196},{1248,196},{1248,588},{632,588}},uv[4][2]={{0,0},{1,0},{1,1},{0,1}};
     for(int i=0;i<4;++i){float values[]={xy[i][0],xy[i][1],uv[i][0],uv[i][1],1,1,1,1};std::memcpy(&model.vertices[i],values,sizeof(Vertex));}
    }
+   if(stageRenderer&&login&&login->stage_request()&&login->stage_request()==stageAssets.result().request){
+    quads.emplace_back();auto& panel=quads.back();panel.atlas=-1;panel.blend=0;
+    const float xy[4][2]={{785,292},{1130,292},{1130,512},{785,512}},uv[4][2]={{0,0},{1,0},{1,1},{0,1}};
+    for(int i=0;i<4;++i){float v[]={xy[i][0],xy[i][1],0,0,0,0,0,.7f};std::memcpy(&panel.vertices[i],v,sizeof(Vertex));}
+    quads.emplace_back();auto& model=quads.back();model.atlas=-4;model.blend=0;
+    for(int i=0;i<4;++i){float v[]={xy[i][0],xy[i][1],uv[i][0],uv[i][1],1,1,1,1};std::memcpy(&model.vertices[i],v,sizeof(Vertex));}
+   }
    quads.emplace_back();auto& q=quads.back();q.atlas=-2;q.blend=0;
    const float xy[4][2]={{0,0},{1280,0},{1280,720},{0,720}};const float uv[4][2]={{0,0},{1,0},{1,1},{0,1}};
    for(int i=0;i<4;++i){float values[]={xy[i][0],xy[i][1],uv[i][0],uv[i][1],1,1,1,1};std::memcpy(&q.vertices[i],values,sizeof(Vertex));}
@@ -419,9 +513,13 @@ int run_title_preview(int argc,wchar_t**argv){try{
   if(modelVisible){if(characterCatalog){characterCatalog->pose(prepared,(GetTickCount64()-modelBegan)/1000.);characterRenderer->update_vertices(context.Get(),prepared.model.vertices);}characterRenderer->render(context.Get(),login->model_yaw());++modelFrames;login->model_rendered();
    context->IASetInputLayout(input.Get());context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);context->IASetVertexBuffers(0,1,&vptr,&stride,&offset);context->IASetIndexBuffer(nullptr,DXGI_FORMAT_R32_UINT,0);context->VSSetShader(vs.Get(),nullptr,0);context->PSSetShader(ps.Get(),nullptr,0);context->PSSetSamplers(0,1,&sp);context->RSSetState(raster.Get());context->RSSetViewports(1,&viewport);context->OMSetRenderTargets(1,&rp,nullptr);context->OMSetDepthStencilState(nullptr,0);
   }else if(login&&login->character_visible())++emptyModelFrames;
+  if(stageRenderer&&agreementVisible&&login&&login->stage_request()&&login->stage_request()==stageAssets.result().request){
+   stageRenderer->render(context.Get(),.35f,true);++stageFrames;
+   context->IASetInputLayout(input.Get());context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);context->IASetVertexBuffers(0,1,&vptr,&stride,&offset);context->IASetIndexBuffer(nullptr,DXGI_FORMAT_R32_UINT,0);context->VSSetShader(vs.Get(),nullptr,0);context->PSSetShader(ps.Get(),nullptr,0);context->PSSetSamplers(0,1,&sp);context->RSSetState(raster.Get());context->RSSetViewports(1,&viewport);context->OMSetRenderTargets(1,&rp,nullptr);context->OMSetDepthStencilState(nullptr,0);
+  }
   if(modelVisible!=lastModelVisible){lastModelVisible=modelVisible;std::osyncstream(std::cout)<<"{\"character_model_visible\":"<<(modelVisible?"true":"false")<<"}"<<std::endl;}
   const float clear[4]={0,0,0,1};context->ClearRenderTargetView(rt.Get(),clear);
-  for(UINT i=0;i<count;i++){const auto&q=quads[i];ID3D11ShaderResourceView*tex=q.atlas==-3?characterRenderer->view():q.atlas==-2?agreementView.Get():textures[q.atlas<0?textureCount:q.atlas].Get();context->PSSetShaderResources(0,1,&tex);context->OMSetBlendState(blend[q.blend].Get(),nullptr,0xffffffff);context->Draw(6,i*6);}
+  for(UINT i=0;i<count;i++){const auto&q=quads[i];ID3D11ShaderResourceView*tex=q.atlas==-4?stageRenderer->view():q.atlas==-3?characterRenderer->view():q.atlas==-2?agreementView.Get():textures[q.atlas<0?textureCount:q.atlas].Get();context->PSSetShaderResources(0,1,&tex);context->OMSetBlendState(blend[q.blend].Get(),nullptr,0xffffffff);context->Draw(6,i*6);}
   if(saveCaptures&&frames==0)capture(device.Get(),context.Get(),back.Get(),argv[3]);
   if(saveCaptures&&animation&&captureIndex<6&&animation->ticks()>=captureTicks[captureIndex]){auto out=std::filesystem::path(argv[3]);out.replace_filename(out.stem().wstring()+L"_"+std::to_wstring(captureTicks[captureIndex])+L".bmp");capture(device.Get(),context.Get(),back.Get(),out);std::osyncstream(std::cout)<<"{\"capture_requested_tick\":"<<captureTicks[captureIndex]<<",\"capture_actual_tick\":"<<animation->ticks()<<"}"<<std::endl;++captureIndex;}
   if(saveCaptures&&loadingVisible&&loadingFrames>=3&&!loadingCaptured){auto out=std::filesystem::path(argv[3]);out.replace_filename(L"loading.bmp");capture(device.Get(),context.Get(),back.Get(),out);loadingCaptured=true;}
@@ -454,6 +552,7 @@ int run_title_preview(int argc,wchar_t**argv){try{
  if(drained)std::osyncstream(std::cout)<<"{\"preview_audio_drain_frames\":"<<drained<<",\"gain\":"<<fade.gain()<<"}"<<std::endl;
  for(auto& a:menuAudio)a->stop=true;for(auto& a:menuAudio){if(a->thread.joinable())a->thread.join();if(a->result.load())++menuFailures;}
  if(motionBack)std::osyncstream(std::cout)<<"{\"background_motion_ticks\":"<<motionBack->ticks()<<",\"background_loop_restarts\":"<<(motionBack->loop_restarts()+motionFront->loop_restarts())<<"}"<<std::endl;
+ std::osyncstream(std::cout)<<"{\"stage_preview_frames\":"<<stageFrames<<",\"stage_gameplay_ready\":false}"<<std::endl;
  std::osyncstream(std::cout)<<"{\"character_model_frames\":"<<modelFrames<<",\"character_frames_without_model\":"<<emptyModelFrames<<",\"account_appearance_applied\":"<<(characterCatalog&&appearanceChanges?"true":"false")<<",\"appearance_changes\":"<<appearanceChanges<<",\"motion_playing\":"<<(characterCatalog&&modelFrames?"true":"false")<<"}"<<std::endl;
  if(login)login->report();
  std::osyncstream(std::cout)<<"{\"login_visits\":"<<loginVisits<<",\"login_frames\":"<<loginFrames<<",\"original_login_quads\":"<<loginBackground.size()<<"}"<<std::endl;

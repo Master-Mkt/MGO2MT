@@ -49,14 +49,15 @@ bool ControllerPanel::message(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
   SetFocus(hwnd);return true;
  }return false;
 }
-void ControllerPanel::draw(HDC dc,const std::vector<HFONT>& fonts){
+POINT ControllerPanel::draw(HDC dc,const std::vector<HFONT>& fonts){
  auto fill=[&](int x,int y,int w,int h,COLORREF c){menu_fill(dc,x,y,w,h,c);};
  auto text=[&](std::wstring s,int x,int y,int w,int h,int font,COLORREF color){RECT r{x,y,x+w,y+h};SelectObject(dc,fonts[font]);SetTextColor(dc,menu_text_color(color));SetBkMode(dc,TRANSPARENT);DrawTextW(dc,s.c_str(),int(s.size()),&r,DT_LEFT|DT_NOPREFIX);};
  auto box=[&](int i,std::wstring label,int x,int y,int w,int h){bool a=focus_==i;fill(x,y,w,h,a?RGB(151,168,126):RGB(37,53,42));text(label,x+12,y+8,w-24,h-6,2,a?RGB(18,28,19):RGB(232,237,218));};
+ menu_band(dc,120,217,1040,40,0);
  text(L"使用する入力機器",125,227,280,30,1,RGB(224,232,212));box(0,draft_.device?L"XInput  ◀ ▶":L"キーボード  ◀ ▶",410,217,350,40);
  box(1,L"XInput #"+std::to_wstring(draft_.slot+1)+(connected_?L"  接続中":L"  未接続"),810,217,350,40);
  text(L"割り当て："+std::to_wstring(page_+1)+L" / 3  （各8項目）",125,272,800,27,2,RGB(208,220,192));box(10,L"◀ 前",930,263,110,31);box(11,L"次 ▶",1050,263,110,31);
- for(int i=0;i<8;++i){unsigned action=page_*8+i;int y=298+i*32;bool active=focus_==i+2;fill(120,y,1040,31,active?RGB(62,84,55):RGB(23,33,27));
+ for(int i=0;i<8;++i){unsigned action=page_*8+i;int y=298+i*32;bool active=focus_==i+2;menu_row(dc,120,y,1040,31,i,active);
   text(action_name(action),135,y+5,590,28,2,RGB(229,237,216));
   auto code=draft_.device?draft_.gamepad[action]:draft_.keyboard[action];
   text(capture_==int(action)?L"入力待ち…":input_name(code,draft_.device!=0),760,y+5,375,28,2,RGB(240,216,160));}
@@ -64,6 +65,10 @@ void ControllerPanel::draw(HDC dc,const std::vector<HFONT>& fonts){
  box(12,L"設定を保存・適用",120,599,320,43);box(13,L"この機器を初期値へ",470,599,330,43);box(14,L"ネットワークへ戻る",830,599,330,43);
  text(dirty_?L"未保存の変更があります":L"保存した設定が有効です",120,649,1040,27,3,RGB(191,206,175));
  text(L"F1/F2：タブ  PgUp/PgDn：ページ  Enter：変更  Esc/クリック：入力待ち取消",83,690,1120,25,3,RGB(174,185,165));
+ if(focus_<2)return {focus_==0?410:810,217};
+ if(focus_<10)return {120,298+(focus_-2)*32};
+ if(focus_<12)return {focus_==10?930:1050,263};
+ return {focus_==12?120:focus_==13?470:830,599};
 }
 void ControllerPanel::report()const{std::osyncstream(std::cout)<<"{\"controller_panel\":true,\"device\":"<<input_->config.device<<",\"slot\":"<<input_->config.slot<<",\"unsaved\":"<<(dirty_?"true":"false")<<",\"capturing\":"<<(capturing()?"true":"false")<<"}"<<std::endl;}
 }

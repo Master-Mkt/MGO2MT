@@ -13,7 +13,7 @@ public:
  ControllerPanel(std::filesystem::path,std::shared_ptr<ControllerInput>);
  bool message(HWND,UINT,WPARAM,LPARAM);
  bool sample(const PadSample&); // True consumes the sample while capturing.
- void draw(HDC,const std::vector<HFONT>&);
+ POINT draw(HDC,const std::vector<HFONT>&); // Active item origin for focus guides.
  void cancel_capture(){capture_=-1;armed_=false;}
  bool capturing()const{return capture_>=0;}
  bool back()const{return back_;}

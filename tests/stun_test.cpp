@@ -21,16 +21,20 @@ int main(){
  try{
   std::atomic_uint calls=0;
   auto pump=[](PortScreen&s,unsigned ms){auto until=GetTickCount64()+ms;do{s.draw();Sleep(5);}while(GetTickCount64()<until);};
+  // These UI cases test probes and speed persistence, not ownership of the
+  // user's gameplay port. Automatic selection keeps a live client untouched.
+  auto automatic=[](PortScreen&s){for(int i=0;i<3;++i)s.message(nullptr,WM_KEYDOWN,VK_UP,0);s.message(nullptr,WM_KEYDOWN,VK_RIGHT,0);for(int i=0;i<3;++i)s.message(nullptr,WM_KEYDOWN,VK_DOWN,0);};
   {PortScreen s(dir/L"network.cfg",true,[&](uintptr_t,const std::atomic_bool& cancelled){++calls;while(!cancelled)Sleep(5);StunResult r;r.status=StunStatus::cancelled;return r;});
-   for(int i=0;i<3;++i)s.message(nullptr,WM_KEYDOWN,VK_UP,0);s.message(nullptr,WM_KEYDOWN,VK_RIGHT,0);for(int i=0;i<3;++i)s.message(nullptr,WM_KEYDOWN,VK_DOWN,0);
+   automatic(s);
    s.message(nullptr,WM_KEYDOWN,VK_RETURN,0);pump(s,30);for(int i=0;i<10;++i)s.message(nullptr,WM_KEYDOWN,VK_RETURN,0);require(calls==1);
    s.message(nullptr,WM_KEYDOWN,VK_ESCAPE,0);require(!s.back());s.message(nullptr,WM_KEYDOWN,VK_ESCAPE,0);require(s.back());}
   for(auto status:{StunStatus::success,StunStatus::timeout,StunStatus::protocol_error}){
-   PortScreen s(dir/L"network.cfg",true,[=](uintptr_t,const std::atomic_bool&){StunResult r;r.status=status;r.mapped_port=status==StunStatus::success?5730:0;return r;});
-   s.message(nullptr,WM_KEYDOWN,VK_RETURN,0);pump(s,30);s.message(nullptr,WM_KEYDOWN,VK_ESCAPE,0);require(s.back());
+   unsigned probes=0;PortScreen s(dir/L"network.cfg",true,[&](uintptr_t,const std::atomic_bool&){++probes;StunResult r;r.status=status;r.mapped_port=status==StunStatus::success?5730:0;return r;});
+   automatic(s);s.message(nullptr,WM_KEYDOWN,VK_RETURN,0);pump(s,30);s.message(nullptr,WM_KEYDOWN,VK_ESCAPE,0);require(s.back()&&probes==1);
   }
   require(!std::filesystem::exists(dir/L"network.cfg"));
   {PortScreen s(dir/L"network.cfg",false);auto key=[&](WPARAM k){s.message(nullptr,WM_KEYDOWN,k,0);};
+   automatic(s);
    key(VK_RETURN); // Reserve port once; speed edits must retain this check.
    key(VK_UP);key(VK_RETURN);key(VK_HOME);key(VK_RETURN);key(VK_DOWN);key(VK_DOWN);key(VK_RETURN);
    PortSettings cfg;require(load_ports(dir/L"network.cfg",cfg)&&cfg.bandwidth_kbps==256);

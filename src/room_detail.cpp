@@ -20,6 +20,9 @@ RoomDetail parse_room_detail(std::span<const uint8_t>b,uint32_t expected){
  RoomDetail d;d.id=expected;d.name=string(b.subspan(8,16));d.comment=string(b.subspan(24,128),true);
  if(d.name.empty()||b[152]>1||b[153]>1)throw std::runtime_error("room detail flags");d.password=b[152]!=0;d.dedicated=b[153]!=0;d.subtype=b[154];
  constexpr size_t env=168,players=372;d.capacity=b[env+66];d.players=b[env+67];if(!d.capacity||d.capacity>18||d.players>18)throw std::runtime_error("room player capacity");
+ // Same reviewed HostGameEnv fields written by room_environment()/4310:
+ // 16 restriction bytes at50 and briefing minutes BE32 at68.
+ std::copy_n(b.begin()+env+50,16,d.weapon_restrictions.begin());d.briefing_minutes=number(b,env+68);d.environment_known=true;
  std::set<uint32_t> ids;
  for(size_t i=0;i<18;++i){auto at=players+i*28;auto id=number(b,at);if(!id){if(i==0)throw std::runtime_error("host must occupy slot zero");continue;}if(!ids.insert(id).second)throw std::runtime_error("duplicate room player");auto name=string(b.subspan(at+4,16));if(name.empty())throw std::runtime_error("empty player name");d.roster.push_back({id,std::move(name)});}
  return d;

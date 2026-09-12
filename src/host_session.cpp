@@ -27,7 +27,7 @@ std::vector<uint8_t> profile_payload(uint32_t id,std::span<const uint8_t>info,st
  b.push_back(uint8_t(highest));for(unsigned i=1;i<=highest;++i)put(b,values[i],2);b.insert(b.end(),name.begin(),name.end());b.push_back(0);b.insert(b.end(),clan.begin(),clan.end());if(b.size()>372)throw Invalid(Error::extent);return b;
 }
 Machine::Machine(Hello local,uint32_t host,std::vector<uint8_t>profile,uint64_t now):local_(std::move(local)),host_(host),profile_(std::move(profile)),start_(now),last_(now),stage_at_(now),hello_next_(now){if(!host||host==local_.character||profile_.empty()||profile_[0]!=2||profile_.size()>372)throw Invalid(Error::identity);encode_hello(local_);}
-void Machine::fail(Stage s,unsigned error){stage_=s;error_=error;pending_.clear();reordered_.clear();roster_={};match_={};}
+void Machine::fail(Stage s,unsigned error){stage_=s;error_=error;pending_.clear();reordered_.clear();roster_={};match_={};placements_.clear();itemReordered_.clear();}
 void Machine::queue(std::vector<uint8_t>b,uint64_t now){if(pending_.size()>=32||pending_.contains(tx_app_))throw Invalid(Error::sequence);Message m;m.channel=1;m.serial=tx_app_++;m.payload=std::move(b);pending_.emplace(m.serial,Pending{std::move(m),now,0});}
 void Machine::application(std::span<const uint8_t>b,uint64_t now){if(b.empty())throw Invalid(Error::message);
  if(b[0]==7){
@@ -38,7 +38,7 @@ void Machine::application(std::span<const uint8_t>b,uint64_t now){if(b.empty())t
   if(stage_==Stage::joined&&((hadSelf&&!present(local_.character))||(hadHost&&!present(host_)))){fail(Stage::disconnected);return;}
   if(playerClass&&b[6]==3&&stage_==Stage::profile){queue({10},now);stage_=Stage::synchronizing;stage_at_=now;}
  }
- else if(b[0]==11){auto generation=update_match(match_,b);if(generation&&stage_==Stage::synchronizing){stage_=Stage::joined;was_joined_=true;stage_at_=now;keepalive_at_=now+2000;}}
+ else if(b[0]==11){auto generation=update_match(match_,b);if(generation&&placements_.result().generation!=generation){placements_.begin(*generation);itemReordered_.clear();itemSerial_=0;generationPacket_=rx_;}if(generation&&stage_==Stage::synchronizing){stage_=Stage::joined;was_joined_=true;stage_at_=now;keepalive_at_=now+2000;}}
  // Other channels/application records belong to gameplay; no gameplay action
  // is synthesized. Room entry requires the original explicit global update.
 }
@@ -58,6 +58,18 @@ void Machine::receive(std::span<const uint8_t>raw,uint64_t now){if(!active(stage
   }
   if(hello_received_&&hello_acked_&&stage_==Stage::connecting){stage_=Stage::profile;stage_at_=now;queue(profile_,now);profile_sent_=true;}
   while(active(stage_)&&reordered_.contains(rx_app_)){auto m=std::move(reordered_.at(rx_app_));reordered_.erase(rx_app_++);application(m.payload,now);}
+  // Original fixed item object 592; channels >63 carry round parity (261AB0).
+  // Wait for a validated global generation. No ACK means the reliable sender
+  // can retry records which arrived before that registration was available.
+  if(auto generation=placements_.result().generation;generation&&int16_t(packet.sequence-generationPacket_)>=0){
+   uint16_t channel=item_channel|((*generation&1)?0x800:0);
+   for(auto&m:packet.messages){if(m.channel!=channel||m.ack)continue;if(!m.reliable)throw Invalid(Error::message);
+    unsigned ahead=uint8_t(m.serial-itemSerial_);if(ahead>=128){acks_.push_back({channel,true,true,false,m.serial,{}});continue;}if(ahead>=32)throw Invalid(Error::sequence);
+    auto it=itemReordered_.find(m.serial);if(it!=itemReordered_.end()&&it->second.payload!=m.payload)throw Invalid(Error::sequence);
+    itemReordered_.insert_or_assign(m.serial,m);acks_.push_back({channel,true,true,false,m.serial,{}});
+   }
+   while(itemReordered_.contains(itemSerial_)){auto m=std::move(itemReordered_.at(itemSerial_));itemReordered_.erase(itemSerial_++);placements_.receive(*generation,m.payload);}
+  }
   if(acks_.size()>128)throw Invalid(Error::extent);
  }catch(const Invalid&e){fail(Stage::protocol_error,unsigned(e.code));}
 }
@@ -83,12 +95,13 @@ Result run(const Local&local,const Admission&admission,std::span<const uint8_t>p
   // Prefer LAN only for peers sharing our public address. Otherwise pin public.
   Endpoint peer=admission.endpoints[0];if(peer.address==local.public_endpoint.address)peer=admission.endpoints[1];
   sockaddr_in destination{};destination.sin_family=AF_INET;destination.sin_port=htons(peer.port);std::copy(peer.address.begin(),peer.address.end(),reinterpret_cast<uint8_t*>(&destination.sin_addr));
-  Machine machine({local.character,seed,2,2,{local.public_endpoint,local.private_endpoint}},admission.character,{profile.begin(),profile.end()},GetTickCount64());Stage reported=Stage::unavailable;uint64_t reportedRevision=0,reportedMatchRevision=0;
+  Machine machine({local.character,seed,2,2,{local.public_endpoint,local.private_endpoint}},admission.character,{profile.begin(),profile.end()},GetTickCount64());Stage reported=Stage::unavailable;uint64_t reportedRevision=0,reportedMatchRevision=0,reportedPlacementRevision=0;bool reportedPartial=false;
   while(active(machine.result().stage)){
    if(stop||cancel){machine.cancel();break;}
    if(lobbyAlive&&!lobbyAlive()){out=machine.result();out.stage=Stage::disconnected;return out;}
-   auto now=GetTickCount64();for(auto&b:machine.poll(now)){int n=sendto(socket,reinterpret_cast<const char*>(b.data()),int(b.size()),0,reinterpret_cast<sockaddr*>(&destination),sizeof(destination));if(n==SOCKET_ERROR){auto err=WSAGetLastError();if(err!=WSAEWOULDBLOCK){out=machine.result();out.stage=Stage::network_error;out.error=unsigned(err);return out;}}}
-   out=machine.result();if(out.stage!=reported||out.roster.revision!=reportedRevision||out.match.revision!=reportedMatchRevision){reported=out.stage;reportedRevision=out.roster.revision;reportedMatchRevision=out.match.revision;publish(out);}if(!active(out.stage))break;
+   auto now=GetTickCount64();
+   for(auto&b:machine.poll(now)){int n=sendto(socket,reinterpret_cast<const char*>(b.data()),int(b.size()),0,reinterpret_cast<sockaddr*>(&destination),sizeof(destination));if(n==SOCKET_ERROR){auto err=WSAGetLastError();if(err!=WSAEWOULDBLOCK){out=machine.result();out.stage=Stage::network_error;out.error=unsigned(err);return out;}}}
+   out=machine.result();if(out.stage!=reported||out.roster.revision!=reportedRevision||out.match.revision!=reportedMatchRevision||out.placements.revision!=reportedPlacementRevision||out.placements.partial!=reportedPartial){reported=out.stage;reportedRevision=out.roster.revision;reportedMatchRevision=out.match.revision;reportedPlacementRevision=out.placements.revision;reportedPartial=out.placements.partial;publish(out);}if(!active(out.stage))break;
    fd_set read;FD_ZERO(&read);FD_SET(socket,&read);timeval wait{0,20000};int n=select(0,&read,nullptr,nullptr,&wait);if(n<0){out.stage=Stage::network_error;out.error=unsigned(WSAGetLastError());return out;}
    if(n){std::array<uint8_t,2049>b{};sockaddr_in from{};int len=sizeof(from);n=recvfrom(socket,reinterpret_cast<char*>(b.data()),int(b.size()),0,reinterpret_cast<sockaddr*>(&from),&len);if(n<0){auto err=WSAGetLastError();if(err==WSAEWOULDBLOCK||err==WSAEMSGSIZE||err==WSAECONNRESET)continue;out.stage=Stage::network_error;out.error=unsigned(err);return out;}if(from.sin_family==AF_INET&&from.sin_port==destination.sin_port&&from.sin_addr.s_addr==destination.sin_addr.s_addr)machine.receive(std::span(b).first(size_t(n)),GetTickCount64());}
   }

@@ -12,7 +12,19 @@ int main(){try{
  auto helloPacket=[&](uint16_t seq){Message m;m.payload=encode_hello(peer);return encode({seq,{m}},{});};
  auto app=[&](uint16_t seq,uint8_t serial,std::vector<uint8_t>b){Message m;m.channel=1;m.serial=serial;m.payload=std::move(b);return encode({seq,{m}},keys);};
  Machine machine(local,456,profile,0);check(machine.poll(0).size()==1,"initial handshake sent");machine.receive(encode({0,{{0,true,true,false,0,{}}}}),10);check(machine.result().stage==Stage::connecting,"ACK alone never means connected");machine.receive(helloPacket(1),20);check(machine.result().stage==Stage::profile,"hello identity and both halves");check(machine.poll(20).size()==2,"handshake ACK uses established key and profile sends");
- machine.receive(app(2,1,generation()),30);check(machine.result().stage==Stage::profile,"out of order snapshot held");machine.receive(app(3,0,{7,0,0,0,0,0,3}),40);check(machine.result().stage==Stage::joined&&machine.result().was_joined,"ordered terminator then explicit sync");machine.receive(app(4,0,{7,0,0,0,0,0,3}),50);check(machine.result().stage==Stage::joined,"duplicate application not replayed");machine.cancel();check(machine.result().stage==Stage::cancelled&&machine.leave_packet().has_value(),"cancel retains profile/entry cleanup state");
+ machine.receive(app(2,1,generation()),30);check(machine.result().stage==Stage::profile,"out of order snapshot held");machine.receive(app(3,0,{7,0,0,0,0,0,3}),40);check(machine.result().stage==Stage::joined&&machine.result().was_joined,"ordered terminator then explicit sync");machine.receive(app(4,0,{7,0,0,0,0,0,3}),50);check(machine.result().stage==Stage::joined,"duplicate application not replayed");
+ // Fixed object channel and parity are processed after the global generation.
+ auto itemPacket=[&](uint16_t seq,uint8_t serial,std::vector<uint8_t>b,uint16_t channel=592|0x800){Message m;m.channel=channel;m.serial=serial;m.payload=std::move(b);return encode({seq,{m}},keys);};
+ machine.receive(itemPacket(5,2,{2,0x2e,0xfb,0x41,1,0x29,9,0,64,0}),51);
+ machine.receive(itemPacket(6,0,{0,0x64,2,1,24,0}),52);
+ machine.receive(itemPacket(7,3,{3,0,0,0,0,0,0,0,0}),53);
+ check(machine.result().placements.partial&&machine.result().placements.items.empty(),"out-of-order object fragments cannot render");
+ machine.receive(itemPacket(8,1,{1,113,0,1,0,0}),54);
+ check(machine.result().placements.items.size()==1&&!machine.result().placements.partial&&machine.result().placements.items.at(0x102).position()[0]==-12340,"ordered host object transport restores original position");
+ auto itemRevision=machine.result().placements.revision;machine.receive(itemPacket(9,0,{0,0x64,2,1,24,0}),55);check(machine.result().placements.revision==itemRevision,"reliable duplicate discarded");
+ auto nextGeneration=generation();nextGeneration[9]=4;machine.receive(app(10,2,nextGeneration),56);check(machine.result().placements.items.empty()&&machine.result().placements.generation==4,"round generation clears item state and serials");
+ machine.receive(itemPacket(11,4,{0,0x64,2,1,24,0}),57);check(!machine.result().placements.partial,"previous parity ignored");
+ machine.cancel();check(machine.result().stage==Stage::cancelled&&machine.leave_packet().has_value(),"cancel retains profile/entry cleanup state");
  Machine timeout(local,456,profile,0);timeout.poll(8000);check(timeout.result().stage==Stage::timeout&&!timeout.result().profile_sent,"handshake deadline");
  Machine mismatch(local,456,profile,0);auto wrong=peer;wrong.character=457;Message bad;bad.payload=encode_hello(wrong);mismatch.receive(encode({0,{bad}}),1);check(mismatch.result().stage==Stage::protocol_error,"wrong PC rejected");
  Machine rejected(local,456,profile,0);Message refusal;refusal.payload={0xc8,1,0,0,0};rejected.receive(encode({0,{refusal}}),1);check(rejected.result().stage==Stage::rejected,"host short rejection");

@@ -7,6 +7,7 @@ import datetime
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -14,10 +15,12 @@ import sys
 
 from gwp import ROOT, load, record, lobby_membership_text
 
-DESTINATIONS = {'character_catalog':'character/appearance.gwc','network_keys':'network.gnk','login_background':'login/frame.m2pv',**{f'login_texture{i}':f'login/images/{i}.dds' for i in range(6)},'agreement_motion':'motion/animated.m2an',**{f'motion_texture{i}':f'motion/images/{i}.dds' for i in range(8)},'agreement_background':'agreement/frame.m2pv','lobby_bgm':'audio/lobby.gwa',**{f'agreement_texture{i}':f'agreement/images/{i}.dds' for i in range(6)},'menu93':'audio/93.gwa','menu94':'audio/94.gwa','scenario': 'title.gwp', 'animation': 'title/animated.m2an',
+DESTINATIONS = {'stage_lighting20':'stage/n022a.lighting.cfg','stage_collision20':'stage/n022a.collision.cfg',**{f'stage_env{i}':f'stage/audio/env_s01a30l_{i:02d}.gwa' for i in (1,4,5,7,8)},'stage_preview20':'stage/n022a.gwm','character_catalog':'character/appearance.gwc','network_keys':'network.gnk','login_background':'login/frame.m2pv',**{f'login_texture{i}':f'login/images/{i}.dds' for i in range(6)},'agreement_motion':'motion/animated.m2an',**{f'motion_texture{i}':f'motion/images/{i}.dds' for i in range(8)},'agreement_background':'agreement/frame.m2pv','lobby_bgm':'audio/lobby.gwa',**{f'agreement_texture{i}':f'agreement/images/{i}.dds' for i in range(6)},'menu93':'audio/93.gwa','menu94':'audio/94.gwa','scenario': 'title.gwp', 'animation': 'title/animated.m2an',
                 'bgm23': 'audio/title.gwa', 'start18999':'audio/start.gwa','loading':'loading/loading.m2an','loading_texture0':'loading/images/0.dds','loading_texture1':'loading/images/1.dds', **{f'texture{i}': f'title/images/{i}.dds' for i in range(10)}}
 DOCUMENTS = ('README.md', 'README.ja.md', 'THIRD_PARTY_NOTICES.md', 'PUBLICATION.md', 'LICENSE_STATUS.md')
 DESTINATIONS.update({f'voice{g}_{v}':f'voice/{g}_{v}.gwa' for g in range(2) for v in range(8)})
+DESTINATIONS.update({**{f'stage_item{i}':f'stage/items/{i}.gwm' for i in (113,140)},'bgm_catalog':'bgm/catalog.json','stage_placements20':'stage/n022a.placements.cfg',**{f'stage_prop{i}':f'stage/props/{i}.gwm' for i in range(6)}})
+DESTINATIONS['stage_cbox20']='stage/n022a.cbox.cfg'
 
 
 def build_release(root=ROOT):
@@ -57,8 +60,22 @@ def package(gwp_path, exe, output, seconds=None):
     for path in documents.values():
         if not path.is_file():
             raise ValueError('Missing distribution document: '+path.name)
+    music=[];catalog=None
+    if 'bgm_catalog' in assets:
+        catalog=json.loads(assets['bgm_catalog'].read_text(encoding='utf-8'))
+        if catalog.get('format')!='MGO2WIN.BGM_CATALOG' or catalog.get('version')!=1 or not 0<len(catalog['tracks'])<=256:
+            raise ValueError('BGM catalog contract')
+        names=set()
+        for track in catalog['tracks']:
+            name=track['file']
+            if not re.fullmatch(r'[a-z0-9_]{1,100}\.wav',name) or name in names or track['id']!='original:'+name[:-4]:raise ValueError('BGM file identity')
+            names.add(name);source=assets['bgm_catalog'].parent/name
+            if not source.is_file() or source.is_symlink() or record(source)['sha256']!=track['sha256']:raise ValueError('BGM input hash mismatch')
+            music.append((source,name))
     output.mkdir(parents=True)
     data = output/'data'; data.mkdir()
+    (data/'bgm/additional').mkdir(parents=True)
+    (data/'bgm/additional/README.txt').write_text('Add up to 32 PCM 16-bit WAV tracks (8 kHz–192 kHz, 1–8 channels, up to 256 MiB each). Restart to rescan. The filename is the displayed title.\n16-bit PCM WAVを最大32曲追加できます。8～192 kHz・1～8ch・1曲256 MiB以下。追加後は再起動。ファイル名が表示名になります。\nTracks use content SHA-256 IDs, not list positions. Missing forced tracks fall back to local selection, then an available original track, then silence.\n',encoding='utf-8')
     shutil.copyfile(exe, output/'MGO2WIN.exe')
     for name, source in documents.items():
         shutil.copyfile(source, output/name)
@@ -72,10 +89,29 @@ def package(gwp_path, exe, output, seconds=None):
         if role=='scenario':
             compiler=ROOT/'build/package/Release/compile_title_program.exe'
             subprocess.run([str(compiler),str(source),str(target)],check=True)
+        elif role=='bgm_catalog':
+            public_catalog={'format':catalog['format'],'version':catalog['version'],'mix':catalog['mix'],'tracks':[{k:v for k,v in t.items() if k!='source'} for t in catalog['tracks']]}
+            target.write_text(json.dumps(public_catalog,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
         else:shutil.copyfile(source, target)
         hashes[name] = record(target)['sha256']
+    # Music is optional at runtime: deleting an unavailable song must not block
+    # boot. Per-track provenance is in catalog.json and package.json instead.
+    for source,name in music:shutil.copyfile(source,data/'bgm'/name)
+    # Editable display names are deliberately outside the mandatory runtime
+    # hash manifest. The immutable audio IDs do not depend on these titles.
+    playlist_header='# UTF-8: filename.wav=Display title / ファイル名.wav=表示名\n# Reopen F12 debug to refresh names. / F12を閉じて開き直すと曲名を再読込します。\n# Blank lines and # comments are ignored. / 空行・#行はコメント。\n'
+    for extra in (False,True):
+        relative='additional/playlist2.txt' if extra else 'playlist1.txt'
+        source=assets['bgm_catalog'].parent/relative if catalog else None
+        target=data/'bgm'/relative
+        if source and source.is_file():shutil.copyfile(source,target)
+        else:target.write_text(playlist_header+('' if extra else ''.join(f"{name}={Path(name).stem}\n" for _,name in music)),encoding='utf-8')
     (data/'lobbies.cfg').write_text(lobby_membership_text(document), encoding='ascii')
     hashes['lobbies.cfg'] = record(data/'lobbies.cfg')['sha256']
+    weapon_catalog = ROOT/'assets/weapon_catalog.tsv'
+    if weapon_catalog.is_file():
+        shutil.copyfile(weapon_catalog, data/'weapon_catalog.tsv')
+        hashes['weapon_catalog.tsv'] = record(data/'weapon_catalog.tsv')['sha256']
     runtime = document['runtime']
     duration = runtime['preview_seconds'] if seconds is None else seconds
     (data/'launch.cfg').write_text(f"MGO2WIN.TITLE 7\n{duration} {runtime['entry_procedure']} {int(runtime['audio_enabled'])}\n{document['network']['policy_url']}\n", encoding='ascii')
@@ -103,7 +139,7 @@ def package(gwp_path, exe, output, seconds=None):
                 'packager_sha256': record(Path(__file__))['sha256'],
                 'input_asset_hashes': {x['role']: x['sha256'] for x in inputs if 'role' in x},
                 'runtime': gwp['runtime'], 'files': files,
-                'limitations': ['START native stereo mix, original DSP parity pending', 'OpenMGO2 login, character selection and live host admission implemented; gameplay, peer mesh and live roster updates pending', 'selected appearance and original lobby motion implemented; some equipment/materials and exact original clip assignment pending', 'no PS3 audiovisual parity claim'],
+                'limitations': ['START native stereo mix, original DSP parity pending', 'OpenMGO2 login, character selection, host admission, roster and map metadata implemented; gameplay and peer mesh pending', 'Map20 textured static preview, spatial hemisphere approximation and world collision query; debug bind-pose placements and local reset; original actor activation, full material/prelighting and gameplay pending', 'selected appearance and original lobby motion implemented; some equipment/materials and exact original clip assignment pending', 'F4 ordinary n022a/TDM weapon draft with recovered prices/restrictions; live DP balance, START readiness, loadout transmission and spawning pending', 'no PS3 audiovisual parity claim'],
                 'runtime_dependencies': ['Windows 10/11 x64 system D3D11, D3DCompiler, XAudio2, BCrypt; MSVC runtime statically linked'],
                 'not_bundled': ['IDA', 'vgmstream/FFmpeg DLLs', 'Noesis', 'Drebin', 'Python', 'SDK installers']}
     (output/'package.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')

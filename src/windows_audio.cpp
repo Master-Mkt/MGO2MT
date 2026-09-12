@@ -12,6 +12,7 @@
 #include <stdexcept>
 #include <vector>
 #include "audio_control.h"
+#include "pcm_wave.h"
 using Microsoft::WRL::ComPtr;
 static void check(HRESULT hr) { if (FAILED(hr)) throw std::runtime_error("Windows audio HRESULT " + std::to_string(static_cast<unsigned long>(hr))); }
 struct Callback final : IXAudio2VoiceCallback {
@@ -61,6 +62,9 @@ int run_audio_probe(int argc, wchar_t** argv, const std::atomic_bool* cancel, co
             dataAt=64;dataSize=static_cast<uint32_t>(pcm);haveFormat=true;nativeLoopBegin=static_cast<uint32_t>(begin);nativeLoopEnd=static_cast<uint32_t>(end);
             if(argc!=3)throw std::runtime_error("GWA uses embedded loop metadata; external loop overrides rejected");
         }else{
+        // BGM uses the same bounded PCM/smpl reader as its library scanner.
+        // Retain extensible PCM support for existing non-BGM diagnostic WAVs.
+        if(control&&control->loopWhole){auto w=mgo2win::read_pcm_wave(bytes);nativeLoopBegin=w.loopBegin;nativeLoopEnd=w.loopEnd?w.loopEnd:w.dataSize/(w.channels*2);}
         if(std::memcmp(bytes.data(),"RIFF",4) || std::memcmp(bytes.data()+8,"WAVE",4) || uint64_t(u32(bytes,4))+8 != bytes.size()) throw std::runtime_error("Invalid RIFF/WAVE extent");
         for(size_t p=12; p<bytes.size();) {
             if(bytes.size()-p<8) throw std::runtime_error("Truncated chunk header");
@@ -72,6 +76,8 @@ int run_audio_probe(int argc, wchar_t** argv, const std::atomic_bool* cancel, co
             } else if(!std::memcmp(bytes.data()+p,"data",4)) {
                 if(dataAt) throw std::runtime_error("Duplicate data chunk");
                 dataAt=begin; dataSize=n;
+            } else if(!std::memcmp(bytes.data()+p,"smpl",4)) {
+                auto w=mgo2win::read_pcm_wave(bytes);if(w.loopEnd){nativeLoopBegin=w.loopBegin;nativeLoopEnd=w.loopEnd;}
             }
             p=begin+n+(n&1); if(p>bytes.size()) throw std::runtime_error("Missing chunk padding");
         }
@@ -97,10 +103,11 @@ int run_audio_probe(int argc, wchar_t** argv, const std::atomic_bool* cancel, co
         float lastRatio=control?control->frequencyRatio.load():1.f;
         if(!(lastRatio>=.5f&&lastRatio<=2.f))throw std::runtime_error("Audio pitch range");
         check(audio.source->SetFrequencyRatio(lastRatio));
-        check(audio.source->SetVolume(0.20f)); check(audio.source->SubmitSourceBuffer(&buffer)); check(audio.source->Start());
+        float initialGain=control?control->gain.load():1.f;if(!(initialGain>=0&&initialGain<=1))throw std::runtime_error("Audio gain range");
+        check(audio.source->SetVolume(0.20f*initialGain)); check(audio.source->SubmitSourceBuffer(&buffer)); check(audio.source->Start());
         const auto deadline=GetTickCount64()+static_cast<ULONGLONG>(seconds*1000);
         XAUDIO2_VOICE_STATE state{};UINT64 observedSamples=0;
-        unsigned volumeUpdates=0;float lastGain=1;
+        unsigned volumeUpdates=0;float lastGain=initialGain;
         do { Sleep(20); check(callback.error.load());
             if(control){float gain=control->gain.load();if(!(gain>=0&&gain<=1))throw std::runtime_error("Audio gain range");if(gain!=lastGain){check(audio.source->SetVolume(.2f*gain));lastGain=gain;++volumeUpdates;}}
             if(control){float ratio=control->frequencyRatio.load();if(!(ratio>=.5f&&ratio<=2.f))throw std::runtime_error("Audio pitch range");if(ratio!=lastRatio){check(audio.source->SetFrequencyRatio(ratio));lastRatio=ratio;}}

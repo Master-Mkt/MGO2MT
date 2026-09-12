@@ -69,6 +69,7 @@ const void* AgreementScreen::draw(){
  }
  text(L"← →：選択    Enter：決定    Esc：終了",83,690,960,25,3,RGB(174,185,165));
 
+ if(!accepted_)menu_focus_guides(dc_,yes_?100:650,618);
  finish_menu_surface(pixels_);
  return pixels_;
 }
