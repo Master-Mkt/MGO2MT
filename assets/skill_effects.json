@@ -1,0 +1,5052 @@
+{
+  "schema": "MGO2WIN.skill_effects",
+  "schema_version": 1,
+  "date": "2026-09-13",
+  "purpose": "evidence_catalog_only_not_runtime_configuration",
+  "rules": {
+    "skill_count": 25,
+    "levels_per_skill": [
+      1,
+      2,
+      3
+    ],
+    "level_zero": "absent skill, represented only in tables; not an equip choice",
+    "unknown_numeric_value": null,
+    "unknown_is_not_neutral": true,
+    "slot_cost_is_not_effect_multiplier": true,
+    "description_is_not_numeric_proof": true,
+    "native_runtime_enabled_by_this_file": false,
+    "four_byte_values": "value is readable decimal; float32_hex/exact_float32 preserve original storage",
+    "throwing_example_1_2": "Not assumed. Confirmed skill8 level1 is motion rate1.1 and local launch-vector multiplier1.15; level2 motion rate is1.2."
+  },
+  "sources": {
+    "elf": {
+      "path": "local-source/MGO2.ELF",
+      "size_bytes": 19615992,
+      "sha256": "1a55a41ee5afdebd89075bd205e412c8311f569ba9dc022f629bb63fb4bfd13a"
+    },
+    "gcx": {
+      "path": "work/stages/n022a/scenerio.gcx",
+      "size_bytes": 1493310,
+      "sha256": "a5601bf0c8020316a05c84c04a560228a392d0aee36c57433a721876fb0a3489"
+    },
+    "catalog": {
+      "path": "assets/skill_catalog.tsv",
+      "size_bytes": 3564,
+      "sha256": "67e90aeca0a6b9dc8b08670dd32dac153fad26730cf2d77c9139127744ad9b0b"
+    },
+    "catalog_audit": {
+      "path": "outputs/skills_resources_20260913/catalog.json",
+      "size_bytes": 4787,
+      "sha256": "307b999cfa571278d43254416853c27eafc30f7cbc7cb380f72bafe6fc43a178"
+    },
+    "cost_export": {
+      "path": "outputs/skills_resources_20260913/ida/data_00FE2700.json",
+      "size_bytes": 4402,
+      "sha256": "b540ea607c0450a898be494abe583e7c41ba207d793f99386d5d49419416cc96"
+    },
+    "reload_note": {
+      "path": "notes/COMBAT_AK102_TIMING_20260913.md",
+      "size_bytes": 8925,
+      "sha256": "fec36a6dcca07d915b20e7ba7f6e191e9ddba455d620e9f1b9098bf49f19fc46"
+    },
+    "mastery_switch": {
+      "path": "outputs/combat_execution_20260913/timing/current/range_008C9E18_008C9F80.json",
+      "size_bytes": 936,
+      "sha256": "11d50afc4ccdc3d22ba9107e62883c2e0aab73ec571a44dbe7a9ee2e916d6088"
+    },
+    "surveyor_consumer": {
+      "path": "outputs/original_lock_20260913/current/008CC0E0.txt",
+      "size_bytes": 12051,
+      "sha256": "80ecb209f3ac92e29b1d7368c1cdcdfe48035ed4292d254852eeb83057d30085"
+    },
+    "skill_reader": {
+      "path": "outputs/original_lock_20260913/current/00816610.txt",
+      "size_bytes": 4272,
+      "sha256": "4447eb2ccb4ff1e0e3cd6f6a5d96b43e70cf4ad79fbaa65dd10e9a8f2928e0f3"
+    },
+    "throw_motion": {
+      "path": "outputs/skill_throw_20260913/ppc/range_0039F280_0039F3D8.txt",
+      "size_bytes": 3028,
+      "sha256": "f28492e294bde6f72587c028abacca9683a8e4907a229b56d091ee950db6acf6"
+    },
+    "throw_vector": {
+      "path": "outputs/skill_throw_20260913/ppc/range_0039CE80_0039CF70.txt",
+      "size_bytes": 2209,
+      "sha256": "657ee6aad994a2c81f73a10ccb9e5f7bbce59d1eaac619679c8315b4724320e3"
+    },
+    "throw_release": {
+      "path": "outputs/skill_throw_20260913/ppc/range_0039EA88_0039EE80.txt",
+      "size_bytes": 9046,
+      "sha256": "6fcd1dbd91fdd3a6eaf6f992752f6ffe0f500cc3b36112c6a0b2e5fc4306099d"
+    },
+    "throw_projectile": {
+      "path": "outputs/skill_throw_20260913/ppc/007B98B8.txt",
+      "size_bytes": 32031,
+      "sha256": "2b5aeb0e7c7f6d9ffcecd66c65097cb841cba6ca74cc4f0c931dd01231d60b32"
+    },
+    "throw_motion_getter": {
+      "path": "outputs/skill_throw_20260913/ppc/00837078.txt",
+      "size_bytes": 1089,
+      "sha256": "acdaee2f62ba85031c0567432d0d76bcd60e60252d3613b38a151e00e17ad93a"
+    },
+    "throw_vector_getter": {
+      "path": "outputs/skill_throw_20260913/ppc/008370C8.txt",
+      "size_bytes": 1089,
+      "sha256": "469524c057a2bc9da56c131709d624c01f1f6cdcea22390837060b405ca1d141"
+    },
+    "throw_verified": {
+      "path": "outputs/skill_throw_20260913/verified.json",
+      "size_bytes": 14944,
+      "sha256": "8622728b8ea11275da073f18df81dbab7463504d91809cc20dda7202d88f3984"
+    },
+    "throw_report": {
+      "path": "outputs/skill_throw_20260913/REPORT.md",
+      "size_bytes": 4426,
+      "sha256": "7b2a02086fc714a78392ac2d745b5cad080a33f8acdc4635c059a615edc6f8b8"
+    }
+  },
+  "tables": {
+    "weapon_reload_rate": {
+      "source": "elf",
+      "address": "0xfdcc60",
+      "encoding": "big_endian_ieee754_binary32",
+      "index": "skill_level; 0 means absent",
+      "values": [
+        {
+          "level": 0,
+          "value": 1,
+          "exact_float32": 1.0,
+          "float32_hex": "0x3f800000"
+        },
+        {
+          "level": 1,
+          "value": 1.15,
+          "exact_float32": 1.149999976158142,
+          "float32_hex": "0x3f933333"
+        },
+        {
+          "level": 2,
+          "value": 1.3,
+          "exact_float32": 1.2999999523162842,
+          "float32_hex": "0x3fa66666"
+        },
+        {
+          "level": 3,
+          "value": 1.5,
+          "exact_float32": 1.5,
+          "float32_hex": "0x3fc00000"
+        }
+      ]
+    },
+    "surveyor_range_multiplier": {
+      "source": "elf",
+      "address": "0xfdcfcc",
+      "encoding": "big_endian_ieee754_binary32",
+      "index": "skill_level; 0 means absent",
+      "values": [
+        {
+          "level": 0,
+          "value": 0.9,
+          "exact_float32": 0.8999999761581421,
+          "float32_hex": "0x3f666666"
+        },
+        {
+          "level": 1,
+          "value": 1,
+          "exact_float32": 1.0,
+          "float32_hex": "0x3f800000"
+        },
+        {
+          "level": 2,
+          "value": 1.2,
+          "exact_float32": 1.2000000476837158,
+          "float32_hex": "0x3f99999a"
+        },
+        {
+          "level": 3,
+          "value": 1.4,
+          "exact_float32": 1.399999976158142,
+          "float32_hex": "0x3fb33333"
+        }
+      ]
+    },
+    "throw_getter_837078": {
+      "source": "elf",
+      "address": "0xfdcc30",
+      "encoding": "big_endian_ieee754_binary32",
+      "index": "skill_level; 0 means absent",
+      "values": [
+        {
+          "level": 0,
+          "value": 1,
+          "exact_float32": 1.0,
+          "float32_hex": "0x3f800000"
+        },
+        {
+          "level": 1,
+          "value": 1.1,
+          "exact_float32": 1.100000023841858,
+          "float32_hex": "0x3f8ccccd"
+        },
+        {
+          "level": 2,
+          "value": 1.2,
+          "exact_float32": 1.2000000476837158,
+          "float32_hex": "0x3f99999a"
+        },
+        {
+          "level": 3,
+          "value": 1.3,
+          "exact_float32": 1.2999999523162842,
+          "float32_hex": "0x3fa66666"
+        }
+      ]
+    },
+    "throw_getter_8370c8": {
+      "source": "elf",
+      "address": "0xfdcc40",
+      "encoding": "big_endian_ieee754_binary32",
+      "index": "skill_level; 0 means absent",
+      "values": [
+        {
+          "level": 0,
+          "value": 1,
+          "exact_float32": 1.0,
+          "float32_hex": "0x3f800000"
+        },
+        {
+          "level": 1,
+          "value": 1.15,
+          "exact_float32": 1.149999976158142,
+          "float32_hex": "0x3f933333"
+        },
+        {
+          "level": 2,
+          "value": 1.3,
+          "exact_float32": 1.2999999523162842,
+          "float32_hex": "0x3fa66666"
+        },
+        {
+          "level": 3,
+          "value": 1.5,
+          "exact_float32": 1.5,
+          "float32_hex": "0x3fc00000"
+        }
+      ]
+    }
+  },
+  "effect_definitions": {
+    "weapon_reload_rate": {
+      "status": "confirmed_scoped",
+      "target": "online reload motion playback rate",
+      "unit": "dimensionless_multiplier",
+      "table": "weapon_reload_rate",
+      "skill_ids": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "conditions": [
+        "Weapon class 2/3/4/5/6 selects skill ID 1/2/3/4/5 through 0x8C9DD8.",
+        "0x837258 calls that selector and reads 0xFDCC60 + 4*level.",
+        "Reload 0x385B88 uses literal 1.0 when attack+0x128 bit6 is set; otherwise virtual+0x134 supplies this rate.",
+        "This is a motion rate, not direct damage or a duration multiplier; each weapon motion and refill event remain separate."
+      ],
+      "evidence": [
+        {
+          "source": "elf",
+          "addresses": [
+            "0x837258",
+            "0x8C9DD8",
+            "0x816610",
+            "0x385B88",
+            "0x3870C8",
+            "0x33620C",
+            "0xD4DF48"
+          ]
+        },
+        {
+          "source": "reload_note"
+        },
+        {
+          "source": "mastery_switch"
+        }
+      ]
+    },
+    "surveyor_range_multiplier": {
+      "status": "confirmed_scoped",
+      "target": "online weapon range parameter field +0x34; used by crosshair and lock-on paths",
+      "unit": "dimensionless_multiplier",
+      "table": "surveyor_range_multiplier",
+      "skill_ids": [
+        7
+      ],
+      "conditions": [
+        "Successful online weapon parameter load in 0x8CC0E0.",
+        "D34C90 applies the weapon-info actor-flag range bonus first; 8CC0E0 then applies Surveyor; the lock-acquire environment expression occurs later.",
+        "0x8CC20C queries skill ID7, then 0x8CC24C/0x8CC250 multiplies the range.",
+        "Absent level0 is 0.9 times the weapon table base, not 1.0. Values are not relative to the absent-skill result.",
+        "With original actor flags0, AK102 weapon ID25 base range8000 gives [7200,8000,9600,11200] before the later environment expression. Width and angle are separate parameters.",
+        "Crosshair candidate 0x83EAA8 uses weapon range directly. Lock acquire 0x35EAF8 applies an additional 0xC05C38 expression and minimum3000; retention allows acquire range+1000. These are not extra Surveyor multipliers."
+      ],
+      "evidence": [
+        {
+          "source": "surveyor_consumer"
+        },
+        {
+          "source": "skill_reader"
+        },
+        {
+          "source": "elf",
+          "addresses": [
+            "0x8CC1F0",
+            "0x8CC20C",
+            "0x8CC218",
+            "0x8CC234",
+            "0x8CC24C",
+            "0x8CC250",
+            "0xFDCFCC",
+            "0x1293840"
+          ]
+        }
+      ]
+    },
+    "throw_motion_playback_rate": {
+      "status": "confirmed_scoped",
+      "target": "throwing action animation playback rate",
+      "unit": "dimensionless_multiplier",
+      "table": "throw_getter_837078",
+      "skill_ids": [
+        8
+      ],
+      "conditions": [
+        "Online attack vtable0x1196970 +0x140 resolves to0x837078, which reads skill ID8.",
+        "The throwing branch in0x39F028 calls the getter at0x39F30C and writes motion-request rate+8.",
+        "A second getter at0x39F35C supplies0x3337D8 (r4=1,r5=2), then0xD4DF48 writes active motion+0x38.",
+        "This speeds up the throwing motion; it is not a launch-vector or distance multiplier. Branch, posture and release timing remain separate."
+      ],
+      "evidence": [
+        {
+          "source": "throw_motion_getter"
+        },
+        {
+          "source": "throw_motion"
+        },
+        {
+          "source": "elf",
+          "addresses": [
+            "0x1196AB0",
+            "0x12012C0",
+            "0x837078",
+            "0xFDCC30",
+            "0x39F30C",
+            "0x39F35C",
+            "0x3337D8",
+            "0xD4DF48"
+          ]
+        },
+        {
+          "source": "throw_verified"
+        },
+        {
+          "source": "throw_report"
+        }
+      ]
+    },
+    "throw_launch_vector_multiplier": {
+      "status": "confirmed_scoped",
+      "target": "skill-dependent local throwing launch-vector components, before rotation and owner-motion addition",
+      "unit": "dimensionless_multiplier",
+      "table": "throw_getter_8370c8",
+      "skill_ids": [
+        8
+      ],
+      "conditions": [
+        "Online attack vtable0x1196970 +0x13C resolves to0x8370C8, which reads skill ID8.",
+        "0x39CDA8 throwing branches multiply local launch-vector values based on18000/12000/6000, rotate the vector and store attack+0x180.",
+        "After the motion-release check,0x39EA88 calls0x39CDA8 at0x39EC48, reads+0x180 at0x39ECB8 and adds owner+0x2D0 at0x39ECC8.",
+        "After owner-motion addition,0x39ECF4 scales xyz by the original float32 0.001 constant (0x11ABB54).0x39EDFC passes this vector to0x7B98B8; that producer scales xyz by1000.0 (0x11C4F8C) and stores projectile+0x240/+0x244/+0x248. SI units remain unresolved; neither scale is a skill multiplier.",
+        "The multiplier applies before owner-motion addition. It is not a blanket multiplier on the final world velocity, projectile damage, fuse duration or achieved distance. Ballistics and collision also affect distance."
+      ],
+      "evidence": [
+        {
+          "source": "throw_vector_getter"
+        },
+        {
+          "source": "throw_vector"
+        },
+        {
+          "source": "throw_release"
+        },
+        {
+          "source": "throw_projectile"
+        },
+        {
+          "source": "elf",
+          "addresses": [
+            "0x1196AAC",
+            "0x12012C8",
+            "0x8370C8",
+            "0xFDCC40",
+            "0x39CDA8",
+            "0x39CEE8",
+            "0x39EC48",
+            "0x39ECC8",
+            "0x39EDFC",
+            "0x7B98B8"
+          ]
+        },
+        {
+          "source": "throw_verified"
+        },
+        {
+          "source": "throw_report"
+        }
+      ]
+    },
+    "weapon_recoil": {
+      "status": "unresolved",
+      "target": "weapon_recoil",
+      "unit": null,
+      "table": null,
+      "skill_ids": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "conditions": [],
+      "evidence": [
+        {
+          "source": "gcx"
+        }
+      ]
+    },
+    "pump_action_rate": {
+      "status": "unresolved",
+      "target": "pump_action_rate",
+      "unit": null,
+      "table": null,
+      "skill_ids": [
+        4
+      ],
+      "conditions": [],
+      "evidence": [
+        {
+          "source": "gcx"
+        }
+      ]
+    },
+    "bolt_action_rate": {
+      "status": "unresolved",
+      "target": "bolt_action_rate",
+      "unit": null,
+      "table": null,
+      "skill_ids": [
+        5
+      ],
+      "conditions": [],
+      "evidence": [
+        {
+          "source": "gcx"
+        }
+      ]
+    },
+    "unscoped_first_person_zoom": {
+      "status": "unresolved",
+      "target": "unscoped_first_person_zoom",
+      "unit": null,
+      "table": null,
+      "skill_ids": [
+        6
+      ],
+      "conditions": [],
+      "evidence": [
+        {
+          "source": "gcx"
+        }
+      ]
+    },
+    "aim_sway": {
+      "status": "unresolved",
+      "target": "aim_sway",
+      "unit": null,
+      "table": null,
+      "skill_ids": [
+        6
+      ],
+      "conditions": [],
+      "evidence": [
+        {
+          "source": "gcx"
+        }
+      ]
+    },
+    "trap_setup_rate": {
+      "status": "unresolved",
+      "target": "trap_setup_rate",
+      "unit": null,
+      "table": null,
+      "skill_ids": [
+        9
+      ],
+      "conditions": [],
+      "evidence": [
+        {
+          "source": "gcx"
+        }
+      ]
+    },
+    "cqc_knockout_damage": {
+      "status": "unresolved",
+      "target": "cqc_knockout_damage",
+      "unit": null,
+      "table": null,
+      "skill_ids": [
+        10
+      ],
+      "conditions": [],
+      "evidence": [
+        {
+          "source": "gcx"
+        }
+      ]
+    },
+    "cqc_action_permissions": {
+      "status": "unresolved",
+      "target": "cqc_action_permissions",
+      "unit": null,
+      "table": null,
+      "skill_ids": [
+        10
+      ],
+      "conditions": [],
+      "evidence": [
+        {
+          "source": "gcx"
+        }
+      ]
+    },
+    "knife_attack_rate": {
+      "status": "unresolved",
+      "target": "knife_attack_rate",
+      "unit": null,
+      "table": null,
+      "skill_ids": [
+        11
+      ],
+      "conditions": [],
+      "evidence": [
+        {
+          "source": "gcx"
+        }
+      ]
+    },
+    "knife_action_permissions": {
+      "status": "unresolved",
+      "target": "knife_action_permissions",
+      "unit": null,
+      "table": null,
+      "skill_ids": [
+        11
+      ],
+      "conditions": [],
+      "evidence": [
+        {
+          "source": "gcx"
+        }
+      ]
+    },
+    "movement_speed": {
+      "status": "unresolved",
+      "target": "movement_speed",
+      "unit": null,
+      "table": null,
+      "skill_ids": [
+        12
+      ],
+      "conditions": [],
+      "evidence": [
+        {
+          "source": "gcx"
+        }
+      ]
+    },
+    "attacked_enemy_display_duration": {
+      "status": "unresolved",
+      "target": "attacked_enemy_display_duration",
+      "unit": null,
+      "table": null,
+      "skill_ids": [
+        13
+      ],
+      "conditions": [],
+      "evidence": [
+        {
+          "source": "gcx"
+        }
+      ]
+    },
+    "nearby_trap_display_range": {
+      "status": "unresolved",
+      "target": "nearby_trap_display_range",
+      "unit": null,
+      "table": null,
+      "skill_ids": [
+        14
+      ],
+      "conditions": [],
+      "evidence": [
+        {
+          "source": "gcx"
+        }
+      ]
+    },
+    "enemy_targeting_display_conditions": {
+      "status": "unresolved",
+      "target": "enemy_targeting_display_conditions",
+      "unit": null,
+      "table": null,
+      "skill_ids": [
+        15
+      ],
+      "conditions": [],
+      "evidence": [
+        {
+          "source": "gcx"
+        }
+      ]
+    },
+    "scanning_duration": {
+      "status": "unresolved",
+      "target": "scanning_duration",
+      "unit": null,
+      "table": null,
+      "skill_ids": [
+        16
+      ],
+      "conditions": [],
+      "evidence": [
+        {
+          "source": "gcx"
+        }
+      ]
+    },
+    "salute_codec_broadcast_behavior": {
+      "status": "unresolved",
+      "target": "salute_codec_broadcast_behavior",
+      "unit": null,
+      "table": null,
+      "skill_ids": [
+        17
+      ],
+      "conditions": [],
+      "evidence": [
+        {
+          "source": "gcx"
+        }
+      ]
+    },
+    "self_and_teammate_recovery_rate": {
+      "status": "unresolved",
+      "target": "self_and_teammate_recovery_rate",
+      "unit": null,
+      "table": null,
+      "skill_ids": [
+        18
+      ],
+      "conditions": [],
+      "evidence": [
+        {
+          "source": "gcx"
+        }
+      ]
+    },
+    "box_movement_speed": {
+      "status": "unresolved",
+      "target": "box_movement_speed",
+      "unit": null,
+      "table": null,
+      "skill_ids": [
+        19
+      ],
+      "conditions": [],
+      "evidence": [
+        {
+          "source": "gcx"
+        }
+      ]
+    },
+    "box_tackle_permission": {
+      "status": "unresolved",
+      "target": "box_tackle_permission",
+      "unit": null,
+      "table": null,
+      "skill_ids": [
+        19
+      ],
+      "conditions": [],
+      "evidence": [
+        {
+          "source": "gcx"
+        }
+      ]
+    },
+    "cqc_ex_action_permissions": {
+      "status": "unresolved",
+      "target": "cqc_ex_action_permissions",
+      "unit": null,
+      "table": null,
+      "skill_ids": [
+        20
+      ],
+      "conditions": [],
+      "evidence": [
+        {
+          "source": "gcx"
+        }
+      ]
+    },
+    "shield_movement_speed": {
+      "status": "unresolved",
+      "target": "shield_movement_speed",
+      "unit": null,
+      "table": null,
+      "skill_ids": [
+        21
+      ],
+      "conditions": [],
+      "evidence": [
+        {
+          "source": "gcx"
+        }
+      ]
+    },
+    "shield_attack_rate": {
+      "status": "unresolved",
+      "target": "shield_attack_rate",
+      "unit": null,
+      "table": null,
+      "skill_ids": [
+        21
+      ],
+      "conditions": [],
+      "evidence": [
+        {
+          "source": "gcx"
+        }
+      ]
+    },
+    "shield_run_permission": {
+      "status": "unresolved",
+      "target": "shield_run_permission",
+      "unit": null,
+      "table": null,
+      "skill_ids": [
+        21
+      ],
+      "conditions": [],
+      "evidence": [
+        {
+          "source": "gcx"
+        }
+      ]
+    },
+    "scanning_ex_target_conditions": {
+      "status": "unresolved",
+      "target": "scanning_ex_target_conditions",
+      "unit": null,
+      "table": null,
+      "skill_ids": [
+        22
+      ],
+      "conditions": [],
+      "evidence": [
+        {
+          "source": "gcx"
+        }
+      ]
+    },
+    "sop_information_suppression": {
+      "status": "unresolved",
+      "target": "sop_information_suppression",
+      "unit": null,
+      "table": null,
+      "skill_ids": [
+        23
+      ],
+      "conditions": [],
+      "evidence": [
+        {
+          "source": "gcx"
+        }
+      ]
+    },
+    "impact_resistance_conditions": {
+      "status": "unresolved",
+      "target": "impact_resistance_conditions",
+      "unit": null,
+      "table": null,
+      "skill_ids": [
+        24
+      ],
+      "conditions": [],
+      "evidence": [
+        {
+          "source": "gcx"
+        }
+      ]
+    },
+    "charm_target_conditions_and_duration": {
+      "status": "unresolved",
+      "target": "charm_target_conditions_and_duration",
+      "unit": null,
+      "table": null,
+      "skill_ids": [
+        25
+      ],
+      "conditions": [],
+      "evidence": [
+        {
+          "source": "gcx"
+        }
+      ]
+    }
+  },
+  "unresolved_parameter_tables": [],
+  "skills": [
+    {
+      "id": 1,
+      "original_tag": "Skill_HAND_MAS",
+      "name_switch_target": "0xb17704",
+      "names": {
+        "native_catalog": {
+          "ja": "ハンドガンマスタリー",
+          "en": "HANDGUN MASTERY"
+        },
+        "original_gcx_ja": {
+          "source": "gcx",
+          "resource_id": 913,
+          "file_offset": "0x2b70f",
+          "text": "ハンドガン・マスタリー"
+        }
+      },
+      "description": {
+        "summary_ja": "対応拳銃の反動軽減と装填時間短縮。",
+        "status": "gcx_text_semantics_not_numeric_consumer_proof",
+        "source": "gcx",
+        "original_texts": [
+          {
+            "level": 1,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1293,
+              "file_offset": "0x2cb64",
+              "text": "ハンドガンを扱うスキル。\\n発射時の反動を抑え、\\nリロード時間を短縮する。\\n\\n\\n　　　　　　　　　　　　　　　反動制御★☆☆\\n　　　　　　　　　　　　　　　リロード★☆☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1294,
+              "file_offset": "0x2cc5b",
+              "text": "Skill wielding handguns.\\nReduces recoil when firing and \\ndecreases reload time.\\n- Recoil ★☆☆\\n- Reload ★☆☆"
+            }
+          },
+          {
+            "level": 2,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1299,
+              "file_offset": "0x2ceee",
+              "text": "ハンドガンを扱うスキル。\\n発射時の反動を抑え、\\nリロード時間を短縮する。\\n\\n\\n　　　　　　　　　　　　　　　反動制御★★☆\\n　　　　　　　　　　　　　　　リロード★★☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1300,
+              "file_offset": "0x2cfe5",
+              "text": "Skill wielding handguns.\\nReduces recoil when firing and \\ndecreases reload time.\\n- Recoil ★★☆\\n- Reload ★★☆"
+            }
+          },
+          {
+            "level": 3,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1305,
+              "file_offset": "0x2d277",
+              "text": "ハンドガンを扱うスキル。\\n発射時の反動を抑え、\\nリロード時間を短縮する。\\n\\n\\n　　　　　　　　　　　　　　　反動制御★★★\\n　　　　　　　　　　　　　　　リロード★★★"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1306,
+              "file_offset": "0x2d36e",
+              "text": "Skill wielding handguns.\\nReduces recoil when firing and \\ndecreases reload time.\\n- Recoil ★★★\\n- Reload ★★★"
+            }
+          }
+        ]
+      },
+      "original_level_label_suppressed": false,
+      "levels": [
+        {
+          "level": 1,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2703",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "weapon_reload_rate",
+              "status": "confirmed_scoped",
+              "value": 1.15,
+              "unit": "dimensionless_multiplier",
+              "table": "weapon_reload_rate",
+              "table_index": 1,
+              "float32_hex": "0x3f933333",
+              "exact_float32": 1.149999976158142,
+              "unresolved": []
+            },
+            {
+              "effect_id": "weapon_recoil",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "slot_cost": 2,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2704",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "weapon_reload_rate",
+              "status": "confirmed_scoped",
+              "value": 1.3,
+              "unit": "dimensionless_multiplier",
+              "table": "weapon_reload_rate",
+              "table_index": 2,
+              "float32_hex": "0x3fa66666",
+              "exact_float32": 1.2999999523162842,
+              "unresolved": []
+            },
+            {
+              "effect_id": "weapon_recoil",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "slot_cost": 3,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2705",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "weapon_reload_rate",
+              "status": "confirmed_scoped",
+              "value": 1.5,
+              "unit": "dimensionless_multiplier",
+              "table": "weapon_reload_rate",
+              "table_index": 3,
+              "float32_hex": "0x3fc00000",
+              "exact_float32": 1.5,
+              "unresolved": []
+            },
+            {
+              "effect_id": "weapon_recoil",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        }
+      ],
+      "native_implementation": {
+        "settings_save_hud": "implemented_candidate",
+        "combat_effects": "not_connected_to_authoritative_saved_loadout",
+        "notes": "Pure helpers and ordinary baseline behavior do not grant a selected skill. Server-to-host saved-loadout authority remains unresolved."
+      }
+    },
+    {
+      "id": 2,
+      "original_tag": "Skill_SBMC_MAS",
+      "name_switch_target": "0xb17734",
+      "names": {
+        "native_catalog": {
+          "ja": "サブマシンガンマスタリー",
+          "en": "SMG MASTERY"
+        },
+        "original_gcx_ja": {
+          "source": "gcx",
+          "resource_id": 923,
+          "file_offset": "0x2b7d1",
+          "text": "サブマシンガン・マスタリー"
+        }
+      },
+      "description": {
+        "summary_ja": "対応サブマシンガンの反動軽減と装填時間短縮。",
+        "status": "gcx_text_semantics_not_numeric_consumer_proof",
+        "source": "gcx",
+        "original_texts": [
+          {
+            "level": 1,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1311,
+              "file_offset": "0x2d600",
+              "text": "サブマシンガンを扱うスキル。\\n発射時の反動を抑え、\\nリロード時間を短縮する。\\n\\n\\n　　　　　　　　　　　　　　　反動制御★☆☆\\n　　　　　　　　　　　　　　　リロード★☆☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1312,
+              "file_offset": "0x2d6fd",
+              "text": "Skill wielding submachine guns.\\nReduces recoil when firing and \\ndecreases reload time.\\n- Recoil ★☆☆\\n- Reload ★☆☆"
+            }
+          },
+          {
+            "level": 2,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1317,
+              "file_offset": "0x2d99d",
+              "text": "サブマシンガンを扱うスキル。\\n発射時の反動を抑え、\\nリロード時間を短縮する。\\n\\n\\n　　　　　　　　　　　　　　　反動制御★★☆\\n　　　　　　　　　　　　　　　リロード★★☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1318,
+              "file_offset": "0x2da9a",
+              "text": "Skill wielding submachine guns.\\nReduces recoil when firing and \\ndecreases reload time.\\n- Recoil ★★☆\\n- Reload ★★☆"
+            }
+          },
+          {
+            "level": 3,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1323,
+              "file_offset": "0x2dd3a",
+              "text": "サブマシンガンを扱うスキル。\\n発射時の反動を抑え、\\nリロード時間を短縮する。\\n\\n\\n　　　　　　　　　　　　　　　反動制御★★★\\n　　　　　　　　　　　　　　　リロード★★★"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1324,
+              "file_offset": "0x2de37",
+              "text": "Skill wielding submachine guns.\\nReduces recoil when firing and \\ndecreases reload time.\\n- Recoil ★★★\\n- Reload ★★★"
+            }
+          }
+        ]
+      },
+      "original_level_label_suppressed": false,
+      "levels": [
+        {
+          "level": 1,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2706",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "weapon_reload_rate",
+              "status": "confirmed_scoped",
+              "value": 1.15,
+              "unit": "dimensionless_multiplier",
+              "table": "weapon_reload_rate",
+              "table_index": 1,
+              "float32_hex": "0x3f933333",
+              "exact_float32": 1.149999976158142,
+              "unresolved": []
+            },
+            {
+              "effect_id": "weapon_recoil",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "slot_cost": 2,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2707",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "weapon_reload_rate",
+              "status": "confirmed_scoped",
+              "value": 1.3,
+              "unit": "dimensionless_multiplier",
+              "table": "weapon_reload_rate",
+              "table_index": 2,
+              "float32_hex": "0x3fa66666",
+              "exact_float32": 1.2999999523162842,
+              "unresolved": []
+            },
+            {
+              "effect_id": "weapon_recoil",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "slot_cost": 3,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2708",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "weapon_reload_rate",
+              "status": "confirmed_scoped",
+              "value": 1.5,
+              "unit": "dimensionless_multiplier",
+              "table": "weapon_reload_rate",
+              "table_index": 3,
+              "float32_hex": "0x3fc00000",
+              "exact_float32": 1.5,
+              "unresolved": []
+            },
+            {
+              "effect_id": "weapon_recoil",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        }
+      ],
+      "native_implementation": {
+        "settings_save_hud": "implemented_candidate",
+        "combat_effects": "not_connected_to_authoritative_saved_loadout",
+        "notes": "Pure helpers and ordinary baseline behavior do not grant a selected skill. Server-to-host saved-loadout authority remains unresolved."
+      }
+    },
+    {
+      "id": 3,
+      "original_tag": "Skill_ASSLT_MAS",
+      "name_switch_target": "0xb17744",
+      "names": {
+        "native_catalog": {
+          "ja": "アサルトライフルマスタリー",
+          "en": "ASSLT. R. MASTERY"
+        },
+        "original_gcx_ja": {
+          "source": "gcx",
+          "resource_id": 933,
+          "file_offset": "0x2b88a",
+          "text": "アサルトライフル・マスタリー"
+        }
+      },
+      "description": {
+        "summary_ja": "対応アサルトライフルの反動軽減と装填時間短縮。",
+        "status": "gcx_text_semantics_not_numeric_consumer_proof",
+        "source": "gcx",
+        "original_texts": [
+          {
+            "level": 1,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1329,
+              "file_offset": "0x2e0d7",
+              "text": "アサルトライフルを扱うスキル。\\n発射時の反動を抑え、\\nリロード時間を短縮する。\\n\\n\\n　　　　　　　　　　　　　　　反動制御★☆☆\\n　　　　　　　　　　　　　　　リロード★☆☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1330,
+              "file_offset": "0x2e1d7",
+              "text": "Skill wielding assault rifles.\\nReduces recoil when firing and \\ndecreases reload time.\\n- Recoil ★☆☆\\n- Reload ★☆☆"
+            }
+          },
+          {
+            "level": 2,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1335,
+              "file_offset": "0x2e481",
+              "text": "アサルトライフルを扱うスキル。\\n発射時の反動を抑え、\\nリロード時間を短縮する。\\n\\n\\n　　　　　　　　　　　　　　　反動制御★★☆\\n　　　　　　　　　　　　　　　リロード★★☆\\n"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1336,
+              "file_offset": "0x2e583",
+              "text": "Skill wielding assault rifles.\\nReduces recoil when firing and \\ndecreases reload time.\\n- Recoil ★★☆\\n- Reload ★★☆"
+            }
+          },
+          {
+            "level": 3,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1341,
+              "file_offset": "0x2e82d",
+              "text": "アサルトライフルを扱うスキル。\\n発射時の反動を抑え、\\nリロード時間を短縮する。\\n\\n\\n　　　　　　　　　　　　　　　反動制御★★★\\n　　　　　　　　　　　　　　　リロード★★★"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1342,
+              "file_offset": "0x2e92d",
+              "text": "Skill wielding assault rifles.\\nReduces recoil when firing and \\ndecreases reload time.\\n- Recoil ★★★\\n- Reload ★★★"
+            }
+          }
+        ]
+      },
+      "original_level_label_suppressed": false,
+      "levels": [
+        {
+          "level": 1,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2709",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "weapon_reload_rate",
+              "status": "confirmed_scoped",
+              "value": 1.15,
+              "unit": "dimensionless_multiplier",
+              "table": "weapon_reload_rate",
+              "table_index": 1,
+              "float32_hex": "0x3f933333",
+              "exact_float32": 1.149999976158142,
+              "unresolved": []
+            },
+            {
+              "effect_id": "weapon_recoil",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "slot_cost": 2,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe270a",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "weapon_reload_rate",
+              "status": "confirmed_scoped",
+              "value": 1.3,
+              "unit": "dimensionless_multiplier",
+              "table": "weapon_reload_rate",
+              "table_index": 2,
+              "float32_hex": "0x3fa66666",
+              "exact_float32": 1.2999999523162842,
+              "unresolved": []
+            },
+            {
+              "effect_id": "weapon_recoil",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "slot_cost": 3,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe270b",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "weapon_reload_rate",
+              "status": "confirmed_scoped",
+              "value": 1.5,
+              "unit": "dimensionless_multiplier",
+              "table": "weapon_reload_rate",
+              "table_index": 3,
+              "float32_hex": "0x3fc00000",
+              "exact_float32": 1.5,
+              "unresolved": []
+            },
+            {
+              "effect_id": "weapon_recoil",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        }
+      ],
+      "native_implementation": {
+        "settings_save_hud": "implemented_candidate",
+        "combat_effects": "not_connected_to_authoritative_saved_loadout",
+        "notes": "Pure helpers and ordinary baseline behavior do not grant a selected skill. Server-to-host saved-loadout authority remains unresolved."
+      }
+    },
+    {
+      "id": 4,
+      "original_tag": "Skill_SHOT_MAS",
+      "name_switch_target": "0xb17754",
+      "names": {
+        "native_catalog": {
+          "ja": "ショットガンマスタリー",
+          "en": "SHOTGUN MASTERY"
+        },
+        "original_gcx_ja": {
+          "source": "gcx",
+          "resource_id": 943,
+          "file_offset": "0x2b968",
+          "text": "ショットガン・マスタリー"
+        }
+      },
+      "description": {
+        "summary_ja": "対応ショットガンの反動軽減、装填とポンプ動作の高速化。",
+        "status": "gcx_text_semantics_not_numeric_consumer_proof",
+        "source": "gcx",
+        "original_texts": [
+          {
+            "level": 1,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1347,
+              "file_offset": "0x2ebd7",
+              "text": "ショットガンを扱うスキル。\\n発射時の反動を抑え、リロード、\\nポンプアクションを素早く行う。\\n\\n　　　　　　　　　　　　　　　反動制御★☆☆\\n　　　　　　　　　　　　　　　リロード★☆☆\\n　　　　　　　　　　　ポンプアクション★☆☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1348,
+              "file_offset": "0x2ed2b",
+              "text": "Skill wielding shotguns. Reduces\\nrecoil when firing and makes reloading \\nand pump action faster.\\n- Recoil ★☆☆\\n- Reload ★☆☆\\n- Pump action ★☆☆"
+            }
+          },
+          {
+            "level": 2,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1353,
+              "file_offset": "0x2f09b",
+              "text": "ショットガンを扱うスキル。\\n発射時の反動を抑え、リロード、\\nポンプアクションを素早く行う。\\n\\n　　　　　　　　　　　　　　　反動制御★★☆\\n　　　　　　　　　　　　　　　リロード★★☆\\n　　　　　　　　　　　ポンプアクション★★☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1354,
+              "file_offset": "0x2f1ef",
+              "text": "Skill wielding shotguns. Reduces\\nrecoil when firing and makes reloading \\nand pump action faster.\\n- Recoil ★★☆\\n- Reload ★★☆\\n- Pump action ★★☆"
+            }
+          },
+          {
+            "level": 3,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1359,
+              "file_offset": "0x2f560",
+              "text": "ショットガンを扱うスキル。\\n発射時の反動を抑え、リロード、\\nポンプアクションを素早く行う。\\n\\n　　　　　　　　　　　　　　　反動制御★★★\\n　　　　　　　　　　　　　　　リロード★★★\\n　　　　　　　　　　　ポンプアクション★★★"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1360,
+              "file_offset": "0x2f6b4",
+              "text": "Skill wielding shotguns. Reduces\\nrecoil when firing and makes reloading \\nand pump action faster.\\n- Recoil ★★★\\n- Reload ★★★\\n- Pump action ★★★"
+            }
+          }
+        ]
+      },
+      "original_level_label_suppressed": false,
+      "levels": [
+        {
+          "level": 1,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe270c",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "weapon_reload_rate",
+              "status": "confirmed_scoped",
+              "value": 1.15,
+              "unit": "dimensionless_multiplier",
+              "table": "weapon_reload_rate",
+              "table_index": 1,
+              "float32_hex": "0x3f933333",
+              "exact_float32": 1.149999976158142,
+              "unresolved": []
+            },
+            {
+              "effect_id": "weapon_recoil",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            },
+            {
+              "effect_id": "pump_action_rate",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "slot_cost": 2,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe270d",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "weapon_reload_rate",
+              "status": "confirmed_scoped",
+              "value": 1.3,
+              "unit": "dimensionless_multiplier",
+              "table": "weapon_reload_rate",
+              "table_index": 2,
+              "float32_hex": "0x3fa66666",
+              "exact_float32": 1.2999999523162842,
+              "unresolved": []
+            },
+            {
+              "effect_id": "weapon_recoil",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            },
+            {
+              "effect_id": "pump_action_rate",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "slot_cost": 3,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe270e",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "weapon_reload_rate",
+              "status": "confirmed_scoped",
+              "value": 1.5,
+              "unit": "dimensionless_multiplier",
+              "table": "weapon_reload_rate",
+              "table_index": 3,
+              "float32_hex": "0x3fc00000",
+              "exact_float32": 1.5,
+              "unresolved": []
+            },
+            {
+              "effect_id": "weapon_recoil",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            },
+            {
+              "effect_id": "pump_action_rate",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        }
+      ],
+      "native_implementation": {
+        "settings_save_hud": "implemented_candidate",
+        "combat_effects": "not_connected_to_authoritative_saved_loadout",
+        "notes": "Pure helpers and ordinary baseline behavior do not grant a selected skill. Server-to-host saved-loadout authority remains unresolved."
+      }
+    },
+    {
+      "id": 5,
+      "original_tag": "Skill_SNIPPER_MAS",
+      "name_switch_target": "0xb17764",
+      "names": {
+        "native_catalog": {
+          "ja": "スナイパーライフルマスタリー",
+          "en": "SNIPER R. MASTERY"
+        },
+        "original_gcx_ja": {
+          "source": "gcx",
+          "resource_id": 953,
+          "file_offset": "0x2ba28",
+          "text": "スナイパーライフル・マスタリー"
+        }
+      },
+      "description": {
+        "summary_ja": "対応スナイパーライフルの反動軽減、装填とボルト動作の高速化。",
+        "status": "gcx_text_semantics_not_numeric_consumer_proof",
+        "source": "gcx",
+        "original_texts": [
+          {
+            "level": 1,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1365,
+              "file_offset": "0x2fa25",
+              "text": "スナイパーライフルを扱うスキル。\\n発射時の反動を抑え、リロード、\\nボルトアクションを素早く行う。\\n\\n　　　　　　　　　　　　　　　反動制御★☆☆\\n　　　　　　　　　　　　　　　リロード★☆☆\\n　　　　　　　　　　　ボルトアクション★☆☆\\n"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1366,
+              "file_offset": "0x2fb84",
+              "text": "Skill wielding sniper rifles. Reduces\\nrecoil when firing and makes reloading \\nand bolt action faster.\\n- Recoil ★☆☆\\n- Reload ★☆☆\\n- Bolt action ★☆☆"
+            }
+          },
+          {
+            "level": 2,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1371,
+              "file_offset": "0x2ff1b",
+              "text": "スナイパーライフルを扱うスキル。\\n発射時の反動を抑え、リロード、\\nボルトアクションを素早く行う。\\n\\n　　　　　　　　　　　　　　　反動制御★★☆\\n　　　　　　　　　　　　　　　リロード★★☆\\n　　　　　　　　　　　ボルトアクション★★☆\\n"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1372,
+              "file_offset": "0x3007a",
+              "text": "Skill wielding sniper rifles. Reduces\\nrecoil when firing and makes reloading \\nand bolt action faster.\\n- Recoil ★★☆\\n- Reload ★★☆\\n- Bolt action ★★☆"
+            }
+          },
+          {
+            "level": 3,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1377,
+              "file_offset": "0x30411",
+              "text": "スナイパーライフルを扱うスキル。\\n発射時の反動を抑え、リロード、\\nボルトアクションを素早く行う。\\n\\n　　　　　　　　　　　　　　　反動制御★★★\\n　　　　　　　　　　　　　　　リロード★★★\\n　　　　　　　　　　　ボルトアクション★★★"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1378,
+              "file_offset": "0x3056e",
+              "text": "Skill wielding sniper rifles. Reduces\\nrecoil when firing and makes reloading \\nand bolt action faster.\\n- Recoil ★★★\\n- Reload ★★★\\n- Bolt action ★★★"
+            }
+          }
+        ]
+      },
+      "original_level_label_suppressed": false,
+      "levels": [
+        {
+          "level": 1,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe270f",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "weapon_reload_rate",
+              "status": "confirmed_scoped",
+              "value": 1.15,
+              "unit": "dimensionless_multiplier",
+              "table": "weapon_reload_rate",
+              "table_index": 1,
+              "float32_hex": "0x3f933333",
+              "exact_float32": 1.149999976158142,
+              "unresolved": []
+            },
+            {
+              "effect_id": "weapon_recoil",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            },
+            {
+              "effect_id": "bolt_action_rate",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "slot_cost": 2,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2710",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "weapon_reload_rate",
+              "status": "confirmed_scoped",
+              "value": 1.3,
+              "unit": "dimensionless_multiplier",
+              "table": "weapon_reload_rate",
+              "table_index": 2,
+              "float32_hex": "0x3fa66666",
+              "exact_float32": 1.2999999523162842,
+              "unresolved": []
+            },
+            {
+              "effect_id": "weapon_recoil",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            },
+            {
+              "effect_id": "bolt_action_rate",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "slot_cost": 3,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2711",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "weapon_reload_rate",
+              "status": "confirmed_scoped",
+              "value": 1.5,
+              "unit": "dimensionless_multiplier",
+              "table": "weapon_reload_rate",
+              "table_index": 3,
+              "float32_hex": "0x3fc00000",
+              "exact_float32": 1.5,
+              "unresolved": []
+            },
+            {
+              "effect_id": "weapon_recoil",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            },
+            {
+              "effect_id": "bolt_action_rate",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        }
+      ],
+      "native_implementation": {
+        "settings_save_hud": "implemented_candidate",
+        "combat_effects": "not_connected_to_authoritative_saved_loadout",
+        "notes": "Pure helpers and ordinary baseline behavior do not grant a selected skill. Server-to-host saved-loadout authority remains unresolved."
+      }
+    },
+    {
+      "id": 6,
+      "original_tag": "Skill_ZOOM",
+      "name_switch_target": "0xb17774",
+      "names": {
+        "native_catalog": {
+          "ja": "ホークアイ",
+          "en": "HAWKEYE"
+        },
+        "original_gcx_ja": {
+          "source": "gcx",
+          "resource_id": 963,
+          "file_offset": "0x2bb05",
+          "text": "ズームアップ"
+        }
+      },
+      "description": {
+        "summary_ja": "スコープを使わない主観照準のズーム率上昇と手ぶれ軽減。",
+        "status": "gcx_text_semantics_not_numeric_consumer_proof",
+        "source": "gcx",
+        "original_texts": [
+          {
+            "level": 1,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1383,
+              "file_offset": "0x30905",
+              "text": "主観カメラで武器を構えた際の\\nカメラのズーム率が上がり、手ブレも軽減される。\\n（スコープ使用時のズーム率には影響しない）\\n\\n\\n　　　　　　　　　　　　　　　ズーム率★☆☆\\n　　　　　　　　　　　　　　手ブレ軽減★☆☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1384,
+              "file_offset": "0x30a44",
+              "text": "Increases the zoom rate when aiming\\nweapons in First Person View and \\nreduces recoil.\\n(Does not affect zoom rate when using\\na scope)\\n- Zoom rate ★☆☆\\n- Recoil ★☆☆"
+            }
+          },
+          {
+            "level": 2,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1389,
+              "file_offset": "0x30e41",
+              "text": "主観カメラで武器を構えた際の\\nカメラのズーム率が上がり、手ブレも軽減される。\\n（スコープ使用時のズーム率には影響しない）\\n\\n\\n　　　　　　　　　　　　　　　ズーム率★★☆\\n　　　　　　　　　　　　　　手ブレ軽減★★☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1390,
+              "file_offset": "0x30f80",
+              "text": "Increases the zoom rate when aiming\\nweapons in First Person View and \\nreduces recoil.\\n(Does not affect zoom rate when using\\na scope)\\n- Zoom rate ★★☆\\n- Recoil ★★☆"
+            }
+          },
+          {
+            "level": 3,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1395,
+              "file_offset": "0x3137c",
+              "text": "主観カメラで武器を構えた際の\\nカメラのズーム率が上がり、手ブレも軽減される。\\n（スコープ使用時のズーム率には影響しない）\\n\\n\\n　　　　　　　　　　　　　　　ズーム率★★★\\n　　　　　　　　　　　　　　手ブレ軽減★★★"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1396,
+              "file_offset": "0x314bb",
+              "text": "Increases the zoom rate when aiming\\nweapons in First Person View and \\nreduces recoil.\\n(Does not affect zoom rate when using\\na scope)\\n- Zoom rate ★★★\\n- Recoil ★★★"
+            }
+          }
+        ]
+      },
+      "original_level_label_suppressed": false,
+      "levels": [
+        {
+          "level": 1,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2712",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "unscoped_first_person_zoom",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            },
+            {
+              "effect_id": "aim_sway",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2713",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "unscoped_first_person_zoom",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            },
+            {
+              "effect_id": "aim_sway",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2714",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "unscoped_first_person_zoom",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            },
+            {
+              "effect_id": "aim_sway",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        }
+      ],
+      "native_implementation": {
+        "settings_save_hud": "implemented_candidate",
+        "combat_effects": "not_connected_to_authoritative_saved_loadout",
+        "notes": "Pure helpers and ordinary baseline behavior do not grant a selected skill. Server-to-host saved-loadout authority remains unresolved."
+      }
+    },
+    {
+      "id": 7,
+      "original_tag": "Skill_LOCKON",
+      "name_switch_target": "0xb17784",
+      "names": {
+        "native_catalog": {
+          "ja": "サーベイヤー",
+          "en": "SURVEYOR"
+        },
+        "original_gcx_ja": {
+          "source": "gcx",
+          "resource_id": 969,
+          "file_offset": "0x2bb3e",
+          "text": "エンハンスドロックオン"
+        }
+      },
+      "description": {
+        "summary_ja": "最大ロックオン距離の延長。",
+        "status": "gcx_text_semantics_not_numeric_consumer_proof",
+        "source": "gcx",
+        "original_texts": [
+          {
+            "level": 1,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1401,
+              "file_offset": "0x318b8",
+              "text": "ロックオン可能距離が広がる。\\n\\n\\n\\n\\n\\n　　　　　　　　　　　　ロックオン距離★☆☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1402,
+              "file_offset": "0x31931",
+              "text": "Extends the maximum lock-on distance.\\n- Lock on distance ★☆☆"
+            }
+          },
+          {
+            "level": 2,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1407,
+              "file_offset": "0x31ab1",
+              "text": "ロックオン可能距離が広がる。\\n\\n\\n\\n\\n\\n　　　　　　　　　　　　ロックオン距離★★☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1408,
+              "file_offset": "0x31b2a",
+              "text": "Extends the maximum lock-on distance.\\n- Lock on distance ★★☆"
+            }
+          },
+          {
+            "level": 3,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1413,
+              "file_offset": "0x31caa",
+              "text": "ロックオン可能距離が広がる。\\n\\n\\n\\n\\n\\n　　　　　　　　　　　　ロックオン距離★★★"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1414,
+              "file_offset": "0x31d23",
+              "text": "Extends the maximum lock-on distance.\\n- Lock on distance ★★★"
+            }
+          }
+        ]
+      },
+      "original_level_label_suppressed": false,
+      "levels": [
+        {
+          "level": 1,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2715",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "surveyor_range_multiplier",
+              "status": "confirmed_scoped",
+              "value": 1,
+              "unit": "dimensionless_multiplier",
+              "table": "surveyor_range_multiplier",
+              "table_index": 1,
+              "float32_hex": "0x3f800000",
+              "exact_float32": 1.0,
+              "unresolved": []
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "slot_cost": 2,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2716",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "surveyor_range_multiplier",
+              "status": "confirmed_scoped",
+              "value": 1.2,
+              "unit": "dimensionless_multiplier",
+              "table": "surveyor_range_multiplier",
+              "table_index": 2,
+              "float32_hex": "0x3f99999a",
+              "exact_float32": 1.2000000476837158,
+              "unresolved": []
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "slot_cost": 3,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2717",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "surveyor_range_multiplier",
+              "status": "confirmed_scoped",
+              "value": 1.4,
+              "unit": "dimensionless_multiplier",
+              "table": "surveyor_range_multiplier",
+              "table_index": 3,
+              "float32_hex": "0x3fb33333",
+              "exact_float32": 1.399999976158142,
+              "unresolved": []
+            }
+          ]
+        }
+      ],
+      "native_implementation": {
+        "settings_save_hud": "implemented_candidate",
+        "combat_effects": "not_connected_to_authoritative_saved_loadout",
+        "notes": "Pure helpers and ordinary baseline behavior do not grant a selected skill. Server-to-host saved-loadout authority remains unresolved."
+      }
+    },
+    {
+      "id": 8,
+      "original_tag": "Skill_THROW",
+      "name_switch_target": "0xb17794",
+      "names": {
+        "native_catalog": {
+          "ja": "クォーターバック",
+          "en": "QUARTERBACK"
+        },
+        "original_gcx_ja": {
+          "source": "gcx",
+          "resource_id": 977,
+          "file_offset": "0x2bbe5",
+          "text": "スローイング・マスタリー"
+        }
+      },
+      "description": {
+        "summary_ja": "投擲武器の遠投距離と投擲動作速度の向上。",
+        "status": "gcx_text_semantics_not_numeric_consumer_proof",
+        "source": "gcx",
+        "original_texts": [
+          {
+            "level": 1,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1419,
+              "file_offset": "0x31ea3",
+              "text": "投擲武器を扱うスキル。\\n投擲武器をより遠くまで投げる事ができる。\\n\\n\\n\\n　　　　　　　　　　　　　　　遠投距離★☆☆\\n　　　　　　　　　　　　　　　投擲速度★☆☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1420,
+              "file_offset": "0x31f91",
+              "text": "Skill wielding throwing weapons.\\nEnables you to throw farther.\\n- Throwing distance ★☆☆\\n- Throwing speed ★☆☆"
+            }
+          },
+          {
+            "level": 2,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1425,
+              "file_offset": "0x32202",
+              "text": "投擲武器を扱うスキル。\\n投擲武器をより遠くまで投げる事ができる。\\n\\n\\n\\n　　　　　　　　　　　　　　　遠投距離★★☆\\n　　　　　　　　　　　　　　　投擲速度★★☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1426,
+              "file_offset": "0x322f0",
+              "text": "Skill wielding throwing weapons.\\nEnables you to throw farther.\\n- Throwing distance ★★☆\\n- Throwing speed ★★☆"
+            }
+          },
+          {
+            "level": 3,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1431,
+              "file_offset": "0x32561",
+              "text": "投擲武器を扱うスキル。\\n投擲武器をより遠くまで投げる事ができる。\\n\\n\\n\\n　　　　　　　　　　　　　　　遠投距離★★★\\n　　　　　　　　　　　　　　　投擲速度★★★"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1432,
+              "file_offset": "0x3264f",
+              "text": "Skill wielding throwing weapons.\\nEnables you to throw farther.\\n- Throwing distance ★★★\\n- Throwing speed ★★★"
+            }
+          }
+        ]
+      },
+      "original_level_label_suppressed": false,
+      "levels": [
+        {
+          "level": 1,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2718",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "throw_motion_playback_rate",
+              "status": "confirmed_scoped",
+              "value": 1.1,
+              "unit": "dimensionless_multiplier",
+              "table": "throw_getter_837078",
+              "table_index": 1,
+              "float32_hex": "0x3f8ccccd",
+              "exact_float32": 1.100000023841858,
+              "unresolved": []
+            },
+            {
+              "effect_id": "throw_launch_vector_multiplier",
+              "status": "confirmed_scoped",
+              "value": 1.15,
+              "unit": "dimensionless_multiplier",
+              "table": "throw_getter_8370c8",
+              "table_index": 1,
+              "float32_hex": "0x3f933333",
+              "exact_float32": 1.149999976158142,
+              "unresolved": []
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2719",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "throw_motion_playback_rate",
+              "status": "confirmed_scoped",
+              "value": 1.2,
+              "unit": "dimensionless_multiplier",
+              "table": "throw_getter_837078",
+              "table_index": 2,
+              "float32_hex": "0x3f99999a",
+              "exact_float32": 1.2000000476837158,
+              "unresolved": []
+            },
+            {
+              "effect_id": "throw_launch_vector_multiplier",
+              "status": "confirmed_scoped",
+              "value": 1.3,
+              "unit": "dimensionless_multiplier",
+              "table": "throw_getter_8370c8",
+              "table_index": 2,
+              "float32_hex": "0x3fa66666",
+              "exact_float32": 1.2999999523162842,
+              "unresolved": []
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe271a",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "throw_motion_playback_rate",
+              "status": "confirmed_scoped",
+              "value": 1.3,
+              "unit": "dimensionless_multiplier",
+              "table": "throw_getter_837078",
+              "table_index": 3,
+              "float32_hex": "0x3fa66666",
+              "exact_float32": 1.2999999523162842,
+              "unresolved": []
+            },
+            {
+              "effect_id": "throw_launch_vector_multiplier",
+              "status": "confirmed_scoped",
+              "value": 1.5,
+              "unit": "dimensionless_multiplier",
+              "table": "throw_getter_8370c8",
+              "table_index": 3,
+              "float32_hex": "0x3fc00000",
+              "exact_float32": 1.5,
+              "unresolved": []
+            }
+          ]
+        }
+      ],
+      "native_implementation": {
+        "settings_save_hud": "implemented_candidate",
+        "combat_effects": "not_connected_to_authoritative_saved_loadout",
+        "notes": "Pure helpers and ordinary baseline behavior do not grant a selected skill. Server-to-host saved-loadout authority remains unresolved."
+      }
+    },
+    {
+      "id": 9,
+      "original_tag": "Skill_TRAP",
+      "name_switch_target": "0xb177a4",
+      "names": {
+        "native_catalog": {
+          "ja": "トリックスター",
+          "en": "TRICKSTER"
+        },
+        "original_gcx_ja": {
+          "source": "gcx",
+          "resource_id": 987,
+          "file_offset": "0x2bc9f",
+          "text": "トラップ・マスタリー"
+        }
+      },
+      "description": {
+        "summary_ja": "トラップ設置の高速化。",
+        "status": "gcx_text_semantics_not_numeric_consumer_proof",
+        "source": "gcx",
+        "original_texts": [
+          {
+            "level": 1,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1437,
+              "file_offset": "0x328c0",
+              "text": "設置武器を扱うスキル。\\n設置武器を仕掛ける素早さが上がる。\\n\\n\\n\\n\\n　　　　　　　　　　　　　　　設置速度★☆☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1438,
+              "file_offset": "0x32963",
+              "text": "Skill wielding traps.\\nEnables you to set up traps more quickly.\\n- Set up speed ★☆☆"
+            }
+          },
+          {
+            "level": 2,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1443,
+              "file_offset": "0x32b76",
+              "text": "設置武器を扱うスキル。\\n設置武器を仕掛ける素早さが上がる。\\n\\n\\n\\n\\n　　　　　　　　　　　　　　　設置速度★★☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1444,
+              "file_offset": "0x32c19",
+              "text": "Skill wielding traps.\\nEnables you to set up traps more quickly.\\n- Set up speed ★★☆"
+            }
+          },
+          {
+            "level": 3,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1449,
+              "file_offset": "0x32e2c",
+              "text": "設置武器を扱うスキル。\\n設置武器を仕掛ける素早さが上がる。\\n\\n\\n\\n\\n　　　　　　　　　　　　　　　設置速度★★★"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1450,
+              "file_offset": "0x32ecf",
+              "text": "Skill wielding traps.\\nEnables you to set up traps more quickly.\\n- Set up speed ★★★"
+            }
+          }
+        ]
+      },
+      "original_level_label_suppressed": false,
+      "levels": [
+        {
+          "level": 1,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe271b",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "trap_setup_rate",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe271c",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "trap_setup_rate",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe271d",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "trap_setup_rate",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        }
+      ],
+      "native_implementation": {
+        "settings_save_hud": "implemented_candidate",
+        "combat_effects": "not_connected_to_authoritative_saved_loadout",
+        "notes": "Pure helpers and ordinary baseline behavior do not grant a selected skill. Server-to-host saved-loadout authority remains unresolved."
+      }
+    },
+    {
+      "id": 10,
+      "original_tag": "Skill_CQC",
+      "name_switch_target": "0xb177b4",
+      "names": {
+        "native_catalog": {
+          "ja": "CQCマスタリー",
+          "en": "CQC MASTERY"
+        },
+        "original_gcx_ja": {
+          "source": "gcx",
+          "resource_id": 997,
+          "file_offset": "0x2bd50",
+          "text": "ＣＱＣ・マスタリー"
+        }
+      },
+      "description": {
+        "summary_ja": "近接拘束・連携、気絶ダメージ向上。上位説明では武器自動奪取。",
+        "status": "gcx_text_semantics_not_numeric_consumer_proof",
+        "source": "gcx",
+        "original_texts": [
+          {
+            "level": 1,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1455,
+              "file_offset": "0x330e2",
+              "text": "CLOSE QUARTERS COMBAT(近接戦闘術)。\\nR1ボタンを長く押すと近くにいる敵に\\n様々なCQCを発動する。\\n\\n\\n　　　　　　　　　　　　　　　　拘束連携可能\\n　　　　　　　　　　　　　気絶ダメージ★☆☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1456,
+              "file_offset": "0x331ec",
+              "text": "Close quarters combat skill.\\nPress and hold the R1 button to\\nuse CQC against nearby enemies.\\n- Can capture and use advanced CQC\\n- Knockout damage ★☆☆"
+            }
+          },
+          {
+            "level": 2,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1461,
+              "file_offset": "0x33554",
+              "text": "CLOSE QUARTERS COMBAT(近接戦闘術)。\\nR1ボタンを長く押すと近くにいる敵に\\n様々なCQCを発動する。\\n\\n\\n　　　　　　　　　　　　　　　　拘束連携可能\\n　　　　　　　　　　　　　気絶ダメージ★★☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1462,
+              "file_offset": "0x3365e",
+              "text": "Close quarters combat skill.\\nPress and hold the R1 button to\\nuse CQC against nearby enemies.\\n- Can capture and use advanced CQC\\n- Knockout damage ★★☆"
+            }
+          },
+          {
+            "level": 3,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1467,
+              "file_offset": "0x339c2",
+              "text": "CLOSE QUARTERS COMBAT(近接戦闘術)。\\nR1ボタンを長く押すと近くにいる敵に\\n様々なCQCを発動する。\\n\\n　　　　　　　　　　　　　　　　拘束連携可能\\n　　　　　　　　　　　　　　　　武器自動奪取\\n　　　　　　　　　　　　　気絶ダメージ★★★"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1468,
+              "file_offset": "0x33b0e",
+              "text": "Close quarters combat skill.\\nPress and hold the R1 button to\\nuse CQC against nearby enemies. \\n- Can capture and use advanced CQC\\n- Can take weapons from enemies\\n- Knockout damage ★★★"
+            }
+          }
+        ]
+      },
+      "original_level_label_suppressed": false,
+      "levels": [
+        {
+          "level": 1,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe271e",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "cqc_knockout_damage",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            },
+            {
+              "effect_id": "cqc_action_permissions",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "slot_cost": 2,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe271f",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "cqc_knockout_damage",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            },
+            {
+              "effect_id": "cqc_action_permissions",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "slot_cost": 3,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2720",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "cqc_knockout_damage",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            },
+            {
+              "effect_id": "cqc_action_permissions",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        }
+      ],
+      "native_implementation": {
+        "settings_save_hud": "implemented_candidate",
+        "combat_effects": "not_connected_to_authoritative_saved_loadout",
+        "notes": "Pure helpers and ordinary baseline behavior do not grant a selected skill. Server-to-host saved-loadout authority remains unresolved."
+      }
+    },
+    {
+      "id": 11,
+      "original_tag": "Skill_KNIFE",
+      "name_switch_target": "0xb177c4",
+      "names": {
+        "native_catalog": {
+          "ja": "ブレード",
+          "en": "BLADES"
+        },
+        "original_gcx_ja": {
+          "source": "gcx",
+          "resource_id": 1007,
+          "file_offset": "0x2bddf",
+          "text": "ナイフ・マスタリー"
+        }
+      },
+      "description": {
+        "summary_ja": "ナイフ攻撃の高速化と攻撃中移動。CQCスキルを要する首切り説明もある。",
+        "status": "gcx_text_semantics_not_numeric_consumer_proof",
+        "source": "gcx",
+        "original_texts": [
+          {
+            "level": null,
+            "level_association": "unresolved_specific_stored_level",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1473,
+              "file_offset": "0x33f1f",
+              "text": "ナイフを扱うスキル。\\n熟達する事で素早く攻撃する。\\n\\n\\n\\n\\n　　　　　　　　　　　　ナイフ攻撃中移動可能"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1474,
+              "file_offset": "0x33fb6",
+              "text": "Skill wielding knives.\\nRaising this skill enables faster knife attacks.\\n- Can move during knife attack"
+            }
+          },
+          {
+            "level": null,
+            "level_association": "unresolved_specific_stored_level",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1480,
+              "file_offset": "0x342ee",
+              "text": "ナイフを扱うスキル。\\n熟達する事で素早く攻撃する。\\n\\n\\n　　　　　　　　　　　　ナイフ攻撃中移動可能\\n必要スキル：ＣＱＣ・マスタリー\\n　　　　　　　　　　 CQC拘束中に首切り可能"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1481,
+              "file_offset": "0x343ef",
+              "text": "Skill wielding knives.\\nRaising this skill enables faster knife attacks.\\n- Can move during knife attack\\nSkill needed: CQC+\\n- Can cut throat during CQC capture"
+            }
+          }
+        ]
+      },
+      "original_level_label_suppressed": false,
+      "levels": [
+        {
+          "level": 1,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2721",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "knife_attack_rate",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            },
+            {
+              "effect_id": "knife_action_permissions",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "slot_cost": 2,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2722",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "knife_attack_rate",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            },
+            {
+              "effect_id": "knife_action_permissions",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "slot_cost": 3,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2723",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "knife_attack_rate",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            },
+            {
+              "effect_id": "knife_action_permissions",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        }
+      ],
+      "native_implementation": {
+        "settings_save_hud": "implemented_candidate",
+        "combat_effects": "not_connected_to_authoritative_saved_loadout",
+        "notes": "Pure helpers and ordinary baseline behavior do not grant a selected skill. Server-to-host saved-loadout authority remains unresolved."
+      }
+    },
+    {
+      "id": 12,
+      "original_tag": "Skill_FASTMOV",
+      "name_switch_target": "0xb177d4",
+      "names": {
+        "native_catalog": {
+          "ja": "ファストムーブ",
+          "en": "FAST MOV"
+        },
+        "original_gcx_ja": {
+          "source": "gcx",
+          "resource_id": 1017,
+          "file_offset": "0x2be91",
+          "text": "ファストムーブ"
+        }
+      },
+      "description": {
+        "summary_ja": "通常移動速度の向上。",
+        "status": "gcx_text_semantics_not_numeric_consumer_proof",
+        "source": "gcx",
+        "original_texts": [
+          {
+            "level": 1,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1486,
+              "file_offset": "0x347d2",
+              "text": "身のこなしに関するスキル。\\n移動速度が上がる。\\n\\n\\n\\n\\n　　　　　　　　　　　　　　　移動速度★☆☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1487,
+              "file_offset": "0x34863",
+              "text": "Level of agility.\\nIncreases movement speed.\\n- Movement speed ★☆☆"
+            }
+          },
+          {
+            "level": 2,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1492,
+              "file_offset": "0x34a14",
+              "text": "身のこなしに関するスキル。\\n移動速度が上がる。\\n\\n\\n\\n\\n　　　　　　　　　　　　　　　移動速度★★☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1493,
+              "file_offset": "0x34aa5",
+              "text": "Level of agility.\\nIncreases movement speed.\\n- Movement speed ★★☆"
+            }
+          },
+          {
+            "level": 3,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1498,
+              "file_offset": "0x34c56",
+              "text": "身のこなしに関するスキル。\\n移動速度が上がる。\\n\\n\\n\\n\\n　　　　　　　　　　　　　　　移動速度★★★"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1499,
+              "file_offset": "0x34ce7",
+              "text": "Level of agility.\\nIncreases movement speed.\\n- Movement speed ★★★"
+            }
+          }
+        ]
+      },
+      "original_level_label_suppressed": false,
+      "levels": [
+        {
+          "level": 1,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2724",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "movement_speed",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "slot_cost": 2,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2725",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "movement_speed",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "slot_cost": 3,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2726",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "movement_speed",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        }
+      ],
+      "native_implementation": {
+        "settings_save_hud": "implemented_candidate",
+        "combat_effects": "not_connected_to_authoritative_saved_loadout",
+        "notes": "Pure helpers and ordinary baseline behavior do not grant a selected skill. Server-to-host saved-loadout authority remains unresolved."
+      }
+    },
+    {
+      "id": 13,
+      "original_tag": "Skill_ENEMY",
+      "name_switch_target": "0xb177e4",
+      "names": {
+        "native_catalog": {
+          "ja": "モノマニア",
+          "en": "MONOMANIA"
+        },
+        "original_gcx_ja": {
+          "source": "gcx",
+          "resource_id": 1025,
+          "file_offset": "0x2bf0b",
+          "text": "エネミーエクスポージャー"
+        }
+      },
+      "description": {
+        "summary_ja": "自分が攻撃した敵の情報を表示し、SOPで共有。レベルで表示時間が変化。",
+        "status": "gcx_text_semantics_not_numeric_consumer_proof",
+        "source": "gcx",
+        "original_texts": [
+          {
+            "level": 1,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1504,
+              "file_offset": "0x34e9a",
+              "text": "攻撃した敵を表示する。\\nSOPによる情報共有が可能。\\n\\n\\n\\n\\n　　　　　　　　　　　　　　　表示時間★☆☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1505,
+              "file_offset": "0x34f2e",
+              "text": "Displays enemies you've attacked.\\nCan share data through SOP.\\n- Display time ★☆☆"
+            }
+          },
+          {
+            "level": 2,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1510,
+              "file_offset": "0x3512a",
+              "text": "攻撃した敵を表示する。\\nSOPによる情報共有が可能。\\n\\n\\n\\n\\n　　　　　　　　　　　　　　　表示時間★★☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1511,
+              "file_offset": "0x351be",
+              "text": "Displays enemies you've attacked.\\nCan share data through SOP.\\n- Display time ★★☆"
+            }
+          },
+          {
+            "level": 3,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1516,
+              "file_offset": "0x353ba",
+              "text": "攻撃した敵を表示する。\\nSOPによる情報共有が可能。\\n\\n\\n\\n\\n　　　　　　　　　　　　　　　表示時間★★★"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1517,
+              "file_offset": "0x3544e",
+              "text": "Displays enemies you've attacked.\\nCan share data through SOP.\\n- Display time ★★★"
+            }
+          }
+        ]
+      },
+      "original_level_label_suppressed": false,
+      "levels": [
+        {
+          "level": 1,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2727",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "attacked_enemy_display_duration",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2728",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "attacked_enemy_display_duration",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2729",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "attacked_enemy_display_duration",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        }
+      ],
+      "native_implementation": {
+        "settings_save_hud": "implemented_candidate",
+        "combat_effects": "not_connected_to_authoritative_saved_loadout",
+        "notes": "Pure helpers and ordinary baseline behavior do not grant a selected skill. Server-to-host saved-loadout authority remains unresolved."
+      }
+    },
+    {
+      "id": 14,
+      "original_tag": "Skill_AWARE",
+      "name_switch_target": "0xb177f4",
+      "names": {
+        "native_catalog": {
+          "ja": "シックスセンス",
+          "en": "SIXTH SENSE"
+        },
+        "original_gcx_ja": {
+          "source": "gcx",
+          "resource_id": 1033,
+          "file_offset": "0x2bfa9",
+          "text": "アウェアネス"
+        }
+      },
+      "description": {
+        "summary_ja": "周囲のトラップを表示し、SOPで共有。レベルで表示範囲が変化。",
+        "status": "gcx_text_semantics_not_numeric_consumer_proof",
+        "source": "gcx",
+        "original_texts": [
+          {
+            "level": 1,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1522,
+              "file_offset": "0x3564a",
+              "text": "周囲の設置武器を表示する。\\nSOPによる情報共有が可能。\\n\\n\\n\\n\\n　　　　　　　　　　　　　　　表示距離★☆☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1523,
+              "file_offset": "0x356e4",
+              "text": "Displays nearby traps.\\nCan share data through SOP.\\n- Display range ★☆☆"
+            }
+          },
+          {
+            "level": 2,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1528,
+              "file_offset": "0x358c8",
+              "text": "周囲の設置武器を表示する。\\nSOPによる情報共有が可能。\\n\\n\\n\\n\\n　　　　　　　　　　　　　　　表示距離★★☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1529,
+              "file_offset": "0x35962",
+              "text": "Displays nearby traps.\\nCan share data through SOP.\\n- Display range ★★☆"
+            }
+          },
+          {
+            "level": 3,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1534,
+              "file_offset": "0x35b46",
+              "text": "周囲の設置武器を表示する。\\nSOPによる情報共有が可能。\\n\\n\\n\\n\\n　　　　　　　　　　　　　　　表示距離★★★"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1535,
+              "file_offset": "0x35be0",
+              "text": "Displays nearby traps.\\nCan share data through SOP.\\n- Display range ★★★"
+            }
+          }
+        ]
+      },
+      "original_level_label_suppressed": false,
+      "levels": [
+        {
+          "level": 1,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe272a",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "nearby_trap_display_range",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe272b",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "nearby_trap_display_range",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe272c",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "nearby_trap_display_range",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        }
+      ],
+      "native_implementation": {
+        "settings_save_hud": "implemented_candidate",
+        "combat_effects": "not_connected_to_authoritative_saved_loadout",
+        "notes": "Pure helpers and ordinary baseline behavior do not grant a selected skill. Server-to-host saved-loadout authority remains unresolved."
+      }
+    },
+    {
+      "id": 15,
+      "original_tag": "Skill_ALERT",
+      "name_switch_target": "0xb17804",
+      "names": {
+        "native_catalog": {
+          "ja": "ナーク",
+          "en": "NARC"
+        },
+        "original_gcx_ja": {
+          "source": "gcx",
+          "resource_id": 1040,
+          "file_offset": "0x2c004",
+          "text": "ターゲットアラート"
+        }
+      },
+      "description": {
+        "summary_ja": "被ロックオン・被照準などの条件で敵を表示し、SOPで共有。発動条件はレベル別。",
+        "status": "gcx_text_semantics_not_numeric_consumer_proof",
+        "source": "gcx",
+        "original_texts": [
+          {
+            "level": 1,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1540,
+              "file_offset": "0x35dc4",
+              "text": "ロックオンダメージを受けたとき、\\nその攻撃をした敵の位置を表示する。\\nSOPによる情報共有が可能。\\n\\n\\n\\n"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1541,
+              "file_offset": "0x35e58",
+              "text": "Displays attacking enemy when locked-on \\nand damage is taken.\\nCan share data through SOP.\\n"
+            }
+          },
+          {
+            "level": 2,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1546,
+              "file_offset": "0x3608a",
+              "text": "敵にロックオンされたとき、\\nその敵の位置を表示する。\\nSOPによる情報共有が可能。\\n\\n\\n\\n"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1547,
+              "file_offset": "0x36106",
+              "text": "Displays enemy when locked-on \\nby that enemy.\\nCan share data through SOP.\\n"
+            }
+          },
+          {
+            "level": 3,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1552,
+              "file_offset": "0x362ee",
+              "text": "敵にターゲットされたとき、\\nその敵の位置を表示する。\\nSOPによる情報共有が可能。\\n\\n\\n\\n"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1553,
+              "file_offset": "0x3636a",
+              "text": "Displays enemy when targeted\\nby that enemy.\\nCan share data through SOP.\\n"
+            }
+          }
+        ]
+      },
+      "original_level_label_suppressed": false,
+      "levels": [
+        {
+          "level": 1,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe272d",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "enemy_targeting_display_conditions",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "slot_cost": 2,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe272e",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "enemy_targeting_display_conditions",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "slot_cost": 3,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe272f",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "enemy_targeting_display_conditions",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        }
+      ],
+      "native_implementation": {
+        "settings_save_hud": "implemented_candidate",
+        "combat_effects": "not_connected_to_authoritative_saved_loadout",
+        "notes": "Pure helpers and ordinary baseline behavior do not grant a selected skill. Server-to-host saved-loadout authority remains unresolved."
+      }
+    },
+    {
+      "id": 16,
+      "original_tag": "Skill_SCANNING",
+      "name_switch_target": "0xb17814",
+      "names": {
+        "native_catalog": {
+          "ja": "スキャニング",
+          "en": "SCANNING"
+        },
+        "original_gcx_ja": {
+          "source": "gcx",
+          "resource_id": 1047,
+          "file_offset": "0x2c06c",
+          "text": "スキャニング"
+        }
+      },
+      "description": {
+        "summary_ja": "CQC拘束中にスキャニングプラグSで敵のリンク情報を表示し、SOPで共有。",
+        "status": "gcx_text_semantics_not_numeric_consumer_proof",
+        "source": "gcx",
+        "original_texts": [
+          {
+            "level": 1,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1558,
+              "file_offset": "0x3653f",
+              "text": "必要スキル：ＣＱＣ・マスタリー\\nCQC拘束中△ボタンでスキャニングプラグSを\\n刺す事で対象のリンク情報を表示する。\\nSOPによる情報共有が可能。\\n\\n　　　　　　　　 装備品：スキャニングプラグS\\n　　　　　　　　　　　スキャニング時間★☆☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1559,
+              "file_offset": "0x36690",
+              "text": "Skill needed: CQC+\\nPress the △ button to inject \\nScanning Plug S into a captured \\nenemy and display link info.\\nCan share data through SOP.\\n- Item needed: Scanning Plug S\\n- Scanning time ★☆☆"
+            }
+          },
+          {
+            "level": 2,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1564,
+              "file_offset": "0x36b2c",
+              "text": "必要スキル：ＣＱＣ・マスタリー\\nCQC拘束中△ボタンでスキャニングプラグSを\\n刺す事で対象のリンク情報を表示する。\\nSOPによる情報共有が可能。\\n\\n　　　　　　　　 装備品：スキャニングプラグS\\n　　　　　　　　　　　スキャニング時間★★☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1565,
+              "file_offset": "0x36c7d",
+              "text": "Skill needed: CQC+  \\nPress the △ button to inject \\nScanning Plug S into a captured \\nenemy and display link info.\\nCan share data through SOP.\\n- Item needed: Scanning Plug S\\n- Scanning time ★★☆"
+            }
+          },
+          {
+            "level": 3,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1570,
+              "file_offset": "0x3711b",
+              "text": "必要スキル：ＣＱＣ・マスタリー\\nCQC拘束中△ボタンでスキャニングプラグSを\\n刺す事で対象のリンク情報を表示する。\\nSOPによる情報共有が可能。\\n\\n　　　　　　　　 装備品：スキャニングプラグS\\n　　　　　　　　　　　スキャニング時間★★★"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1571,
+              "file_offset": "0x3726c",
+              "text": "Skill needed: CQC+\\nPress the △ button to inject \\nScanning Plug S into a captured \\nenemy and display link info.\\nCan share data through SOP.\\n- Item needed: Scanning Plug S\\n- Scanning time ★★★"
+            }
+          }
+        ]
+      },
+      "original_level_label_suppressed": false,
+      "levels": [
+        {
+          "level": 1,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2730",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "scanning_duration",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2731",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "scanning_duration",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2732",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "scanning_duration",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        }
+      ],
+      "native_implementation": {
+        "settings_save_hud": "implemented_candidate",
+        "combat_effects": "not_connected_to_authoritative_saved_loadout",
+        "notes": "Pure helpers and ordinary baseline behavior do not grant a selected skill. Server-to-host saved-loadout authority remains unresolved."
+      }
+    },
+    {
+      "id": 17,
+      "original_tag": "Skill_OFFICER",
+      "name_switch_target": "0xb17824",
+      "names": {
+        "native_catalog": {
+          "ja": "インストラクター",
+          "en": "INSTRUCTOR"
+        },
+        "original_gcx_ja": {
+          "source": "gcx",
+          "resource_id": 1054,
+          "file_offset": "0x2c0b4",
+          "text": "教官"
+        }
+      },
+      "description": {
+        "summary_ja": "敬礼とプリセット無線が変化し、位置・無線を全キャラクターへ伝達。",
+        "status": "gcx_text_semantics_not_numeric_consumer_proof",
+        "source": "gcx",
+        "original_texts": [
+          {
+            "level": null,
+            "level_association": "unresolved_specific_stored_level",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1576,
+              "file_offset": "0x37707",
+              "text": "教官として振舞う事で、敬礼時のポーズと\\nプリセット無線の内容が変化する。\\nさらに、その強力な存在感は自分自身の\\n位置と無線を全てのPCに伝える。\\n\\n　　　　　　　　　　　　　　　　　態度★★★\\n　　　　　　　　　　　　　　　　存在感★★★"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1577,
+              "file_offset": "0x37863",
+              "text": "Changes salute pose and preset\\nCodec messages. In addition, position\\nand Codec messages are broadcast\\nto all characters.\\n- Intimidation ★★★\\n- Attitude ★★★"
+            }
+          }
+        ]
+      },
+      "original_level_label_suppressed": true,
+      "levels": [
+        {
+          "level": 1,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2733",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "salute_codec_broadcast_behavior",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2734",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "salute_codec_broadcast_behavior",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2735",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "salute_codec_broadcast_behavior",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        }
+      ],
+      "native_implementation": {
+        "settings_save_hud": "implemented_candidate",
+        "combat_effects": "not_connected_to_authoritative_saved_loadout",
+        "notes": "Pure helpers and ordinary baseline behavior do not grant a selected skill. Server-to-host saved-loadout authority remains unresolved."
+      }
+    },
+    {
+      "id": 18,
+      "original_tag": "Skill_RECOVER",
+      "name_switch_target": "0xb17834",
+      "names": {
+        "native_catalog": {
+          "ja": "クイックリカバリー",
+          "en": "QUICK RECOVERY"
+        },
+        "original_gcx_ja": {
+          "source": "gcx",
+          "resource_id": 1059,
+          "file_offset": "0x2c0e7",
+          "text": "クイックリカバリー"
+        }
+      },
+      "description": {
+        "summary_ja": "気絶した味方を起こす速度と自身の回復速度の向上。",
+        "status": "gcx_text_semantics_not_numeric_consumer_proof",
+        "source": "gcx",
+        "original_texts": [
+          {
+            "level": 1,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1582,
+              "file_offset": "0x37c3b",
+              "text": "仲間のサポートに関するスキル。\\n気絶した仲間を起こす時間を短縮する。\\n自身の回復速度も上がる。\\n\\n\\n\\n　　　　　　　　　　　　　　　回復速度★☆☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1583,
+              "file_offset": "0x37d11",
+              "text": "Team support skill.\\nWake up unconscious \\nteammates faster.\\nAlso speed up your own recovery.\\n- Recovery Speed ★☆☆"
+            }
+          },
+          {
+            "level": 2,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1588,
+              "file_offset": "0x38085",
+              "text": "仲間のサポートに関するスキル。\\n気絶した仲間を起こす時間を短縮する。\\n自身の回復速度も上がる。\\n\\n\\n\\n　　　　　　　　　　　　　　　回復速度★★☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1589,
+              "file_offset": "0x3815b",
+              "text": "Team support skill.\\nWake up unconscious \\nteammates faster.\\nAlso speed up your own recovery.\\n- Recovery Speed ★★☆"
+            }
+          },
+          {
+            "level": 3,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1594,
+              "file_offset": "0x384cf",
+              "text": "仲間のサポートに関するスキル。\\n気絶した仲間を起こす時間を短縮する。\\n自身の回復速度も上がる。\\n\\n\\n\\n　　　　　　　　　　　　　　　回復速度★★★"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1595,
+              "file_offset": "0x385a5",
+              "text": "Team support skill.\\nWake up unconscious \\nteammates faster.\\nAlso speed up your own recovery.\\n- Recovery Speed ★★★"
+            }
+          }
+        ]
+      },
+      "original_level_label_suppressed": false,
+      "levels": [
+        {
+          "level": 1,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2736",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "self_and_teammate_recovery_rate",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "slot_cost": 2,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2737",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "self_and_teammate_recovery_rate",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "slot_cost": 3,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2738",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "self_and_teammate_recovery_rate",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        }
+      ],
+      "native_implementation": {
+        "settings_save_hud": "implemented_candidate",
+        "combat_effects": "not_connected_to_authoritative_saved_loadout",
+        "notes": "Pure helpers and ordinary baseline behavior do not grant a selected skill. Server-to-host saved-loadout authority remains unresolved."
+      }
+    },
+    {
+      "id": 19,
+      "original_tag": "Skill_CBOX",
+      "name_switch_target": "0xb17844",
+      "names": {
+        "native_catalog": {
+          "ja": "ボックスムーブ",
+          "en": "BOX MOVE"
+        },
+        "original_gcx_ja": {
+          "source": "gcx",
+          "resource_id": 1067,
+          "file_offset": "0x2c194",
+          "text": "ボックスムーブ"
+        }
+      },
+      "description": {
+        "summary_ja": "ダンボール中の移動速度向上。上位説明ではボックスタックル。",
+        "status": "gcx_text_semantics_not_numeric_consumer_proof",
+        "source": "gcx",
+        "original_texts": [
+          {
+            "level": 1,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1600,
+              "file_offset": "0x38919",
+              "text": "ダンボール移動に関するスキル。\\nダンボール移動速度が上がる。\\n\\n\\n\\n\\n　　　　　　　　　　ダンボール移動速度★☆☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1601,
+              "file_offset": "0x389bf",
+              "text": "Increases movement speed \\nwhen in a box.\\n- Box movement speed ★☆☆"
+            }
+          },
+          {
+            "level": 2,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1606,
+              "file_offset": "0x38bb5",
+              "text": "ダンボール移動に関するスキル。\\nダンボール移動速度が上がる。\\n\\n\\n\\n\\n　　　　　　　　　　ダンボール移動速度★★☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1607,
+              "file_offset": "0x38c5b",
+              "text": "Increases movement speed \\nwhen in a box.\\n- Box movement speed ★★☆"
+            }
+          },
+          {
+            "level": 3,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1612,
+              "file_offset": "0x38e51",
+              "text": "ダンボール移動に関するスキル。\\nダンボール移動速度が上がる。\\n×ボタンでダンボールタックル可能。\\n\\n\\n\\n　　　　　　　　　　ダンボール移動速度★★★"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1613,
+              "file_offset": "0x38f29",
+              "text": "Increases movement speed \\nwhen in a box.\\nAllows you to do a \"box tackle\" \\nby pressing the × button. \\n- Box movement speed ★★★"
+            }
+          }
+        ]
+      },
+      "original_level_label_suppressed": false,
+      "levels": [
+        {
+          "level": 1,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2739",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "box_movement_speed",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            },
+            {
+              "effect_id": "box_tackle_permission",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "slot_cost": 2,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe273a",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "box_movement_speed",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            },
+            {
+              "effect_id": "box_tackle_permission",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "slot_cost": 3,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe273b",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "box_movement_speed",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            },
+            {
+              "effect_id": "box_tackle_permission",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        }
+      ],
+      "native_implementation": {
+        "settings_save_hud": "implemented_candidate",
+        "combat_effects": "not_connected_to_authoritative_saved_loadout",
+        "notes": "Pure helpers and ordinary baseline behavior do not grant a selected skill. Server-to-host saved-loadout authority remains unresolved."
+      }
+    },
+    {
+      "id": 20,
+      "original_tag": "Skill_CQC_EX",
+      "name_switch_target": "0xb17854",
+      "names": {
+        "native_catalog": {
+          "ja": "CQC EX",
+          "en": "CQC EX"
+        },
+        "original_gcx_ja": {
+          "source": "gcx",
+          "resource_id": 1075,
+          "file_offset": "0x2c21f",
+          "text": "CQC EX"
+        }
+      },
+      "description": {
+        "summary_ja": "CQCを超える拘束連携・武器自動奪取・CQC返し。日英説明には差がある。",
+        "status": "gcx_text_semantics_not_numeric_consumer_proof",
+        "source": "gcx",
+        "original_texts": [
+          {
+            "level": null,
+            "level_association": "unresolved_specific_stored_level",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1618,
+              "file_offset": "0x39292",
+              "text": "CQCを超える真のCQC。\\nR1ボタンを長く押すと近くにいる敵に\\n様々なCQCを発動する。\\n　　　　　　　　　　　　　　　　拘束連携可能\\n　　　　　　　　　　　　　　　　武器自動奪取\\n　　　　　　　　　　　　　　　 CQC返し可能\\n　　　　　　　　　　　　　気絶ダメージ★★★"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1619,
+              "file_offset": "0x3940d",
+              "text": "The 'true' form of CQC.  Surpasses \\nthe standard CQC skill.\\n- Can capture and use advanced CQC\\n- Can take weapons from enemies\\n- Can instantly knock out enemies by \\n   throwing them\\n- Knockout damage ★★★"
+            }
+          }
+        ]
+      },
+      "original_level_label_suppressed": true,
+      "levels": [
+        {
+          "level": 1,
+          "slot_cost": 4,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe273c",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "cqc_ex_action_permissions",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "slot_cost": 4,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe273d",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "cqc_ex_action_permissions",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "slot_cost": 4,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe273e",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "cqc_ex_action_permissions",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        }
+      ],
+      "native_implementation": {
+        "settings_save_hud": "implemented_candidate",
+        "combat_effects": "not_connected_to_authoritative_saved_loadout",
+        "notes": "Pure helpers and ordinary baseline behavior do not grant a selected skill. Server-to-host saved-loadout authority remains unresolved."
+      }
+    },
+    {
+      "id": 21,
+      "original_tag": "Skill_SHIELD_MAS",
+      "name_switch_target": "0xb17864",
+      "names": {
+        "native_catalog": {
+          "ja": "シールドマスタリー",
+          "en": "SHIELD MASTERY"
+        },
+        "original_gcx_ja": {
+          "source": "gcx",
+          "resource_id": 1076,
+          "file_offset": "0x2c226",
+          "text": "シールド・マスタリー"
+        }
+      },
+      "description": {
+        "summary_ja": "盾保持中の移動と盾攻撃の高速化。上位説明では直進走行。",
+        "status": "gcx_text_semantics_not_numeric_consumer_proof",
+        "source": "gcx",
+        "original_texts": [
+          {
+            "level": 1,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1624,
+              "file_offset": "0x39884",
+              "text": "シールドを扱うスキル。\\nシールド構え時の移動速度が上がる。\\n\\n\\n\\n　　　　　　　　　　　シールド移動速度★☆☆\\n　　　　　　　　　シールドアタック速度★☆☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1625,
+              "file_offset": "0x39969",
+              "text": "Skill wielding a shield.\\nIncreases movement speed when \\nholding shield.\\n-Shield movement speed ★☆☆\\n-Shield attack speed ★☆☆\\n\\n"
+            }
+          },
+          {
+            "level": 2,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1630,
+              "file_offset": "0x39ca4",
+              "text": "シールドを扱うスキル。\\nシールド構え時の移動速度が上がる。\\n\\n\\n\\n　　　　　　　　　　　シールド移動速度★★☆\\n　　　　　　　　　シールドアタック速度★★☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1631,
+              "file_offset": "0x39d89",
+              "text": "Skill wielding a shield.\\nIncreases movement speed when \\nholding shield.\\n-Shield movement speed ★★☆\\n-Shield attack speed ★★☆\\n\\n"
+            }
+          },
+          {
+            "level": 3,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1636,
+              "file_offset": "0x3a0c4",
+              "text": "シールドを扱うスキル。\\nシールド構え時の移動速度が上がる。\\n正面方向へは走ることも可能。\\n\\n\\n　　　　　　　　　　　シールド移動速度★★★\\n　　　　　　　　　シールドアタック速度★★★"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1637,
+              "file_offset": "0x3a1d3",
+              "text": "Skill wielding a shield.\\nIncreases movement speed when \\nholding shield.\\nAllows you to run straight ahead.\\n-Shield movement speed ★★★\\n-Shield attack speed ★★★\\n"
+            }
+          }
+        ]
+      },
+      "original_level_label_suppressed": false,
+      "levels": [
+        {
+          "level": 1,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe273f",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "shield_movement_speed",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            },
+            {
+              "effect_id": "shield_attack_rate",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            },
+            {
+              "effect_id": "shield_run_permission",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2740",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "shield_movement_speed",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            },
+            {
+              "effect_id": "shield_attack_rate",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            },
+            {
+              "effect_id": "shield_run_permission",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2741",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "shield_movement_speed",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            },
+            {
+              "effect_id": "shield_attack_rate",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            },
+            {
+              "effect_id": "shield_run_permission",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        }
+      ],
+      "native_implementation": {
+        "settings_save_hud": "implemented_candidate",
+        "combat_effects": "not_connected_to_authoritative_saved_loadout",
+        "notes": "Pure helpers and ordinary baseline behavior do not grant a selected skill. Server-to-host saved-loadout authority remains unresolved."
+      }
+    },
+    {
+      "id": 22,
+      "original_tag": "Skill_SCANNING_EX",
+      "name_switch_target": "0xb17874",
+      "names": {
+        "native_catalog": {
+          "ja": "スキャニングEX",
+          "en": "SCANNING EX"
+        },
+        "original_gcx_ja": {
+          "source": "gcx",
+          "resource_id": 1086,
+          "file_offset": "0x2c2d5",
+          "text": "スキャニング・EX"
+        }
+      },
+      "description": {
+        "summary_ja": "CQC拘束対象に加えて気絶・睡眠中の敵もスキャニング対象にできる。",
+        "status": "gcx_text_semantics_not_numeric_consumer_proof",
+        "source": "gcx",
+        "original_texts": [
+          {
+            "level": null,
+            "level_association": "unresolved_specific_stored_level",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1642,
+              "file_offset": "0x3a5c5",
+              "text": "気絶中の敵かCQC拘束されている敵に\\n△ボタンでスキャニングプラグSを刺す事で\\n対象のリンク情報を表示する。\\nSOPによる情報共有が可能。\\n\\n　　　　　　　　 装備品：スキャニングプラグS\\n　　　　　　　　　　　スキャニング時間★★★"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1643,
+              "file_offset": "0x3a70d",
+              "text": "Makes it possible to SOP scan \\nunconscious and sleeping enemies \\nas well as enemies captured with CQC. \\n- Item needed: Scanning Plug S\\n- Scanning time ★★★\\n\\n"
+            }
+          }
+        ]
+      },
+      "original_level_label_suppressed": true,
+      "levels": [
+        {
+          "level": 1,
+          "slot_cost": 3,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2742",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "scanning_ex_target_conditions",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "slot_cost": 3,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2743",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "scanning_ex_target_conditions",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "slot_cost": 3,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2744",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "scanning_ex_target_conditions",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        }
+      ],
+      "native_implementation": {
+        "settings_save_hud": "implemented_candidate",
+        "combat_effects": "not_connected_to_authoritative_saved_loadout",
+        "notes": "Pure helpers and ordinary baseline behavior do not grant a selected skill. Server-to-host saved-loadout authority remains unresolved."
+      }
+    },
+    {
+      "id": 23,
+      "original_tag": "Skill_SOP_JAMMING",
+      "name_switch_target": "0xb17884",
+      "names": {
+        "native_catalog": {
+          "ja": "SOPステルス",
+          "en": "SOP STEALTH"
+        },
+        "original_gcx_ja": {
+          "source": "gcx",
+          "resource_id": 1092,
+          "file_offset": "0x2c329",
+          "text": "SOP・ステルス"
+        }
+      },
+      "description": {
+        "summary_ja": "敵のSOP情報表示武器・スキルの効果を弱め、本人のSOP情報を保護。",
+        "status": "gcx_text_semantics_not_numeric_consumer_proof",
+        "source": "gcx",
+        "original_texts": [
+          {
+            "level": 1,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1648,
+              "file_offset": "0x3ab5b",
+              "text": "敵が持つ「SOP情報を表示する」タイプの\\n武器 & スキルの効果を弱め、自分の\\nSOP情報を守る。\\n\\n\\n\\n　　　　　　　　　　　　　　　　隠密性★☆☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1649,
+              "file_offset": "0x3ac25",
+              "text": "Nullifies the SOP scanning capabilities \\nof enemy weapons, blocks skills, \\nand protects your SOP information.  \\n- Stealth ★☆☆\\n\\n\\n"
+            }
+          },
+          {
+            "level": 2,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1654,
+              "file_offset": "0x3af0c",
+              "text": "敵が持つ「SOP情報を表示する」タイプの\\n武器 & スキルの効果を弱め、自分の\\nSOP情報を守る。\\n\\n\\n\\n　　　　　　　　　　　　　　　　隠密性★★☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1655,
+              "file_offset": "0x3afd6",
+              "text": "Nullifies the SOP scanning capabilities \\nof enemy weapons, blocks skills, \\nand protects your SOP information.  \\n- Stealth ★★☆\\n\\n\\n"
+            }
+          },
+          {
+            "level": 3,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1660,
+              "file_offset": "0x3b2bd",
+              "text": "敵が持つ「SOP情報を表示する」タイプの\\n武器 & スキルの効果を弱め、自分の\\nSOP情報を守る。\\n\\n\\n\\n　　　　　　　　　　　　　　　　隠密性★★★"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1661,
+              "file_offset": "0x3b387",
+              "text": "Nullifies the SOP scanning capabilities \\nof enemy weapons, blocks skills, \\nand protects your SOP information.  \\n- Stealth ★★★\\n\\n\\n"
+            }
+          }
+        ]
+      },
+      "original_level_label_suppressed": false,
+      "levels": [
+        {
+          "level": 1,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2745",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "sop_information_suppression",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2746",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "sop_information_suppression",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "slot_cost": 2,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2747",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "sop_information_suppression",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        }
+      ],
+      "native_implementation": {
+        "settings_save_hud": "implemented_candidate",
+        "combat_effects": "not_connected_to_authoritative_saved_loadout",
+        "notes": "Pure helpers and ordinary baseline behavior do not grant a selected skill. Server-to-host saved-loadout authority remains unresolved."
+      }
+    },
+    {
+      "id": 24,
+      "original_tag": "Skill_TOUGHNESS",
+      "name_switch_target": "0xb17894",
+      "names": {
+        "native_catalog": {
+          "ja": "タフネス",
+          "en": "TOUGHNESS"
+        },
+        "original_gcx_ja": {
+          "source": "gcx",
+          "resource_id": 1098,
+          "file_offset": "0x2c3a1",
+          "text": "ショック・アブソーブ"
+        }
+      },
+      "description": {
+        "summary_ja": "のけぞり、転倒、吹き飛ばしへの耐性。対象はレベル別。",
+        "status": "gcx_text_semantics_not_numeric_consumer_proof",
+        "source": "gcx",
+        "original_texts": [
+          {
+            "level": 1,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1666,
+              "file_offset": "0x3b66c",
+              "text": "のけぞりを根性で耐える。\\n\\n\\n\\n\\n\\n　　　　　　　　　　　　　　　　忍耐力★☆☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1667,
+              "file_offset": "0x3b6df",
+              "text": "Prevents knockback through sheer \\nwill power.\\n- Endurance ★☆☆"
+            }
+          },
+          {
+            "level": 2,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1672,
+              "file_offset": "0x3b87a",
+              "text": "のけぞり、ダウンを根性で耐える。\\n\\n\\n\\n\\n\\n　　　　　　　　　　　　　　　　忍耐力★★☆"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1673,
+              "file_offset": "0x3b8f9",
+              "text": "Prevents knockback and knockdown \\nthrough sheer will power.\\n- Endurance ★★☆"
+            }
+          },
+          {
+            "level": 3,
+            "level_association": "ordered_three_level_descriptions",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1678,
+              "file_offset": "0x3cc1a",
+              "text": "強靭な肉体と精神力は、\\nのけぞり、ダウンに加えて\\n体が吹き飛ぶほどの衝撃すらも耐え抜く。\\n\\n\\n\\n　　　　　　　　　　　　　　　　忍耐力★★★"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1679,
+              "file_offset": "0x3cce7",
+              "text": "Extremely tough body and will power \\nprevent knockback and knockdown.\\nWithstand any impact strong enough \\nto blow someone away.\\n- Endurance ★★★"
+            }
+          }
+        ]
+      },
+      "original_level_label_suppressed": false,
+      "levels": [
+        {
+          "level": 1,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2748",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "impact_resistance_conditions",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "slot_cost": 2,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe2749",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "impact_resistance_conditions",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "slot_cost": 3,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe274a",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "impact_resistance_conditions",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        }
+      ],
+      "native_implementation": {
+        "settings_save_hud": "implemented_candidate",
+        "combat_effects": "not_connected_to_authoritative_saved_loadout",
+        "notes": "Pure helpers and ordinary baseline behavior do not grant a selected skill. Server-to-host saved-loadout authority remains unresolved."
+      }
+    },
+    {
+      "id": 25,
+      "original_tag": "Skill_CHARM",
+      "name_switch_target": "0xb178a4",
+      "names": {
+        "native_catalog": {
+          "ja": "チャーム",
+          "en": "CHARM"
+        },
+        "original_gcx_ja": {
+          "source": "gcx",
+          "resource_id": 1107,
+          "file_offset": "0x2c424",
+          "text": "チャームアップ"
+        }
+      },
+      "description": {
+        "summary_ja": "魅了するポーズで対象の動きを止める。",
+        "status": "gcx_text_semantics_not_numeric_consumer_proof",
+        "source": "gcx",
+        "original_texts": [
+          {
+            "level": null,
+            "level_association": "unresolved_specific_stored_level",
+            "ja": {
+              "source": "gcx",
+              "resource_id": 1684,
+              "file_offset": "0x3d042",
+              "text": "隠れた魅力を引き出すスキル。\\n△ボタンで魅惑的なポーズをとる事で、\\n相手を誘惑して動きを封じる。\\n\\n\\n\\n　　　　　　　　　　　　　　フェロモン★★★"
+            },
+            "en": {
+              "source": "gcx",
+              "resource_id": 1685,
+              "file_offset": "0x3d11b",
+              "text": "Skill drawing upon hidden charm.\\nPress the △ button to strike an \\nalluring pose, enthralling targets \\nand freezing them in place.\\n-Pheromones ★★★"
+            }
+          }
+        ]
+      },
+      "original_level_label_suppressed": true,
+      "levels": [
+        {
+          "level": 1,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe274b",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "charm_target_conditions_and_duration",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe274c",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "charm_target_conditions_and_duration",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "slot_cost": 1,
+          "slot_cost_evidence": {
+            "source": "elf",
+            "address": "0xfe274d",
+            "reader": "0xA03DC8",
+            "budget_consumer": "0xA08C10"
+          },
+          "parameters": [
+            {
+              "effect_id": "charm_target_conditions_and_duration",
+              "status": "unresolved",
+              "value": null,
+              "unit": null,
+              "table": null,
+              "table_index": null,
+              "float32_hex": null,
+              "exact_float32": null,
+              "unresolved": [
+                "Exact current-ELF consumer, value and application conditions have not yet been fully connected. GCX descriptions establish the stated function only."
+              ]
+            }
+          ]
+        }
+      ],
+      "native_implementation": {
+        "settings_save_hud": "implemented_candidate",
+        "combat_effects": "not_connected_to_authoritative_saved_loadout",
+        "notes": "Pure helpers and ordinary baseline behavior do not grant a selected skill. Server-to-host saved-loadout authority remains unresolved."
+      }
+    }
+  ]
+}

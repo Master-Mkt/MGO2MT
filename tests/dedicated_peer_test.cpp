@@ -29,7 +29,21 @@ int main(){try{
  DedicatedPeer invalid(host,client,0);Keys keys{host.seed^client.seed,host.seed^client.seed^initial_mac};Message good;good.channel=1;good.payload=profile;Message bad=good;bad.serial=1;bad.payload={2};invalid.receive(encode({0,{good,bad}},keys),1);check(invalid.closed()&&invalid.events().empty(),"failed packet cannot leak an earlier admission event");
  for(auto payload:{std::vector<uint8_t>{10},std::vector<uint8_t>{1,0},std::vector<uint8_t>{0,0}}){DedicatedPeer malformed(host,client,0);good.payload=payload;malformed.receive(encode({0,{good}},keys),1);check(malformed.closed()&&malformed.events().empty(),"premature sync or oversized control rejected");}
  DedicatedPeer stalled(host,client,0);good.payload={0};for(unsigned i=0;i<8;++i){good.serial=uint8_t(i);stalled.receive(encode({uint16_t(i),{good,{0,true,true,false,0,{}}}},keys),i*1000);stalled.events();stalled.poll(i*1000);}stalled.poll(8000);check(stalled.closed(),"keepalives cannot reserve a slot without profile forever");
- DedicatedPeer slow(host,client,0);for(unsigned i=0;i<33;++i)slow.queue({0},1);check(slow.closed(),"slow recipient overflows only its own peer queue");
+ // A stalled recipient can retain 32 active wire records plus the bounded
+ // unsent FIFO. Keep another recipient sending/ACKing through serial wrap
+ // while filling that capacity; overflowing one must not affect the other.
+ DedicatedPeer slow(host,client,0),healthy(host,client,0);
+ constexpr size_t slowCapacity=32+MandatoryBacklog::capacity;
+ auto healthyRoundTrip=[&](size_t i){
+  auto ticket=healthy.queue({0},i+1);check(ticket&&!healthy.closed(),"healthy recipient accepts its own record");
+  check(!healthy.poll(i+1).empty(),"healthy recipient sends before receipt");
+  healthy.receive(encode({uint16_t(i),{{1,true,true,false,uint8_t(i),{}}}},keys),i+1);
+  check(healthy.delivery_complete(ticket)&&healthy.mandatory_backlog()==0,"healthy recipient ACKs independently through serial wrap");
+ };
+ for(size_t i=0;i<slowCapacity;++i){check(slow.queue({0},1)&&!slow.closed(),"slow recipient retains active and unsent capacity");healthyRoundTrip(i);}
+ check(slow.mandatory_backlog()==MandatoryBacklog::capacity,"slow recipient reaches exact unsent capacity");
+ check(!slow.queue({0},1)&&slow.closed()&&slow.close_reason()==PeerCloseReason::mandatory_overflow,"slow recipient overflows only its own peer queue");
+ healthyRoundTrip(slowCapacity);check(!healthy.closed(),"healthy recipient remains usable after another recipient overflows");
  DedicatedPeer delivery(host,client,0);auto firstTicket=delivery.queue({0},0),snapshotTicket=delivery.queue({0},0);
  check(!delivery.delivery_complete(0)&&!delivery.delivery_complete(snapshotTicket),"queuing a snapshot does not establish receipt");
  delivery.receive(encode({0,{{1,true,true,false,1,{}}}},keys),1);

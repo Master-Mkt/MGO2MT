@@ -1,6 +1,7 @@
 #include "login_screen.h"
 #include "login_store.h"
 #include <sstream>
+#include <fstream>
 #include <iostream>
 #include <stdexcept>
 using namespace mgo2win;
@@ -36,6 +37,16 @@ int main(){
    // Select save-ID-and-password, then submit. A rejected account is never newly stored.
    for(int i=0;i<4;++i)key(s,VK_TAB);key(s,VK_RETURN);for(int i=0;i<3;++i)key(s,VK_TAB);key(s,VK_RETURN);
    frames(s,100);require(calls==1&&!std::filesystem::exists(store));}
+  // Session-only local playtest: never restore or mutate an existing store, even after success.
+  initial.restore(2,L"dummy_id",L"dummy_password");save_login(store,initial);calls=0;
+  auto bytes=[&]{std::ifstream f(store,std::ios::binary);return std::string(std::istreambuf_iterator<char>(f),{});};const auto preserved=bytes();
+  {LoginScreen s(store,true,[&](const AuthCredentials& c,const std::atomic_bool&){++calls;require(std::wstring_view(c.id.data())==L"manual_test");AuthReply r;r.status=AuthStatus::success;r.user=7;return r;},false,{},{},{},true);
+   frames(s,1150);require(calls==0&&report(s).find("\"settings_restored\":false")!=std::string::npos);
+   text(s,L"manual_test");key(s,VK_TAB);text(s,L"test_only_password");key(s,VK_TAB);
+   for(int i=0;i<4;++i)key(s,VK_TAB);key(s,VK_RETURN);for(int i=0;i<3;++i)key(s,VK_TAB);key(s,VK_RETURN);
+   frames(s,100);require(calls==1&&s.port_visible());require(report(s).find("\"settings_written\":false")!=std::string::npos);require(bytes()==preserved);}
+  std::filesystem::remove(store);calls=0;
+  {LoginScreen s(store,true,denied,false,{},{},{},true);text(s,L"manual_test");key(s,VK_TAB);text(s,L"test_only_password");key(s,VK_TAB);key(s,VK_RETURN);frames(s,100);require(calls==1&&!std::filesystem::exists(store));}
   std::filesystem::remove(dir);std::cout<<"Offline login success/failure, delayed single auto-login, key cancellation, duplicate suppression, in-flight cancellation and deferred saving passed.\n";
  }catch(...){std::error_code ec;std::filesystem::remove(store,ec);std::filesystem::remove(dir,ec);throw;}
 }

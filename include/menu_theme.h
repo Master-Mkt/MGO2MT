@@ -96,6 +96,8 @@ inline void finish_menu_surface(void* pixels){
   else if(c==RGB(38,48,49))alpha=90;
   else if(c==RGB(48,59,61))alpha=230;
   else if(c==RGB(99,75,47))alpha=110;
+  else if(c==RGB(58,36,18))alpha=195;
+  else if(c==RGB(76,50,27))alpha=180;
   else if(c==RGB(125,88,47))alpha=125;
   else if(c==RGB(108,124,125)||c==RGB(65,80,83))alpha=180;
   else if(c==RGB(194,143,83)||c==RGB(177,121,61))alpha=178;

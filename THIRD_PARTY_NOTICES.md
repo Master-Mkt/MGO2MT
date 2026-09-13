@@ -6,6 +6,10 @@ This trial includes converted runtime resources (GWA, GWC, M2AN, M2PV, DDS, GNK 
 
 # Third-party sources and notices / 出典・第三者ライセンス
 
+Icon conversion uses Pillow 12.3.0 offline; its installed LICENSE identifies MIT-CMU and includes additional component notices. DAR reading reuses the local Solideye-informed reader, whose upstream version/terms remain unverified. QAR/TXN/DLD reuse the existing Noesis-informed readers described below. These tools and references are not bundled. / アイコン変換ではPillow 12.3.0をオフライン利用しました。インストール済みLICENSEでMIT-CMUと追加依存のnoticeを確認。DARは既存Solideye構造参照reader（元版・条件の確認は未完）、QAR/TXN/DLDは下記Noesis構造参照readerを再利用しています。ツール・参照元の実行物は同梱しません。
+
+2026-09-13 local weapon-card update:38 original weapon images are recovered through the reviewed ELF ID→LA2 mapping and local TXN/DCI texture references. The PNGs retain their game-derived rights; this project grants no new rights over them. Their index and individual digests are recorded in the local GWP/package. Windows WIC reads them at runtime; no third-party image-decoder DLL or extraction tool is bundled. / ローカル版では原ELFの武器ID→LA2とTXN/DCIの参照を照合し、通常武器38種類の元画像をPNG化しました。権利は原ゲーム由来のままで、本プロジェクトから新しい許諾を与えません。indexと各画像のhashをGWP・出力manifestへ記録。実行時はWindows標準WICを使用し、第三者decoder DLLや抽出ツールは同梱しません。
+
 Reviewed / 確認日: 2026-09-08. Attribution is not a substitute for permission. A build tool's license does not automatically license generated game content. / 出典記載は配布許可の代わりではありません。変換ツールのライセンスはゲーム内容に自動適用されません。
 
 | Source / 出典 | Use / 用途 | License and packaging / ライセンス・同梱 |
@@ -103,3 +107,18 @@ The dedicated host, briefing tracker, common-settings serialization and restrict
 Folder-shaped tabs, alternating row shades, orange focus guides and the two-column lobby layout are native GDI implementations informed by user-provided screenshots. The screenshots themselves are not included. Source-only UI tests use independently specified synthetic values. Dedicated hosting adds no third-party runtime beyond the Windows libraries already listed.
 
 フォルダー形タブ・行の濃淡・オレンジのクロス・左右2列のロビーは、利用者の参考画像を元にGDIで描く独自実装です。参考画像自体は含めません。公開ソースの画面検証には独自の模擬値を使い、既出のWindowsライブラリ以外の実行環境は追加していません。
+
+## Player input and sampled motion (2026-09-12) / 入力と原モーション
+
+Input, posture state, menu routing and shared-depth rendering are newly written native C++. GWMOT contains locally sampled original MTAR clips; this game-derived data has no new license grant. The offline decoder uses the Jayveer MGS-MDN-Noesis format reference already attributed above; no reference binary or Python runtime is bundled. Bone poses and source root travel support the native action choices, but original MTSQ/C++ dispatch and weapon layers remain unverified.
+
+入力・姿勢管理・画面切替・深度共有は新規C++実装です。GWMOTは原MTAR由来で、素材への新たな許諾を主張しません。既述のJayveer形式資料を参照したローカル変換で、参照ツール本体は同梱せず、原版の動作選択条件の完全復旧も主張しません。
+
+
+## Native round preparation and original spawn data / 出撃準備と原配置 (2026-09-13)
+
+GWCBv2 readiness, the host DP ledger, transactional loadout/spawn coordination and their UI are newly written C++. The local n022a.tdm-spawns.cfg contains 128 original GCX/GEOM-derived records verified against the user's local MGO2 ELF through IDA 9.1; no new rights in those records or the original assets are claimed. The original 64-bit selector was checked against PPC. Conservative vertical capsule landing and Windows host RNG seeding are native implementation choices, not a claim of original physics or seed parity. No IDA database, original ELF, credentials or reference tool is bundled with this addition.
+
+出撃準備・DP管理・武器承認・配置確定と画面は新規C++実装です。配置ファイルの128行は利用者のローカル原GCX／GEOMと現MGO2 ELFをIDA9.1で照合したもので、原素材への新たな権利を主張しません。原64bit選択処理と、Windows側の乱数初期化・垂直着地の設計を区別しています。IDAデータベース、元ELF、認証情報、参照ツールを同梱していません。
+
+Menu sound update / メニュー効果音更新（2026-09-13）: Cancel92, Confirm93 and Cursor94 use the original init_n/mgs4int_nt.ssp interface bank. IDA9.1 read-only current MGO2 analysis AA7DB4 → 988404/989D0C → 482B0 and PPC bytes establish the three call paths. Only92 was newly converted with the existing independently written SSW2 decoder;93/94 bytes are unchanged. The Music selector and Windows action policy are newly written. Original PS3 reset defaults/reverb and exact DSP parity remain incomplete; no original executable, SDK, IDA or decryption helper is included. 元のメニュー音を再利用し、今回は取消92のみ変換。原音の権利・元ツールのライセンスを本プロジェクトが新たに許諾するものではありません。

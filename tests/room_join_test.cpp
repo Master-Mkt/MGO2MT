@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
+#include <sstream>
 using namespace mgo2win;
 void check(bool v,const char*s){if(!v)throw std::runtime_error(s);}
 void put(std::vector<uint8_t>&b,size_t at,uint32_t v){for(unsigned i=0;i<4;++i)b[at+3-i]=uint8_t(v>>(8*i));}
@@ -11,6 +12,8 @@ LobbyPacket permission(){LobbyPacket p{0x4321,0,std::vector<uint8_t>(43)};const 
 int main(int argc,char**argv){try{
  auto d=parse_room_detail(detail().payload,77);check(d.name==L"R"&&d.comment==L"C"&&d.capacity==16&&d.players==2&&d.roster.size()==2&&d.roster[0].id==123,"detail offsets and host slot");
  auto environment=detail().payload;put(environment,236,5);environment[218]=1;environment[223]=0x40;auto settings=parse_room_detail(environment,77);check(settings.environment_known&&settings.briefing_minutes==5&&settings.weapon_restrictions[0]==1&&settings.weapon_restrictions[5]==0x40,"room restrictions and briefing use reviewed HostGameEnv offsets");
+ check(!settings.enemy_nametags,"received room bit OFF overrides default ON");environment[346]|=8;check(parse_room_detail(environment,77).enemy_nametags,"received room bit ON");environment[346]&=~8;environment[345]|=8;check(!parse_room_detail(environment,77).enemy_nametags,"adjacent environment bit is not enemy tag permission");
+ check(!settings.auto_aim,"received room auto aim OFF overrides default");environment[345]|=0x20;check(parse_room_detail(environment,77).auto_aim,"original auto aim permission byte177 mask20");environment[345]&=~0x20;environment[346]|=0x20;check(!parse_room_detail(environment,77).auto_aim,"adjacent commonB bit is not auto aim permission");
  for(unsigned mode=0;mode<7;++mode){auto b=detail().payload;if(mode==0)b.pop_back();if(mode==1)put(b,4,78);if(mode==2)put(b,372,0);if(mode==3)put(b,400,123);if(mode==4)b[234]=19;if(mode==5)b[8]=255;if(mode==6)b[152]=2;bool bad=false;try{parse_room_detail(b,77);}catch(...){bad=true;}check(bad,"malformed detail rejected");}
  auto logical=room_join_payload(77,1,L"abc");check(logical.size()==21&&logical[3]==77&&logical[4]=='a'&&logical[7]==0&&logical[20]==1,"logical join layout");
  NetworkKeys keys;auto encrypted=room_action_wire_payload(keys,0x4320,logical);check(encrypted.size()==24,"encrypted join block extent");network_block(encrypted,keys.packet,false);check(std::equal(logical.begin(),logical.end(),encrypted.begin())&&encrypted[21]==0&&encrypted[22]==0&&encrypted[23]==0,"encrypted wire decrypts to padded original contract");
@@ -27,6 +30,26 @@ int main(int argc,char**argv){try{
  for(unsigned mode=0;mode<5;++mode){guard=false;cancel=false;std::vector<uint16_t>commands;
   auto out=exchange_room_action(a,[&](uint16_t cmd,std::span<const uint8_t>)->LobbyPacket{commands.push_back(cmd);if(cmd==0x4312)return detail();if(cmd==0x4320)return permission();if(cmd==0x4380){if(mode==4)throw std::runtime_error("leave acknowledgement lost");return {0x4381,0,{0,0,0,0}};}check(cmd==0x4322,"cleanup command");return {0x4323,0,{0,0,0,0}};},guard,cancel,[&](const host::Admission&admission){check(guard&&admission.character==123&&admission.endpoints[0].port==5735,"authenticated host endpoint handed to UDP adapter");host::Result r;r.stage=mode==0?host::Stage::timeout:mode==1?host::Stage::rejected:host::Stage::cancelled;r.profile_sent=mode>=2;r.was_joined=mode==3;return r;});
   check(commands.size()==(mode>=2?4:3),"profile send determines active-player cleanup");if(mode==4)check(guard&&out.join_status==RoomJoinStatus::outcome_unknown,"failed cleanup latches uncertain state");else check(!guard&&out.join_status==(mode==0?RoomJoinStatus::host_timeout:mode==1?RoomJoinStatus::host_rejected:RoomJoinStatus::host_cancelled),"host terminal error is preserved after cleanup");
+ }
+ // A cleanup exception must not hide the preceding host failure from logs.
+ // All reservation/active-player cleanup rules and uncertain-state outcomes
+ // remain identical, including when an unrelated asynchronous reply arrives.
+ for(unsigned mode=0;mode<4;++mode){
+  guard=false;std::vector<uint16_t> sent;std::ostringstream diagnostic;
+  auto previous=std::cout.rdbuf(diagnostic.rdbuf());
+  auto out=exchange_room_action(a,[&](uint16_t command,std::span<const uint8_t>)->LobbyPacket{
+   sent.push_back(command);if(command==0x4312)return detail();if(command==0x4320)return permission();
+   if(command==0x4322){if(mode==0)return {0x0005,0,{0,0,0,0}};if(mode==1)throw std::runtime_error("closed lobby during cleanup");return {0x4323,0,{0,0,0,0}};}
+   check(command==0x4380,"only expected active-player cleanup");if(mode==2)return {0x4381,0,{0,0,0,7}};return {0x4381,0,{0,0,0,0}};
+  },guard,cancel,[](const host::Admission&){host::Result r;r.stage=host::Stage::protocol_error;r.error=6;r.profile_sent=true;r.was_joined=true;return r;});
+  std::cout.rdbuf(previous);const auto logged=diagnostic.str();
+  check(logged.find("\"room_host_terminal\":true")<logged.find("\"room_cleanup\":\"begin\"")&&logged.find("\"join_status\":14,\"error\":6,\"profile_sent\":true,\"was_joined\":true")!=std::string::npos,"primary host outcome logged before cleanup failure");
+  check(logged.find("192.0.2.")==std::string::npos&&logged.find("character")==std::string::npos&&logged.find("abc")==std::string::npos,"cleanup diagnostics omit peer addresses, identities and password");
+  if(mode<2)check(sent==std::vector<uint16_t>({0x4312,0x4320,0x4322})&&guard&&out.status==RoomStatus::protocol_error&&out.join_status==RoomJoinStatus::outcome_unknown&&out.error==0,"reservation cleanup failure preserves original uncertain behavior");
+  if(mode==0)check(logged.find("\"room_cleanup\":\"invalid_reply\",\"command\":17186,\"received_command\":5,\"payload_bytes\":4")!=std::string::npos,"unexpected reply logged without payload");
+  if(mode==1)check(logged.find("\"room_cleanup\":\"transport_error\"")!=std::string::npos,"transport failure distinguished from invalid reply");
+  if(mode==2)check(guard&&out.status==RoomStatus::rejected&&out.join_status==RoomJoinStatus::outcome_unknown&&out.error==7&&logged.find("\"room_cleanup\":\"rejected\",\"command\":17280")!=std::string::npos,"leave rejection retains uncertain guard and original error");
+  if(mode==3)check(!guard&&out.join_status==RoomJoinStatus::host_protocol_error&&out.error==6&&sent.size()==4&&logged.find("\"room_cleanup\":\"success\",\"command\":17280")!=std::string::npos,"successful cleanup retains original terminal cause");
  }
  // UI: first Enter opens details, a separate confirmation sends only once;
  // even repeated non-repeat events and Back cannot abandon an active send.

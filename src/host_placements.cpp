@@ -35,9 +35,10 @@ void PlacementReceiver::receive(uint8_t generation,std::span<const uint8_t>b){
  if(found==state_.items.end()&&state_.items.size()>=12)throw Invalid(Error::extent);
  state_.items.insert_or_assign(item.id,item);++state_.revision;
 }
-ObjectStates::ObjectStates(uint8_t localSlot,std::vector<uint8_t> widths,std::vector<Update> updates):widths_(std::move(widths)),values_(widths_.size()),updates_(std::move(updates)),slot_(localSlot){
+ObjectStates::ObjectStates(uint8_t localSlot,std::vector<uint8_t> widths,std::vector<Update> updates):widths_(std::move(widths)),values_(widths_.size()),pending_(widths_.size()),updates_(std::move(updates)),slot_(localSlot){
  if(slot_>=24||widths_.size()>224||std::any_of(widths_.begin(),widths_.end(),[](uint8_t n){return n==0||n>8;}))throw Invalid(Error::message);
  if(!updates_.empty()&&updates_.size()!=widths_.size())throw Invalid(Error::extent);
+ if(std::any_of(updates_.begin(),updates_.end(),[](Update u){return u!=Update::bits&&u!=Update::maximum;}))throw Invalid(Error::message);
 }
 bool ObjectStates::receive(std::span<const uint8_t>b){
  if(b.empty())throw Invalid(Error::extent);
@@ -49,14 +50,19 @@ bool ObjectStates::receive(std::span<const uint8_t>b){
   for(size_t i=0;i<next.size();++i){unsigned v=0;for(unsigned j=0;j<widths_[i];++j,++at)v|=((b[2+at/8]>>(at%8))&1)<<j;next[i]=uint8_t(v);}
   // Publish only after the complete addressed snapshot is decoded. Initial
   // application is assignment, unlike the later per-object OR callback.
-  initial_=next;values_=std::move(next);complete_=true;return true;
+  initial_=next;
+  // The snapshot and ordinary deltas use distinct registered channels.
+  // A monotone OR/max update received first must not be erased by an older
+  // E0 image. Keep those updates private until the full baseline is valid.
+  for(size_t i=0;i<next.size();++i){if(!updates_.empty()&&updates_[i]==Update::maximum)next[i]=std::max(next[i],pending_[i]);else next[i]|=pending_[i];}
+  values_=std::move(next);pending_.clear();complete_=true;return true;
  }
  if(b[0]>=widths_.size())throw Invalid(Error::message);
  auto width=widths_[b[0]];if(b.size()!=(width==1?1:2))throw Invalid(Error::extent);
  // 737860 OR and 737888 maximum callbacks both exist. Require the reviewed
  // concrete actor policy for multibit deltas instead of generalizing OR.
  if(width>1&&updates_.empty())throw Invalid(Error::message);
- auto&v=values_[b[0]];auto old=v;auto incoming=uint8_t((width==1?1:b[1])&((1u<<width)-1));
- if(!updates_.empty()&&updates_[b[0]]==Update::maximum)v=std::max(v,incoming);else v|=incoming;return old!=v;
+ auto&v=(complete_?values_:pending_)[b[0]];auto old=v;auto incoming=uint8_t((width==1?1:b[1])&((1u<<width)-1));
+ if(!updates_.empty()&&updates_[b[0]]==Update::maximum)v=std::max(v,incoming);else v|=incoming;return complete_&&old!=v;
 }
 }

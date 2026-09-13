@@ -1,0 +1,403 @@
+{
+  "schema": "mgo2win.preset_radio.reference.v1",
+  "source_elf_sha256": "1a55a41ee5afdebd89075bd205e412c8311f569ba9dc022f629bb63fb4bfd13a",
+  "source_gcx": "local-source/scenerio.gcx",
+  "source_gcx_sha256": "a5601bf0c8020316a05c84c04a560228a392d0aee36c57433a721876fb0a3489",
+  "text_variant": {
+    "original_actor_type": 7,
+    "native_assignment": "reference display only; no inferred native voice"
+  },
+  "default_placement_source": "BB5C60 current ELF; profile nonzero valid IDs may override defaults",
+  "native_select_order": [
+    "closed",
+    "chat",
+    "preset_categories"
+  ],
+  "original_help_select_order": [
+    "closed",
+    "preset_categories",
+    "chat"
+  ],
+  "double_press_window_ms": null,
+  "original_selection_countdown_raw": 100,
+  "original_selection_countdown_unit": null,
+  "categories": [
+    {
+      "direction": "up",
+      "label_ja": "攻撃系",
+      "label_resource": 7446,
+      "messages": [
+        {
+          "preset_id": 0,
+          "text_ja": "ゴーゴーゴー！",
+          "text_en": "Go! Go! Go!",
+          "gcx_resource": 7493,
+          "gcx_offset": "0x7b063",
+          "lookup_group": "preset_radio",
+          "lookup_index": 8,
+          "switch_target": "0xbb4988",
+          "voice_asset": null,
+          "voice_cue": {
+            "self": 30639,
+            "remote": 30720,
+            "condition": "original actor type 7, IDs <=37, BB19A8 eligibility gates; native voice not assigned",
+            "source": [
+              "B1A348 table B1A3B4[0] -> B1A434 -> B1AE2C -> B1B408 -> B1B7A0",
+              "BB19A8"
+            ]
+          }
+        },
+        {
+          "preset_id": 1,
+          "text_ja": "敵がいるぞ!!",
+          "text_en": "The enemy's here!",
+          "gcx_resource": 7518,
+          "gcx_offset": "0x7b268",
+          "lookup_group": "preset_radio",
+          "lookup_index": 27,
+          "switch_target": "0xbb473c",
+          "voice_asset": null,
+          "voice_cue": {
+            "self": 30640,
+            "remote": 30721,
+            "condition": "original actor type 7, IDs <=37, BB19A8 eligibility gates; native voice not assigned",
+            "source": [
+              "B1A348 table B1A3B4[0] -> B1A434 -> B1AE2C -> B1B408 -> B1B7A0",
+              "BB19A8"
+            ]
+          }
+        },
+        {
+          "preset_id": 2,
+          "text_ja": "カバー！",
+          "text_en": "Cover!",
+          "gcx_resource": 7595,
+          "gcx_offset": "0x7b7f8",
+          "lookup_group": "preset_radio",
+          "lookup_index": 46,
+          "switch_target": "0xbb42f8",
+          "voice_asset": null,
+          "voice_cue": {
+            "self": 30641,
+            "remote": 30722,
+            "condition": "original actor type 7, IDs <=37, BB19A8 eligibility gates; native voice not assigned",
+            "source": [
+              "B1A348 table B1A3B4[0] -> B1A434 -> B1AE2C -> B1B408 -> B1B7A0",
+              "BB19A8"
+            ]
+          }
+        },
+        {
+          "preset_id": 3,
+          "text_ja": "待て！",
+          "text_en": "Hold it!",
+          "gcx_resource": 7657,
+          "gcx_offset": "0x7bc99",
+          "lookup_group": "preset_radio",
+          "lookup_index": 65,
+          "switch_target": "0xbb42a4",
+          "voice_asset": null,
+          "voice_cue": {
+            "self": 30642,
+            "remote": 30723,
+            "condition": "original actor type 7, IDs <=37, BB19A8 eligibility gates; native voice not assigned",
+            "source": [
+              "B1A348 table B1A3B4[0] -> B1A434 -> B1AE2C -> B1B408 -> B1B7A0",
+              "BB19A8"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "direction": "right",
+      "label_ja": "応答系",
+      "label_resource": 7452,
+      "messages": [
+        {
+          "preset_id": 4,
+          "text_ja": "了解",
+          "text_en": "Roger that.",
+          "gcx_resource": 7709,
+          "gcx_offset": "0x7bf87",
+          "lookup_group": "preset_radio",
+          "lookup_index": 84,
+          "switch_target": "0xbb4468",
+          "voice_asset": null,
+          "voice_cue": {
+            "self": 30643,
+            "remote": 30724,
+            "condition": "original actor type 7, IDs <=37, BB19A8 eligibility gates; native voice not assigned",
+            "source": [
+              "B1A348 table B1A3B4[0] -> B1A434 -> B1AE2C -> B1B408 -> B1B7A0",
+              "BB19A8"
+            ]
+          }
+        },
+        {
+          "preset_id": 5,
+          "text_ja": "ついて来い！",
+          "text_en": "Follow me!",
+          "gcx_resource": 7774,
+          "gcx_offset": "0x7c2b5",
+          "lookup_group": "preset_radio",
+          "lookup_index": 103,
+          "switch_target": "0xbb4414",
+          "voice_asset": null,
+          "voice_cue": {
+            "self": 30644,
+            "remote": 30725,
+            "condition": "original actor type 7, IDs <=37, BB19A8 eligibility gates; native voice not assigned",
+            "source": [
+              "B1A348 table B1A3B4[0] -> B1A434 -> B1AE2C -> B1B408 -> B1B7A0",
+              "BB19A8"
+            ]
+          }
+        },
+        {
+          "preset_id": 6,
+          "text_ja": "反対だ",
+          "text_en": "Uh uh.",
+          "gcx_resource": 7854,
+          "gcx_offset": "0x7c83c",
+          "lookup_group": "preset_radio",
+          "lookup_index": 122,
+          "switch_target": "0xbb44c0",
+          "voice_asset": null,
+          "voice_cue": {
+            "self": 30645,
+            "remote": 30726,
+            "condition": "original actor type 7, IDs <=37, BB19A8 eligibility gates; native voice not assigned",
+            "source": [
+              "B1A348 table B1A3B4[0] -> B1A434 -> B1AE2C -> B1B408 -> B1B7A0",
+              "BB19A8"
+            ]
+          }
+        },
+        {
+          "preset_id": 7,
+          "text_ja": "異状なし",
+          "text_en": "All clear.",
+          "gcx_resource": 7954,
+          "gcx_offset": "0x7ce8a",
+          "lookup_group": "preset_radio",
+          "lookup_index": 141,
+          "switch_target": "0xbb4188",
+          "voice_asset": null,
+          "voice_cue": {
+            "self": 30646,
+            "remote": 30727,
+            "condition": "original actor type 7, IDs <=37, BB19A8 eligibility gates; native voice not assigned",
+            "source": [
+              "B1A348 table B1A3B4[0] -> B1A434 -> B1AE2C -> B1B408 -> B1B7A0",
+              "BB19A8"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "direction": "down",
+      "label_ja": "防御系",
+      "label_resource": 7458,
+      "messages": [
+        {
+          "preset_id": 9,
+          "text_ja": "ターゲットを守れ!",
+          "text_en": "Defend the target!",
+          "gcx_resource": 8109,
+          "gcx_offset": "0x7dac1",
+          "lookup_group": "preset_radio",
+          "lookup_index": 179,
+          "switch_target": "0xbb3970",
+          "voice_asset": null,
+          "voice_cue": {
+            "self": 30648,
+            "remote": 30729,
+            "condition": "original actor type 7, IDs <=37, BB19A8 eligibility gates; native voice not assigned",
+            "source": [
+              "B1A348 table B1A3B4[0] -> B1A434 -> B1AE2C -> B1B408 -> B1B7A0",
+              "BB19A8"
+            ]
+          }
+        },
+        {
+          "preset_id": 10,
+          "text_ja": "固まって進もう!",
+          "text_en": "Stay together!",
+          "gcx_resource": 8170,
+          "gcx_offset": "0x7e0ee",
+          "lookup_group": "preset_radio",
+          "lookup_index": 198,
+          "switch_target": "0xbb3bc0",
+          "voice_asset": null,
+          "voice_cue": {
+            "self": 30649,
+            "remote": 30730,
+            "condition": "original actor type 7, IDs <=37, BB19A8 eligibility gates; native voice not assigned",
+            "source": [
+              "B1A348 table B1A3B4[0] -> B1A434 -> B1AE2C -> B1B408 -> B1B7A0",
+              "BB19A8"
+            ]
+          }
+        },
+        {
+          "preset_id": 11,
+          "text_ja": "一時撤退！",
+          "text_en": "Fall back!",
+          "gcx_resource": 8268,
+          "gcx_offset": "0x7ea70",
+          "lookup_group": "preset_radio",
+          "lookup_index": 217,
+          "switch_target": "0xbb3700",
+          "voice_asset": null,
+          "voice_cue": {
+            "self": 30650,
+            "remote": 30731,
+            "condition": "original actor type 7, IDs <=37, BB19A8 eligibility gates; native voice not assigned",
+            "source": [
+              "B1A348 table B1A3B4[0] -> B1A434 -> B1AE2C -> B1B408 -> B1B7A0",
+              "BB19A8"
+            ]
+          }
+        },
+        {
+          "preset_id": 12,
+          "text_ja": "隠れろ!!",
+          "text_en": "Take cover!",
+          "gcx_resource": 8345,
+          "gcx_offset": "0x7efd7",
+          "lookup_group": "preset_radio",
+          "lookup_index": 236,
+          "switch_target": "0xbb3ee0",
+          "voice_asset": null,
+          "voice_cue": {
+            "self": 30651,
+            "remote": 30732,
+            "condition": "original actor type 7, IDs <=37, BB19A8 eligibility gates; native voice not assigned",
+            "source": [
+              "B1A348 table B1A3B4[0] -> B1A434 -> B1AE2C -> B1B408 -> B1B7A0",
+              "BB19A8"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "direction": "left",
+      "label_ja": "コミュニケーション系",
+      "label_resource": 7464,
+      "messages": [
+        {
+          "preset_id": 13,
+          "text_ja": "すまない",
+          "text_en": "Sorry.",
+          "gcx_resource": 8379,
+          "gcx_offset": "0x7f26a",
+          "lookup_group": "preset_radio",
+          "lookup_index": 255,
+          "switch_target": "0xbb3a00",
+          "voice_asset": null,
+          "voice_cue": {
+            "self": 30652,
+            "remote": 30733,
+            "condition": "original actor type 7, IDs <=37, BB19A8 eligibility gates; native voice not assigned",
+            "source": [
+              "B1A348 table B1A3B4[0] -> B1A434 -> B1AE2C -> B1B408 -> B1B7A0",
+              "BB19A8"
+            ]
+          }
+        },
+        {
+          "preset_id": 14,
+          "text_ja": "すごいな",
+          "text_en": "Awesome!",
+          "gcx_resource": 8467,
+          "gcx_offset": "0x7f7dc",
+          "lookup_group": "preset_radio",
+          "lookup_index": 274,
+          "switch_target": "0xbb3c60",
+          "voice_asset": null,
+          "voice_cue": {
+            "self": 30653,
+            "remote": 30734,
+            "condition": "original actor type 7, IDs <=37, BB19A8 eligibility gates; native voice not assigned",
+            "source": [
+              "B1A348 table B1A3B4[0] -> B1A434 -> B1AE2C -> B1B408 -> B1B7A0",
+              "BB19A8"
+            ]
+          }
+        },
+        {
+          "preset_id": 15,
+          "text_ja": "幸運を",
+          "text_en": "Don't die on me.",
+          "gcx_resource": 8568,
+          "gcx_offset": "0x7fd3d",
+          "lookup_group": "preset_radio",
+          "lookup_index": 293,
+          "switch_target": "0xbb37a0",
+          "voice_asset": null,
+          "voice_cue": {
+            "self": 30654,
+            "remote": 30735,
+            "condition": "original actor type 7, IDs <=37, BB19A8 eligibility gates; native voice not assigned",
+            "source": [
+              "B1A348 table B1A3B4[0] -> B1A434 -> B1AE2C -> B1B408 -> B1B7A0",
+              "BB19A8"
+            ]
+          }
+        },
+        {
+          "preset_id": 16,
+          "text_ja": "頼んだ",
+          "text_en": "I'm counting on you.",
+          "gcx_resource": 8657,
+          "gcx_offset": "0x803b5",
+          "lookup_group": "preset_radio",
+          "lookup_index": 312,
+          "switch_target": "0xbb3da0",
+          "voice_asset": null,
+          "voice_cue": {
+            "self": 30655,
+            "remote": 30736,
+            "condition": "original actor type 7, IDs <=37, BB19A8 eligibility gates; native voice not assigned",
+            "source": [
+              "B1A348 table B1A3B4[0] -> B1A434 -> B1AE2C -> B1B408 -> B1B7A0",
+              "BB19A8"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "wire_opcode": null,
+  "original_game_channel": 600,
+  "original_channel_registration": {
+    "source": "B32098..B320B4",
+    "topology": 0,
+    "flags": 3,
+    "selector": 255
+  },
+  "original_game_payload": [
+    "type_1_client_or_2_host",
+    "sender_slot_u8",
+    "preset_id_u8",
+    "constant_2_u8"
+  ],
+  "transport_enabled": false,
+  "audio_enabled": false,
+  "internal_actor_event": "0x150008",
+  "local_event_payload": [
+    "sender_slot_u8",
+    "preset_id_u8",
+    "constant_2_u8"
+  ],
+  "unresolved": [
+    "native HOST original channel 600 integration and authenticated slot binding",
+    "original speech asset mapping",
+    "voice/type selection for native characters",
+    "custom profile radio editing",
+    "original 100-tick selection delay unit"
+  ]
+}

@@ -1,4 +1,5 @@
 #pragma once
+#include "menu_audio.h"
 #include <array>
 #include <algorithm>
 #include <string>
@@ -33,19 +34,19 @@ public:
  bool back()const{return back_;}unsigned attempts()const{return attempts_;}
  const std::wstring& notice()const{return notice_;}
  std::wstring display(int i)const{return i==1?std::wstring(fields_[1].size,L'•'):std::wstring(fields_[0].bytes.data(),fields_[0].size);}
- int focus(int i){if(i<0||i>6||i==focus_)return -1;for(auto&f:fields_)f.selected=false;focus_=i;return 94;}
+ int focus(int i){if(i<0||i>6||i==focus_)return -1;for(auto&f:fields_)f.selected=false;focus_=i;return menu_audio::Cursor;}
  void character(wchar_t c){if(focus_>=2)return;if(c<33||c>126){notice_=L"半角英数字・記号を入力してください。";return;}fields_[focus_].insert(c);notice_.clear();}
  int key(Key k){
-  if(k==cancel){clear();back_=true;return 93;}
+  if(k==cancel){clear();back_=true;return menu_audio::Cancel;}
   if(k==next||k==previous)return focus((focus_+(k==next?1:6))%7);
-  if(k==confirm){if(focus_<2)return focus(focus_+1);if(focus_==3)return key(cancel);
-   if(focus_>=4){saveMode_=focus_-4;notice_=L"保存設定はログインボタンで適用されます。";return 94;}
+  if(k==confirm){if(focus_<2){focus(focus_+1);return menu_audio::Confirm;}if(focus_==3)return key(cancel);
+   if(focus_>=4){saveMode_=focus_-4;notice_=L"保存設定はログインボタンで適用されます。";return menu_audio::Confirm;}
    ++attempts_;if(!fields_[0].size){focus(0);notice_=L"GAME IDを入力してください。";}
    else if(!fields_[1].size){focus(1);notice_=L"パスワードを入力してください。";}
    else notice_=L"ログイン接続は準備中です。入力内容は送信されていません。";
-   return 93;
+   return valid()?int(menu_audio::Confirm):-1;
   }
-  if(focus_>=4){if(k==left||k==right){focus(4+(focus_-4+(k==right?1:2))%3);saveMode_=focus_-4;return 94;}return -1;}
+  if(focus_>=4){if(k==left||k==right){focus(4+(focus_-4+(k==right?1:2))%3);saveMode_=focus_-4;return menu_audio::Cursor;}return -1;}
   if(focus_>=2){if(k==left||k==right)return focus(focus_==2?3:2);return -1;}
   auto&f=fields_[focus_];
   if(k==selectAll){f.selected=true;return -1;}

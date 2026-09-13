@@ -13,12 +13,14 @@ struct MusicLibrary {
 };
 struct MusicChoice {const Track* track=nullptr;bool missingForced=false;};
 // This is the audio-thread replacement gate. A selection/respawn or title edit
-// cannot restart the current voice unless the resolved music ID changes.
+// cannot restart the current voice unless the resolved ID or immutable layer
+// layout changes. A preset/gain change keeps the same sample position.
 class MusicPlayback {
  std::string id_;
+ std::filesystem::path alternate_;
 public:
- bool select(const Track* track){std::string next=track?track->id:std::string{};if(next==id_)return false;id_=std::move(next);return true;}
- void clear(){id_.clear();}
+ bool select(const Track* track,const std::filesystem::path& alternate={}){std::string next=track?track->id:std::string{};if(next==id_&&alternate==alternate_)return false;id_=std::move(next);alternate_=alternate;return true;}
+ void clear(){id_.clear();alternate_.clear();}
 };
 class MusicSelection {
  std::string selected_,pending_;std::optional<std::string> forced_;

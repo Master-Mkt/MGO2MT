@@ -70,6 +70,17 @@ int main(){try{
    ui.message(nullptr,WM_KEYDOWN,VK_DOWN,0);check(ui.current_lobby_group()==0,"category down wraps to automatching");ui.message(nullptr,WM_KEYDOWN,VK_RIGHT,0);ui.message(nullptr,WM_KEYDOWN,VK_DOWN,0);check(ui.current_lobby_group()==0&&ui.focused_lobby_id()==2,"right column navigates lobbies without changing category");ui.message(nullptr,WM_KEYDOWN,VK_ESCAPE,0);check(!ui.lobby_visible()&&ui.preview_character_id()==91,"back restores PC preview");}
   else{check(!ui.lobby_visible()&&ui.preview_character_id()==91,"bad reply cannot transition");check(state->unresolved==(uiMode!=3),"reject versus uncertain");if(state->unresolved){ui.message(nullptr,WM_KEYDOWN,VK_RETURN,0);check(!ui.busy()&&calls==1,"uncertain selection cannot repeat");}}
  }
+ // A configured salute preserves the model only for its presentation duration.
+ // If transport outlasts the salute, return to the ordinary pending display.
+ {
+  uint64_t now=100;CharacterScreen ui(transport,[&]{return now;});settle(ui);std::atomic_bool release=false;unsigned calls=0;
+  ui.selection_presentation(2000,false,false);
+  ui.selection([&](uint32_t id,const std::atomic_bool& c){++calls;while(!release&&!c)Sleep(1);CharacterSelectionReply r;r.status=CharacterSelectionStatus::success;r.character.id=id;r.request_may_have_been_sent=true;return r;},std::make_shared<CharacterSelectionState>());
+  ui.message(nullptr,WM_KEYDOWN,VK_RETURN,0);ui.draw();check(ui.busy()&&ui.preview_visible(),"configured salute keeps pending preview");
+  now=2099;ui.draw();check(ui.preview_visible(),"salute remains visible before its final millisecond");
+  now=2100;ui.draw();check(ui.busy()&&!ui.preview_visible()&&!ui.lobby_visible(),"finished salute restores pending display until server reply");
+  ui.message(nullptr,WM_KEYDOWN,VK_RETURN,0);release=true;settle(ui);check(calls==1&&ui.lobby_visible(),"expired salute never resends selection and confirmed reply advances");
+ }
  auto state=std::make_shared<CharacterSelectionState>();{
   CharacterScreen ui(transport);settle(ui);ui.selection([](uint32_t,const std::atomic_bool&c){while(!c)Sleep(1);CharacterSelectionReply r;r.status=CharacterSelectionStatus::outcome_unknown;r.request_may_have_been_sent=true;return r;},state);ui.message(nullptr,WM_KEYDOWN,VK_RETURN,0);ui.message(nullptr,WM_KEYDOWN,VK_ESCAPE,0);check(ui.back()&&state->unresolved,"leaving pending selection retains uncertainty");
  }{CharacterScreen ui(transport);settle(ui);unsigned invoked=0;ui.selection([&](uint32_t,const std::atomic_bool&){++invoked;return CharacterSelectionReply{};},state);ui.message(nullptr,WM_KEYDOWN,VK_RETURN,0);check(!invoked&&!ui.busy(),"uncertainty survives screen recreation");}

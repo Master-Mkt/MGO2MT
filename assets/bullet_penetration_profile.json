@@ -1,0 +1,543 @@
+{
+  "schema": 1,
+  "evidence": "notes/ORIGINAL_BULLET_PENETRATION_20260914.md",
+  "elf_sha256": "1a55a41ee5afdebd89075bd205e412c8311f569ba9dc022f629bb63fb4bfd13a",
+  "weapon": {
+    "id": 25,
+    "name": "AK102",
+    "base_hp": 275,
+    "initial_force": 1000,
+    "minimum_force": 550,
+    "penetration_budget": 250,
+    "front_surface_force_cost": 100,
+    "missing_material_resistance": 1000,
+    "stop_comparison": "remaining_budget <= resistance",
+    "free_surface_attribute": "0x8000",
+    "backface": "direction dot original_normal >= 0 is free",
+    "decay_start": 15000,
+    "decay_end": 80000,
+    "range": 200000,
+    "projectile_speed": 473750,
+    "hp_formula": "trunc(base_hp * signed_force / 1000); original force=0 sentinel maps to1000"
+  },
+  "near_hp_examples": {
+    "direct": 275,
+    "one_passed_surface": 247,
+    "two_passed_surfaces": 220
+  },
+  "native_adapter": {
+    "instantaneous_ray": true,
+    "body_through": false,
+    "ricochet": false,
+    "maximum_geometric_surfaces": 64,
+    "exhausted_force_damage": 0,
+    "exhausted_force_zero_sentinel_disabled": true,
+    "part_armor_rule_modifiers_complete": false
+  },
+  "stage_materials": {
+    "n022a": {
+      "map": 20,
+      "materials": [
+        {
+          "material_hash": "0x15bccc",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x1818ac",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x4598aa",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x189cd7",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x48c4ba",
+          "resistance": 600
+        },
+        {
+          "material_hash": "0x7adccb",
+          "resistance": 300
+        },
+        {
+          "material_hash": "0x189cd6",
+          "resistance": 90
+        },
+        {
+          "material_hash": "0x48c4bc",
+          "resistance": 300
+        },
+        {
+          "material_hash": "0x7818b1",
+          "resistance": 16
+        },
+        {
+          "material_hash": "0x48c4b9",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0xe1d8b3",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x7adcca",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x35d425",
+          "resistance": 15
+        },
+        {
+          "material_hash": "0xa1dccb",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x3920c6",
+          "resistance": 30
+        },
+        {
+          "material_hash": "0xe1d8c6",
+          "resistance": 90
+        },
+        {
+          "material_hash": "0x65c426",
+          "resistance": 90
+        },
+        {
+          "material_hash": "0xe1d8c5",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x41e4b4",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0xe8dcad",
+          "resistance": 20
+        },
+        {
+          "material_hash": "0x189cd4",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0xb720ce",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0xb720cd",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0xea24cd",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x48c4b8",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0xb83cd1",
+          "resistance": 20
+        },
+        {
+          "material_hash": "0x381ccb",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x15bccd",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x189cd5",
+          "resistance": 600
+        },
+        {
+          "material_hash": "0x7214ca",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0xe1d8b4",
+          "resistance": 30
+        },
+        {
+          "material_hash": "0xb720cf",
+          "resistance": 1000
+        }
+      ]
+    },
+    "n001a": {
+      "map": 1,
+      "materials": [
+        {
+          "material_hash": "0x7a24ce",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x12b8cb",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x15bccd",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x41e4b4",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x41d8b5",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x41d8b4",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x189cd6",
+          "resistance": 90
+        },
+        {
+          "material_hash": "0x48c4ba",
+          "resistance": 600
+        },
+        {
+          "material_hash": "0x35d425",
+          "resistance": 15
+        },
+        {
+          "material_hash": "0x189cd4",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x189cd5",
+          "resistance": 600
+        },
+        {
+          "material_hash": "0x1818ac",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x189cd7",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0xe1d8b3",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x4598aa",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x48c4b9",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x3920c6",
+          "resistance": 30
+        },
+        {
+          "material_hash": "0xe8dcac",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0xe8dcab",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0xe1d8b4",
+          "resistance": 30
+        },
+        {
+          "material_hash": "0x65c426",
+          "resistance": 90
+        },
+        {
+          "material_hash": "0xb720cd",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x12b8ca",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0xe8dcad",
+          "resistance": 20
+        },
+        {
+          "material_hash": "0x15bccc",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x3b20d4",
+          "resistance": 16
+        },
+        {
+          "material_hash": "0x15bce2",
+          "resistance": 1000
+        }
+      ]
+    },
+    "n004a": {
+      "map": 4,
+      "materials": [
+        {
+          "material_hash": "0x15bccc",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x48c4b9",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x1818ac",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x7818b1",
+          "resistance": 16
+        },
+        {
+          "material_hash": "0x35d425",
+          "resistance": 15
+        },
+        {
+          "material_hash": "0xe1d8c5",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x48c4ba",
+          "resistance": 600
+        },
+        {
+          "material_hash": "0x7a24ce",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x7214ca",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0xe1d8b3",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x48c4b8",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x45bcb4",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x539cb7",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0xe8dcad",
+          "resistance": 20
+        },
+        {
+          "material_hash": "0xe1d8b4",
+          "resistance": 30
+        },
+        {
+          "material_hash": "0xa1dccb",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0xb83cd1",
+          "resistance": 20
+        },
+        {
+          "material_hash": "0x189cd6",
+          "resistance": 90
+        },
+        {
+          "material_hash": "0x65c426",
+          "resistance": 90
+        },
+        {
+          "material_hash": "0x08e8cd",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x7adcca",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x189cd7",
+          "resistance": 1000
+        }
+      ]
+    },
+    "n023a": {
+      "map": 21,
+      "materials": [
+        {
+          "material_hash": "0x7a24ce",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x15bccd",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x12b8cb",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x35d425",
+          "resistance": 15
+        },
+        {
+          "material_hash": "0x15bccc",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x41d8b4",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x41e4b4",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x189cd7",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x48c4ba",
+          "resistance": 600
+        },
+        {
+          "material_hash": "0x189cd5",
+          "resistance": 600
+        },
+        {
+          "material_hash": "0x4598aa",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x189cd4",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x381ccb",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0xe8dcab",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x48c4b9",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x189cd6",
+          "resistance": 90
+        },
+        {
+          "material_hash": "0xe8dcad",
+          "resistance": 20
+        },
+        {
+          "material_hash": "0x7214ca",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0xe8dcac",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x1818ad",
+          "resistance": 600
+        },
+        {
+          "material_hash": "0x1818ac",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x7adcca",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x65c426",
+          "resistance": 90
+        },
+        {
+          "material_hash": "0x7818b1",
+          "resistance": 16
+        },
+        {
+          "material_hash": "0x7818b2",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0xe1d8c5",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x45bcb4",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0xb83cd1",
+          "resistance": 20
+        },
+        {
+          "material_hash": "0x3920c5",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0xe1d8b3",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x1818c2",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x41d8b5",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0xe1d8c6",
+          "resistance": 90
+        },
+        {
+          "material_hash": "0x3920c6",
+          "resistance": 30
+        },
+        {
+          "material_hash": "0x15bcce",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x41d8b6",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x15bce2",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x3b20d3",
+          "resistance": 16
+        },
+        {
+          "material_hash": "0x189cea",
+          "resistance": 1000
+        },
+        {
+          "material_hash": "0x989cb2",
+          "resistance": 1000
+        }
+      ]
+    }
+  }
+}

@@ -21,17 +21,25 @@ class CharacterCreation {
  int pitch_=0;unsigned auditions_=0;std::optional<CharacterVoicePreview> audition_;
  unsigned tab_=0,row_=0;bool color_=false,closed_=false,confirm_=false,discard_=false,yes_=false,dirty_=false;
  unsigned changes_=0,confirmations_=0;
+ bool skillsRequired_=false,skillsConfigured_=false,skillRequested_=false;
  bool registrationEnabled_=false,registrationBusy_=false,registrationRequested_=false;
+ bool unicodeNames_=false,imeComposing_=false,imeEnterGuard_=false;
+ wchar_t pendingHigh_=0;
  std::optional<CharacterCreateRequest> registration_;
  std::vector<unsigned> cues_;
  std::vector<AppearanceRule> rules(unsigned slot)const;
  std::vector<unsigned> choices(unsigned slot,bool colors)const;
  void normalize();void step(int direction);void activate();void change_tab(unsigned);void cancel();
  void audition();
+ void append_name(wchar_t);
 public:
  explicit CharacterCreation(const CharacterCatalog*,bool registrationEnabled=false);
  std::optional<CharacterCreateRequest> take_registration(){auto r=std::move(registration_);registration_.reset();return r;}
  void registration_failed(std::wstring message){registrationBusy_=false;confirm_=false;yes_=false;notice_=std::move(message);}
+ void require_skills(bool enabled){skillsRequired_=enabled;}
+ void unicode_names(bool enabled){unicodeNames_=enabled;notice_.clear();}
+ bool take_skill_request(){bool result=skillRequested_;skillRequested_=false;return result;}
+ void skills_complete(bool advance){skillsConfigured_=true;dirty_=true;if(advance)activate();}
  bool registration_busy()const{return registrationBusy_;}
  bool message(HWND,UINT,WPARAM,LPARAM);
  void draw(HDC,std::span<const HFONT>)const;
@@ -44,7 +52,7 @@ public:
  unsigned tab()const{return tab_;}unsigned row()const{return row_;}
  bool confirming()const{return confirm_;}bool discarding()const{return discard_;}bool yes()const{return yes_;}
  unsigned changes()const{return changes_;}unsigned confirmations()const{return confirmations_;}
- static std::wstring name_error(std::wstring_view);
+ static std::wstring name_error(std::wstring_view,bool unicode=false);
  std::vector<unsigned> cues(){auto r=std::move(cues_);cues_.clear();return r;}
  void report()const;
 };

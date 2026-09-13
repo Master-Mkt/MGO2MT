@@ -6,6 +6,9 @@ namespace mgo2win::host {
 struct Player {
  uint8_t slot=0;uint16_t instance=0;uint32_t character=0;
  std::string name,clan;
+ uint32_t clanId=0;uint8_t emblem=0;
+ // Optional Windows GWAV appearance; absent on older hosts.
+ std::optional<std::array<uint8_t,28>> appearance;
  bool operator==(const Player&)const=default;
 };
 struct Roster {

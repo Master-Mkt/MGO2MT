@@ -27,6 +27,24 @@ int main(int argc,char**argv){try{
   check(a.result().model==loaded.model&&a.result().lighting==loaded.lighting,"invalid mixed bindings do not partially darken the scene");
   check(!a.object_lights(request(20),mixed,{{2,123,{},0}}),"CBOX state is not a one-bit light switch");
  }
+ // A single authoritative revision updates geometry, contact and illumination.
+ {std::ofstream collision(folder/"n022a.collision.cfg");collision<<"MGO2WIN.STAGE_COLLISION 1 3 1\n-100 -100 -100\n100 -100 -100\n0 -100 100\n0 1 2 0 0\n";}
+ {stage::Assets a(folder),late(folder);a.select(request(20));late.select(request(20));auto base=wait(a);wait(late);
+  auto part=std::make_shared<CharacterModel>(bytes);auto wall=std::make_shared<stage::Collision>(stage::Collision::make({{0,-2,-2},{0,2,-2},{0,0,2}},{{{0,1,2}}}));
+  stage::ObjectBinding b;b.bindingId=900;b.width=1;b.position={5,0,0};b.parts.push_back({77,1,0,part,wall});b.lights.push_back({1,0,{123,~0u,true,{},0}});
+  stage::SceneSnapshot intact{request(20),1,{{900,0,0}}};check(a.object_states(intact,{&b,1}),"complete intact scene");auto before=a.result();
+  check(before.objectModel&&before.objectModel->vertices.size()==6&&before.objectModel->vertices[0].lr==.5f,"intact object and light publish together");
+  auto hit=before.collision->ray({0,0,0},{1,0,0},10);check(hit&&before.collision->triangles[hit->triangle].object==77,"intact dynamic contact");
+  auto broken=intact;broken.revision=2;broken.objects[0].current=1;check(a.object_states(broken,{&b,1}),"broken scene revision");auto after=a.result();
+  check(after.objectModel->vertices.size()==3&&after.objectModel->vertices[0].lr==0&&!after.collision->ray({0,0,0},{1,0,0},10),"broken removes visual/contact and disables light atomically");
+  check(before.objectModel->vertices.size()==6&&before.collision->ray({0,0,0},{1,0,0},10).has_value(),"published previous snapshot remains immutable");
+  check(!a.object_states(intact,{&b,1}),"old scene revision cannot resurrect object");auto invalid=broken;invalid.revision=3;invalid.objects[0].initial=1;check(!a.object_states(invalid,{&b,1}),"same-round baseline cannot change");
+  invalid=broken;invalid.revision=3;invalid.objects[0].current=2;check(!a.object_states(invalid,{&b,1})&&a.result().objectModel==after.objectModel,"invalid width rejected without partial mutation");
+  auto join=broken;join.revision=1;join.objects[0].initial=1;check(late.object_states(join,{&b,1}),"late join accepts already broken baseline");check(late.result().objectModel->vertices.size()==after.objectModel->vertices.size()&&late.result().objectModel->vertices[0].lr==0,"late join agrees with existing receiver");
+  a.reset();check(a.result().objectSnapshot==after.objectSnapshot&&a.result().collision==after.collision,"F5 preserves authoritative object state");
+  a.select(request(20,2));auto next=wait(a);check(!next.objectSnapshot&&!next.objectModel&&next.collision->triangles.size()==1,"new round clears old actors atomically");
+ }
+ std::filesystem::remove(folder/"n022a.collision.cfg");
  std::filesystem::remove(folder/"n022a.lighting.cfg");
  {std::ofstream out(folder/"n022a.cbox.cfg");out<<"MGO2WIN.STAGE_CBOX 1 2 3\n100 5 0 0 0\n132 5 100 0 0\n164 5 200 0 0\n";}
  {stage::Assets a(folder),late(folder);auto first=request(20,100);first.generation=0;a.select(first);auto loaded=wait(a);check(loaded.cboxes.size()==2,"host generation zero selects native CBOX layout");auto arrival=request(20,999);arrival.generation=0;late.select(arrival);check(wait(late).cboxes==loaded.cboxes,"different client load sequence retains host selection");a.reset();auto reloaded=wait(a);check(reloaded.generation!=loaded.generation&&reloaded.cboxes==loaded.cboxes,"F5 reload never substitutes local generation for shared seed");auto next=request(20,101);next.generation=255;a.select(next);check(a.result().cboxes==loaded.cboxLayout->select(255),"cached stage reselects on host generation");a.select(std::nullopt);check(!a.result().cboxLayout&&a.result().cboxes.empty(),"exit clears selected CBOX identities");}

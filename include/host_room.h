@@ -31,6 +31,9 @@ struct Settings {
 constexpr size_t room_settings_size=345,room_environment_size=204;
 std::vector<uint8_t> settings_payload(const Settings&);
 std::array<uint8_t,room_environment_size> room_environment(const Settings&);
+// Native minute-valued interpretation of advertised DM/TDM settings. Original
+// unit conversion is unverified; other rule identities return unknown (zero).
+uint32_t round_duration_ms(const Settings&,uint8_t rule);
 std::vector<uint8_t> host_room_wire_payload(const NetworkKeys&,uint16_t,std::span<const uint8_t>);
 enum class RoomControlStatus {success,rejected,cancelled,invalid_input,invalid_state,protocol_error,outcome_unknown};
 struct CreateReply {RoomControlStatus status=RoomControlStatus::protocol_error;uint32_t room=0,error=0;bool room_may_exist=false;};

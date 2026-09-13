@@ -1,11 +1,9 @@
-# Publication / 公開方針
+# Publication scope — 2026-09-14
 
 Repository: https://github.com/Master-Mkt/MGO2WIN
 
-The project owner requested this experimental release on 2026-09-10. Reviewed native source and notices go into Git; executable and converted runtime resources are attached to a prerelease. This supersedes the earlier local-only packaging policy for this trial.
+The project owner requested publication of the complete current Windows client and HOST sets. Current native source, standalone tests and notices belong in Git; complete program/data archives are separate Release attachments. This updates the earlier source-only milestone and supersedes historical local-only publication statements for this requested release.
 
-2026-09-10の公開指示に基づき、確認済みソースと表記をGitへ、EXEと変換済み実行リソースをお試し版Releaseへ置きます。この版について、以前のローカル専用方針を更新します。
+Git excludes raw game archives, converted runtime assets, IDA databases, full assembly/decompilation dumps, SDK documents, private logs/captures, credentials, personal settings and updater test secrets. The source includes short original-behavior evidence comments and reviewed native constant tables needed to build the programs; those are not full original binary dumps.
 
-Raw game files, research databases, full decompilation/assembly dumps, SDK documents, credential files, personal settings and private logs are excluded. No new license is granted for game-derived resources or third-party references. See LICENSE_STATUS.md and THIRD_PARTY_NOTICES.md.
-
-原本・解析DB・逆コンパイル／逆アセンブル全文・SDK資料・認証情報・個人設定・私的ログは除外します。ゲーム資産や第三者資料へ新しい許諾を付与しません。ライセンス状況と出典表記を参照してください。
+The original MGO2 patch mechanism remains unused. Publishing this snapshot does not deploy a NomadPX server, change a database or firewall, send game invitations, or award tournament prizes. Source inspection and local tests are not proof of live match compatibility or a rights clearance. Existing license and attribution notices remain applicable.

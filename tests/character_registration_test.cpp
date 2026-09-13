@@ -49,5 +49,26 @@ int main(){try{
  }
  CharacterExchange duplicate=[&](uint16_t cmd,std::span<const uint8_t>){check(cmd==0x3048,"existing same name never sends create");LobbyPacket p{0x3049,1,std::vector<uint8_t>(471)};p.payload[4]=2;p.payload[5]=1;p.payload[27]=1;for(unsigned i=0;i<16;++i)p.payload[28+i]=expected[i];return p;};
  r=exchange_character_create(request,duplicate,cancel);check(r.status==CharacterCreateStatus::rejected&&!r.request_may_have_been_sent,"preflight refuses already-listed exact name");
+ request.name=std::wstring(16,L'名');request.unicode_name=true;unsigned nativeCalls=0;mode=0;
+ CharacterExchange nativeExchange=[&](uint16_t command,std::span<const uint8_t> body){
+  if(command==0x3048){LobbyPacket p{0x3049,1,std::vector<uint8_t>(471)};p.payload[4]=4;return p;}
+  check(command==0x30e2,"native never falls back to original create");++nativeCalls;
+  check(body.size()==95&&body[0]=='G'&&body[3]=='M'&&body[5]==3&&body[16]==0&&body[17]==48&&body[19]==27,"native Japanese 16 is length-prefixed 48 bytes, not 32");
+  for(size_t at=20;at<68;at+=3)check(body[at]==0xe5&&body[at+1]==0x90&&body[at+2]==0x8d,"full name preserved");
+  check(std::equal(request.wire_appearance.begin(),request.wire_appearance.end(),body.begin()+68),"native appearance offset follows variable name");
+  if(mode==9)throw std::runtime_error("lost response after create");
+  std::vector<uint8_t> p{'G','W','N','M',1,0,3,1};p.insert(p.end(),body.begin()+8,body.begin()+16);p.insert(p.end(),{0,0,16,64,0,0,0,7,0,0,0,0,0,0,0,99});
+  if(mode>=1&&mode<=4){p[5]=uint8_t(mode);p[7]=p[18]=p[19]=p[23]=p[31]=0;if(mode==4)p[24]=p[25]=p[26]=0xff,p[27]=0xfc;}
+  if(mode==5){p[5]=1;p[7]=p[18]=p[19]=p[23]=0;p.resize(24);}
+  if(mode==6)p[8]^=1;if(mode==8)p[31]=0;
+  return LobbyPacket{uint16_t(mode==7?0x3102:0x30e3),2,std::move(p)};
+ };
+ r=exchange_character_create(request,nativeExchange,cancel,[]{return false;});check(!nativeCalls&&!r.request_may_have_been_sent&&r.status==CharacterCreateStatus::rejected,"same-connection capability required before native mutation");
+ for(mode=0;mode<=9;++mode){nativeCalls=0;r=exchange_character_create(request,nativeExchange,cancel,[]{return true;});
+  const auto expectedStatus=mode==0?CharacterCreateStatus::success:(mode==1||mode==2||mode==4)?CharacterCreateStatus::rejected:CharacterCreateStatus::outcome_unknown;
+  check(nativeCalls==1&&r.request_may_have_been_sent&&r.status==expectedStatus,"native success, guaranteed rejection and unknown outcome stay distinct without retry");
+  if(!mode)check(r.created_id==99,"native stable ID confirms result");
+ }
+ request.name+=L'名';nativeCalls=0;r=exchange_character_create(request,nativeExchange,cancel,[]{return true;});check(!nativeCalls&&!r.request_may_have_been_sent,"17 Unicode scalars never sent");
  std::cout<<"Creation payload, preflight, response and no-retry cases passed (fake transport only)\n";return 0;
 }catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}

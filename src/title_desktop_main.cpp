@@ -1,5 +1,9 @@
+#include "build_version.h"
+#include "local_playtest.h"
+#include "combat_audio_bundle.h"
 // Desktop entry point. No Python, IDA or asset conversion tool is used at runtime.
 #include <windows.h>
+#include "weapon_icons.h"
 #include <algorithm>
 #include <bcrypt.h>
 #include <filesystem>
@@ -92,17 +96,61 @@ static fs::path executable_folder() {
 }
 
 static size_t verify_assets(const fs::path& root) {
-    std::set<std::string> required{"lobbies.cfg","character/appearance.gwc","network.gnk","login/frame.m2pv","motion/animated.m2an","agreement/frame.m2pv","audio/lobby.gwa","audio/93.gwa","audio/94.gwa","launch.cfg", "title.gwp", "audio/title.gwa", "title/animated.m2an", "audio/start.gwa", "loading/loading.m2an", "loading/images/0.dds", "loading/images/1.dds"};
+    std::set<std::string> required{"lobbies.cfg","character/appearance.gwc","network.gnk","login/frame.m2pv","motion/animated.m2an","agreement/frame.m2pv","audio/lobby.gwa","audio/92.gwa","audio/93.gwa","audio/94.gwa","launch.cfg", "title.gwp", "audio/title.gwa", "title/animated.m2an", "audio/start.gwa", "loading/loading.m2an", "loading/images/0.dds", "loading/images/1.dds"};
     for(int i=0;i<6;++i)required.insert("login/images/"+std::to_string(i)+".dds");
     for(int g=0;g<2;++g)for(int v=0;v<8;++v)required.insert("voice/"+std::to_string(g)+"_"+std::to_string(v)+".gwa");
     for(int i=0;i<8;++i)required.insert("motion/images/"+std::to_string(i)+".dds");
     for(int i=0;i<6;++i)required.insert("agreement/images/"+std::to_string(i)+".dds");
     for (int i=0; i<10; ++i) required.insert("title/images/"+std::to_string(i)+".dds");
+    required.insert("skill_catalog.tsv");
+    required.insert("character/selection0.gwmot");
+    required.insert("character/selection1.gwmot");
+    required.insert("audio/salute.gwa");
+    required.insert("audio/sop_native.wav");
+    required.insert("character/special_male.gwmot");
+    required.insert("skills/index.tsv");
+    required.insert("skills/briefing.tsv");
+    for(auto name:{"skill_star.png","participants.png","rules.png","deploy.png","skills.png","equipment.png","options.png"})
+        required.insert(std::string("skills/")+name);
+    const auto skillIcons=mgo2win::weapons::read_icon_index(root/L"skills/index.tsv");
+    if(skillIcons.size()!=25)throw std::runtime_error("Incomplete skill icon index");
+    for(unsigned id=1;id<=25;++id){auto it=skillIcons.find(uint16_t(id));if(it==skillIcons.end()||it->second!="skill_star.png")throw std::runtime_error("Unexpected skill icon mapping");}
+    const auto briefingIcons=mgo2win::weapons::read_icon_index(root/L"skills/briefing.tsv");
+    const std::vector<std::string> briefingNames{"start","map","rules","skills","host","options","quit"};
+    if(briefingIcons.size()!=14)throw std::runtime_error("Incomplete briefing icon index");
+    for(bool selected:{false,true})for(size_t i=0;i<briefingNames.size();++i){const auto name=briefingNames[i]+(selected?"_selected.png":"_normal.png");auto it=briefingIcons.find(uint16_t((selected?101:1)+i));if(it==briefingIcons.end()||it->second!=name)throw std::runtime_error("Unexpected briefing icon mapping");required.insert("skills/"+name);}
+    if(fs::exists(root/L"briefing-map/index.tsv")){required.insert("briefing-map/index.tsv");const auto maps=mgo2win::weapons::read_icon_index(root/L"briefing-map/index.tsv");if(maps!=std::map<uint16_t,std::string>{{1,"n022a-online-map-0.png"},{2,"n022a-online-map-1.png"}})throw std::runtime_error("Unexpected briefing map layers");for(const auto&[id,name]:maps)required.insert("briefing-map/"+name);}
     if(fs::exists(root/L"stage/n022a.gwm"))required.insert("stage/n022a.gwm");
-    for(auto name:{"weapon_catalog.tsv","stage/n022a.cbox.cfg"})if(fs::exists(root/name))required.insert(name);
+    for(auto name:{"weapon_catalog.tsv","stage/n022a.cbox.cfg","stage/n022a.tdm-spawns.cfg","character/player.gwmot"})if(fs::exists(root/name))required.insert(name);
+    if(fs::exists(root/L"weapon-icons/index.tsv")){
+        required.insert("weapon-icons/index.tsv");
+        for(const auto&[id,name]:mgo2win::weapons::read_icon_index(root/L"weapon-icons/index.tsv"))required.insert("weapon-icons/"+name);
+    }
+    // Reuse runtime PCM/path validation; bind every listed local cue to the hash manifest.
+    if(fs::exists(root/L"sfx/combat.txt")||fs::exists(root/L"sfx/body_impact_1369_v0.wav")||fs::exists(root/L"sfx/body_impact_8168_v0.wav")||fs::exists(root/L"sfx/ak102_10002_v0.wav")){
+        auto files=mgo2win::combat::audio_bundle_files(root/L"sfx");
+        if(!files)throw std::runtime_error("Invalid combat audio bundle");
+        for(const auto& name:*files)required.insert(name.generic_string());
+    }
+    // New local candidate is a complete four-stage bundle. Legacy title/GWP
+    // packages without any expansion entry retain their original manifest.
+    if(fs::exists(root/L"bullet_penetration_profile.json")||fs::exists(root/L"item_drop_policy.json")||
+       fs::exists(root/L"stage/n001a.gwm")||fs::exists(root/L"stage/n004a.gwm")||fs::exists(root/L"stage/n023a.gwm")||fs::exists(root/L"stage/n022a.dm-spawns.cfg")){
+        required.insert("bullet_penetration_profile.json");required.insert("item_drop_policy.json");
+        for(auto stage:{"n001a","n004a","n022a","n023a"})
+            for(auto suffix:{".gwm",".bindings.cfg",".cbox.cfg",".collision.cfg",".lighting.cfg",".objects.cfg",".gww",".dm-spawns.cfg",".tdm-spawns-v2.cfg"})
+                required.insert(std::string("stage/")+stage+suffix);
+    }
     for(auto name:{"stage/items/113.gwm","stage/items/140.gwm"})if(fs::exists(root/name))required.insert(name);
     for(auto name:{"bgm/catalog.json","stage/n022a.placements.cfg","stage/props/0.gwm","stage/props/1.gwm","stage/props/2.gwm","stage/props/3.gwm","stage/props/4.gwm","stage/props/5.gwm"})if(fs::exists(root/name))required.insert(name);
     for(auto name:{"stage/n022a.lighting.cfg","stage/n022a.collision.cfg","stage/audio/env_s01a30l_01.gwa","stage/audio/env_s01a30l_04.gwa","stage/audio/env_s01a30l_05.gwa","stage/audio/env_s01a30l_07.gwa","stage/audio/env_s01a30l_08.gwa"})if(fs::exists(root/name))required.insert(name);
+    if(fs::exists(root/L"stage/n022a.objects.cfg")||fs::exists(root/L"stage/n022a.bindings.cfg")){
+        for(auto name:{"n022a.objects.cfg","n022a.bindings.cfg","n022a.cbox.cfg","n022a.gwm","n022a.collision.cfg","n022a.lighting.cfg"})required.insert(std::string("stage/")+name);
+        for(auto name:{"s01a_car_a0_sk","s01a_car_a0_glass","s01a_car_b0_sk","s01a_car_b0_glass","s01a_drum_a0_sk","cbox_a_sk","cbox_a_kuzure_sk","s01a_btle_a0_sk","s01a_btle_b0_sk","s01a_btle_c0_sk","s01a_btle_d0_sk","s01a_btle_e0_sk"})required.insert(std::string("stage/objects/")+name+".gwm");
+        for(auto key:{"982f38","982fb8","9ebb66","0ae4e5"})required.insert(std::string("stage/objects/geom_")+key+".collision.cfg");
+        for(char c='a';c<='e';++c)required.insert(std::string("stage/objects/s01a_btle_")+c+"0_sk.hit.cfg");
+        for(int i=0;i<6;++i)required.insert("stage/objects/blast_drum_"+std::to_string(i)+".hit.cfg");
+    }
     const auto expectedCount=required.size();
     std::ifstream manifest(root / L"assets.sha256");
     if (!manifest) throw std::runtime_error("Missing data/assets.sha256. Keep the data folder beside MGO2WIN.exe.");
@@ -123,6 +171,8 @@ static size_t verify_assets(const fs::path& root) {
 
 int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR command, int) {
     const std::wstring mode = command ? command : L"";
+    if(mode==L"--version"){std::cout<<"MGO2WIN "<<mgo2win::build_version<<std::endl;return 0;}
+    const auto playtest=mgo2win::LocalPlaytest::parse(mode);
     const bool smokeCreation=mode==L"--smoke-creation";
     const bool smokeSelection=mode==L"--smoke-selection";
     const bool smokeAppearance=mode==L"--smoke-appearance";
@@ -140,7 +190,7 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR command, int) {
     int result = 1;
     std::string error;
     try {
-        if (!mode.empty() && !smoke && !checkOnly && !probeAuth && !probeAccount && !probeStun && !safeGraphics && !probeGate) throw std::runtime_error("Supported options: --check, --smoke-test, --smoke-no, --smoke-login, --smoke-ports, --smoke-stun, --probe-auth, --probe-account, --probe-stun");
+        if (!mode.empty() && !smoke && !checkOnly && !probeAuth && !probeAccount && !probeStun && !safeGraphics && !probeGate && !playtest.enabled) throw std::runtime_error("Supported options: --check, --smoke-test, --smoke-no, --smoke-login, --smoke-ports, --smoke-stun, --probe-auth, --probe-account, --probe-stun");
         const auto root = executable_folder(), data = root/L"data";
         const auto verifiedFiles=verify_assets(data);
         std::ifstream config(data/L"launch.cfg");
@@ -158,11 +208,12 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR command, int) {
         wchar_t runName[80];
         swprintf_s(runName, L"%04u%02u%02uT%02u%02u%02u_%03u_%lu", now.wYear, now.wMonth, now.wDay,
                    now.wHour, now.wMinute, now.wSecond, now.wMilliseconds, GetCurrentProcessId());
-        const auto run = fs::path(appData)/L"MGO2WIN"/L"logs"/runName;
+        const auto run = playtest.profile(fs::path(appData)/L"MGO2WIN")/L"logs"/runName;
         fs::create_directories(run);
         log.open(run/L"run.log");
         if (!log) throw std::runtime_error("Cannot create the title log");
         std::cout.rdbuf(log.rdbuf()); std::cerr.rdbuf(log.rdbuf());
+        std::cout << "{\"build_version\":\"" << mgo2win::build_version << "\"}" << std::endl;
         std::cout << "{\"desktop_package\":true,\"verified_files\":" << verifiedFiles << ",\"smoke_test\":" << (smoke?"true":"false") << "}" << std::endl;
         if(probeAccount){result=inspect_account(data/L"network.gnk");std::cout.rdbuf(oldOut);std::cerr.rdbuf(oldError);return result;}
         if(probeGate){std::atomic_bool cancel{false};auto r=mgo2win::probe_character_gate(data/L"network.gnk",cancel);result=r.status==mgo2win::CharacterStatus::success?0:1;std::cout<<"{\"gate_probe\":true,\"status\":"<<int(r.status)<<",\"stage\":"<<int(r.stage)<<",\"error\":"<<r.error<<",\"account_port\":"<<r.account_port<<"}"<<std::endl;std::cout.rdbuf(oldOut);std::cerr.rdbuf(oldError);return result;}
@@ -183,7 +234,8 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR command, int) {
             smokeSelection?L"35":smokeCreation?L"25":smokeAppearance?L"25":smokeSlots?L"25":smokeGraphics?L"32":smokeCharacters?L"20":smoke?L"15":std::to_wstring(seconds), (run/L"title.bmp").wstring(),
             L"--gcx", (data/L"title.gwp").wstring(), L"--entry", std::to_wstring(entry),
             L"--wav", (data/L"audio/title.gwa").wstring(),L"--se",(data/L"audio/start.gwa").wstring(),L"--loading",(data/L"loading/loading.m2an").wstring()};
-        arguments.insert(arguments.end(),{L"--voice-directory",(data/L"voice").wstring(),L"--character-catalog",(data/L"character/appearance.gwc").wstring(),L"--network-keys",(data/L"network.gnk").wstring(),L"--login-background",(data/L"login/frame.m2pv").wstring(),L"--agreement-motion",(data/L"motion/animated.m2an").wstring(),L"--agreement-background",(data/L"agreement/frame.m2pv").wstring(),L"--lobby-music",(data/L"audio/lobby.gwa").wstring(),L"--policy-url",policyUrl,L"--menu-confirm",(data/L"audio/93.gwa").wstring(),L"--menu-move",(data/L"audio/94.gwa").wstring()});
+        arguments.insert(arguments.end(),{L"--voice-directory",(data/L"voice").wstring(),L"--character-catalog",(data/L"character/appearance.gwc").wstring(),L"--network-keys",(data/L"network.gnk").wstring(),L"--login-background",(data/L"login/frame.m2pv").wstring(),L"--agreement-motion",(data/L"motion/animated.m2an").wstring(),L"--agreement-background",(data/L"agreement/frame.m2pv").wstring(),L"--lobby-music",(data/L"audio/lobby.gwa").wstring(),L"--policy-url",policyUrl,L"--menu-cancel",(data/L"audio/92.gwa").wstring(),L"--menu-confirm",(data/L"audio/93.gwa").wstring(),L"--menu-move",(data/L"audio/94.gwa").wstring()});
+        if(playtest.enabled)arguments.push_back(mode);
         if (sound) arguments.push_back(L"--audio");
         if(safeGraphics)arguments.push_back(L"--safe-graphics");
         arguments.push_back(smokeSelection?L"--scripted-selection":smokeCreation?L"--scripted-creation":smokeAppearance?L"--scripted-appearance":smokeSlots?L"--scripted-slots":smokeCharacters?L"--scripted-characters":smokeGraphics?L"--scripted-graphics":smokeControls?L"--scripted-controls":smokeNo?L"--scripted-no":smokeStun?L"--scripted-stun":smokePorts?L"--scripted-ports":smokeLogin?L"--scripted-login":smoke?L"--scripted-input":L"--no-capture");
@@ -193,7 +245,8 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR command, int) {
         if (result) error = "Title playback failed. See the log in %LOCALAPPDATA%\\MGO2WIN\\logs.";
     } catch (const std::exception& failure) {
         error = failure.what();
-        if (log) log << error << std::endl;
+        if (log.is_open()) log << error << std::endl;
+        else std::cerr << error << std::endl;
     }
     std::cout.rdbuf(oldOut); std::cerr.rdbuf(oldError);
     if (!error.empty() && !smoke && !checkOnly && !probeAccount) {

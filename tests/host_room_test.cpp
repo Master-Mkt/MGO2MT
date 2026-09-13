@@ -11,6 +11,9 @@ LobbyPacket reply(uint16_t request,uint32_t result=0,uint32_t id=0){LobbyPacket 
 void common_settings_checks(){
  Settings defaults;
  auto original=settings_payload(defaults);auto original_env=room_environment(defaults);
+ auto number=[&](size_t at){uint32_t v=0;for(size_t i=0;i<4;++i)v=(v<<8)|original_env[at+i];return v;};
+ check(round_duration_ms(defaults,0)==number(0x88)*60000&&round_duration_ms(defaults,1)==number(0x7c)*60000&&round_duration_ms(defaults,1)==300000,"native minute clock reads advertised DM/TDM value");
+ check(!round_duration_ms(defaults,255)&&!round_duration_ms(defaults,2),"unreviewed rule identity has no fabricated clock");
  check(original[322]==0x25&&original[323]==0xcb&&original[324]==0x20,"retained default common bytes");
  check(original_env[177]==0x25&&original_env[178]==0xcb&&original_env[179]==0x20,"retained default environment common bytes");
  // Each control changes its one observed original bit in both independently

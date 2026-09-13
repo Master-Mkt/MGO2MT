@@ -5,11 +5,21 @@
 #include <algorithm>
 #include <set>
 #include <stdexcept>
+#include <iostream>
+#include <syncstream>
 namespace mgo2win {
 namespace {
 uint32_t number(std::span<const uint8_t>b,size_t at,unsigned n=4){if(at+n>b.size())throw std::runtime_error("room extent");uint32_t v=0;while(n--)v=(v<<8)|b[at++];return v;}
 std::wstring string(std::span<const uint8_t>b,bool lines=false){auto end=std::find(b.begin(),b.end(),0);int n=int(end-b.begin());if(!n)return {};int count=MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,reinterpret_cast<const char*>(b.data()),n,nullptr,0);if(!count)throw std::runtime_error("room UTF8");std::wstring s(count,0);MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,reinterpret_cast<const char*>(b.data()),n,s.data(),count);for(auto c:s)if((c<32&&!(lines&&(c==10||c==13||c==9)))||c==127)throw std::runtime_error("room text control");return s;}
 struct Rejected {uint32_t code;};
+void log_host_terminal(const host::Result&r)noexcept{try{
+ std::osyncstream(std::cout)<<"{\"room_host_terminal\":true,\"host_stage\":"<<int(r.stage)<<",\"join_status\":"<<int(room_host_status(r.stage))<<",\"error\":"<<r.error<<",\"profile_sent\":"<<(r.profile_sent?"true":"false")<<",\"was_joined\":"<<(r.was_joined?"true":"false")<<"}"<<std::endl;
+}catch(...){}}
+void log_cleanup(uint16_t command,const char*result,bool received=false,uint16_t actual=0,size_t bytes=0,uint32_t error=0)noexcept{try{
+ std::osyncstream log(std::cout);log<<"{\"room_cleanup\":\""<<result<<"\",\"command\":"<<command;
+ if(received)log<<",\"received_command\":"<<actual<<",\"payload_bytes\":"<<bytes;
+ log<<",\"error\":"<<error<<"}"<<std::endl;
+}catch(...){}}
 void response(const LobbyPacket&p,uint16_t command,size_t successSize){if(p.command!=command||p.payload.size()<4)throw std::runtime_error("room response command");auto result=number(p.payload,0);if(result){if(p.payload.size()!=4)throw std::runtime_error("room error extent");throw Rejected{result};}if(p.payload.size()!=successSize)throw std::runtime_error("room response extent");}
 std::array<uint8_t,4> id_payload(uint32_t id){return {uint8_t(id>>24),uint8_t(id>>16),uint8_t(id>>8),uint8_t(id)};}
 host::Endpoint endpoint(std::span<const uint8_t>b){auto s=string(b.first(16));IN_ADDR address{};if(s.empty()||InetPtonW(AF_INET,s.c_str(),&address)!=1)throw std::runtime_error("host endpoint");host::Endpoint e;std::copy_n(reinterpret_cast<const uint8_t*>(&address),4,e.address.begin());e.port=uint16_t(number(b,16,2));if(!host::valid_endpoint(e))throw std::runtime_error("invalid host endpoint");return e;}
@@ -22,7 +32,7 @@ RoomDetail parse_room_detail(std::span<const uint8_t>b,uint32_t expected){
  constexpr size_t env=168,players=372;d.capacity=b[env+66];d.players=b[env+67];if(!d.capacity||d.capacity>18||d.players>18)throw std::runtime_error("room player capacity");
  // Same reviewed HostGameEnv fields written by room_environment()/4310:
  // 16 restriction bytes at50 and briefing minutes BE32 at68.
- std::copy_n(b.begin()+env+50,16,d.weapon_restrictions.begin());d.briefing_minutes=number(b,env+68);d.environment_known=true;
+ std::copy_n(b.begin()+env+50,16,d.weapon_restrictions.begin());d.briefing_minutes=number(b,env+68);d.enemy_nametags=(b[env+178]&8)!=0;d.auto_aim=(b[env+177]&0x20)!=0;d.environment_known=true;
  std::set<uint32_t> ids;
  for(size_t i=0;i<18;++i){auto at=players+i*28;auto id=number(b,at);if(!id){if(i==0)throw std::runtime_error("host must occupy slot zero");continue;}if(!ids.insert(id).second)throw std::runtime_error("duplicate room player");auto name=string(b.subspan(at+4,16));if(name.empty())throw std::runtime_error("empty player name");d.roster.push_back({id,std::move(name)});}
  return d;
@@ -59,10 +69,19 @@ RoomReply exchange_room_action(const RoomAction&a,const CharacterExchange&exchan
   try{admission.endpoints={endpoint(std::span(p.payload).subspan(4,18)),endpoint(std::span(p.payload).subspan(22,18))};}
   catch(...){invalidEndpoint=true;hostResult.stage=host::Stage::protocol_error;}
   if(connect&&!invalidEndpoint){try{hostResult=connect(admission);}catch(...){threw=true;hostResult.stage=host::Stage::network_error;hostResult.profile_sent=true;}}
+  // Cleanup can itself fail. Keep the preceding host outcome visible without
+  // weakening the uncertain-state latch or recording identities/payloads.
+  if(connect||invalidEndpoint)log_host_terminal(hostResult);
+  auto cleanup=[&](uint16_t command){
+   log_cleanup(command,"begin");bool received=false;uint16_t actual=0;size_t bytes=0;
+   try{auto reply=exchange(command,{});received=true;actual=reply.command;bytes=reply.payload.size();response(reply,uint16_t(command+1),4);log_cleanup(command,"success",true,actual,bytes);}
+   catch(const Rejected&r){log_cleanup(command,"rejected",received,actual,bytes,r.code);throw;}
+   catch(...){log_cleanup(command,received?"invalid_reply":"transport_error",received,actual,bytes);throw;}
+  };
   // 4322 clears the pending reservation. Once a profile may have reached the
   // host, 4380 also requests removal of a possible active player (not the host).
-  p=exchange(0x4322,{});response(p,0x4323,4);
-  if(connect&&hostResult.profile_sent){p=exchange(0x4380,{});response(p,0x4381,4);}
+  cleanup(0x4322);
+  if(connect&&hostResult.profile_sent)cleanup(0x4380);
   uncertain=false;out.join_status=connect||invalidEndpoint?room_host_status(hostResult.stage):RoomJoinStatus::permission_checked;out.error=hostResult.error;
   if(threw)out.join_status=RoomJoinStatus::host_network_error;
  }catch(const Rejected&r){out.error=r.code;out.status=RoomStatus::rejected;out.join_status=uncertain?RoomJoinStatus::outcome_unknown:RoomJoinStatus::rejected;}

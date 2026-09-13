@@ -1,31 +1,33 @@
-﻿#include "menu_theme.h"
+#include "menu_theme.h"
 #include "port_screen.h"
+#include "menu_audio.h"
 #include <cstring>
 #include <iostream>
 #include <syncstream>
 #include <stdexcept>
 namespace mgo2win {
-PortScreen::PortScreen(std::filesystem::path path,bool external,std::function<StunResult(uintptr_t,const std::atomic_bool&)> probe,std::shared_ptr<ControllerInput> input,std::shared_ptr<GraphicsSettings> graphics):store_(std::move(path)),external_(external),probe_(std::move(probe)),input_(std::move(input)),graphics_(std::move(graphics)){
+PortScreen::PortScreen(std::filesystem::path path,bool external,std::function<StunResult(uintptr_t,const std::atomic_bool&)> probe,std::shared_ptr<ControllerInput> input,std::shared_ptr<GraphicsSettings> graphics,uint16_t fixedPort):fixedPort_(fixedPort),store_(std::move(path)),external_(external),probe_(std::move(probe)),input_(std::move(input)),graphics_(std::move(graphics)){
+ if(fixedPort_&&fixedPort_<1024)throw std::runtime_error("Invalid fixed local test port");
  if(!graphics_)graphics_=std::make_shared<GraphicsSettings>(store_.parent_path()/L"graphics.cfg");
  auto inputPath=store_.parent_path()/L"input.cfg";if(!input_)input_=std::make_shared<ControllerInput>(inputPath);controls_=std::make_unique<ControllerPanel>(inputPath,input_);
  try{restored_=load_ports(store_,settings_);notice_=restored_?L"保存したポート設定を復元しました。":L"使用するポートを選び、チェックしてください。";}
  catch(...){notice_=L"保存した設定を読めませんでした。初期値を表示します。";}
- number_=std::to_wstring(settings_.port);
+ number_=std::to_wstring(settings_.port);enforce_fixed_port();if(fixedPort_)fixed_port_notice();
  dc_=CreateCompatibleDC(nullptr);if(!dc_)throw std::runtime_error("Port screen DC failure");
  BITMAPINFO info{};info.bmiHeader.biSize=sizeof(BITMAPINFOHEADER);info.bmiHeader.biWidth=1280;info.bmiHeader.biHeight=-720;info.bmiHeader.biPlanes=1;info.bmiHeader.biBitCount=32;info.bmiHeader.biCompression=BI_RGB;
  bitmap_=CreateDIBSection(dc_,&info,DIB_RGB_COLORS,&pixels_,nullptr,0);if(!bitmap_){DeleteDC(dc_);throw std::runtime_error("Port screen surface failure");}old_=SelectObject(dc_,bitmap_);
  for(int size:{30,23,20,17})fonts_.push_back(CreateFontW(-size,0,0,0,FW_NORMAL,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,ANTIALIASED_QUALITY,FIXED_PITCH,L"MS Gothic"));
- cues_.push_back(93);
+ cue(menu_audio::Confirm);
  std::osyncstream(std::cout)<<"{\"port_settings_visible\":true,\"settings_restored\":"<<(restored_?"true":"false")<<"}"<<std::endl;
 }
 void PortScreen::stop_probe(){cancel_=true;if(worker_.joinable())worker_.join();pending_=false;}
 PortScreen::~PortScreen(){stop_probe();reservation_.reset();SelectObject(dc_,old_);DeleteObject(bitmap_);DeleteDC(dc_);for(auto f:fonts_)DeleteObject(f);}
-void PortScreen::focus(int n){if(n==focus_)return;focus_=n;selected_=false;if(cues_.size()<32)cues_.push_back(94);}
+void PortScreen::focus(int n,bool sound){if(n==focus_)return;focus_=n;selected_=false;if(sound)cue(menu_audio::Cursor);}
 void PortScreen::open_speed(){speed_choice_=settings_.bandwidth_kbps/256-1;speed_open_=true;}
 void PortScreen::accept_speed(){
  auto speed=static_cast<uint16_t>((speed_choice_+1)*256);
  if(settings_.bandwidth_kbps!=speed){settings_.bandwidth_kbps=speed;saved_=false;notice_=L"通信速度を変更しました。「設定を保存」で確定してください。";}
- speed_open_=false;cues_.push_back(93);
+ speed_open_=false;cue(menu_audio::Confirm);
 }
 void PortScreen::invalidate(){stop_probe();reservation_.reset();result_={};stun_={};saved_=false;notice_=L"設定を変更しました。チェックしてから保存してください。";}
 void PortScreen::update_probe(){
@@ -39,18 +41,18 @@ void PortScreen::update_probe(){
  case StunStatus::cancelled:status="cancelled";notice_=L"確認を中止しました。";break;
  default:notice_=L"UDP検査を送信できませんでした。Windowsの通信許可を確認してください。";break;
  }
- cues_.push_back(93);
+ cue(menu_audio::Confirm);
  std::osyncstream(std::cout)<<"{\"stun_result\":\""<<status<<"\",\"mapped_port\":"<<stun_.mapped_port<<",\"attempts\":"<<stun_.attempts<<",\"error\":"<<stun_.error<<",\"peer_inbound_tested\":false}"<<std::endl;
 }
 void PortScreen::check(){
- if(pending_)return;stop_probe();stun_={};
- uint16_t n;if(!parse_port(number_,n)){notice_=L"ポート番号を1024～65535の範囲で入力してください。";focus(1);return;}
+ if(pending_)return;stop_probe();stun_={};enforce_fixed_port();
+ uint16_t n;if(!parse_port(number_,n)){notice_=L"ポート番号を1024～65535の範囲で入力してください。";focus(1,false);return;}
  settings_.port=n;result_=reservation_.check(settings_);++checks_;
  switch(result_.status){
  case PortStatus::available:notice_=L"このPCでUDPポートを使用できます。外部からの到達は未確認です。";break;
- case PortStatus::in_use:notice_=L"このポートは使用中です。別の番号か自動選択をお試しください。";break;
+ case PortStatus::in_use:notice_=fixedPort_?L"固定の試験ポートは使用中です。同じ番号を使う別clientを閉じてから再チェックしてください。":L"このポートは使用中です。別の番号か自動選択をお試しください。";break;
  case PortStatus::denied:notice_=L"ポートを確保できません。使用中またはWindowsの制限の可能性があります。";break;
- default:notice_=L"ポートを確認できませんでした。番号を変更して再度お試しください。";break;
+ default:notice_=fixedPort_?L"固定の試験ポートを確認できませんでした。ポートの使用状態を確認して再度お試しください。":L"ポートを確認できませんでした。番号を変更して再度お試しください。";break;
  }
  std::osyncstream(std::cout)<<"{\"local_port_check\":true,\"available\":"<<(result_.status==PortStatus::available?"true":"false")<<",\"port\":"<<result_.port<<",\"error\":"<<result_.error<<",\"external_reachability_tested\":false}"<<std::endl;
  if(external_&&result_.status==PortStatus::available){
@@ -60,15 +62,24 @@ void PortScreen::check(){
  }
 }
 void PortScreen::save(){
- uint16_t n;if(!parse_port(number_,n)){notice_=L"有効なポート番号を入力してください。";focus(1);return;}
+ enforce_fixed_port();
+ uint16_t n;if(!parse_port(number_,n)){notice_=L"有効なポート番号を入力してください。";focus(1,false);return;}
  if(result_.status!=PortStatus::available){notice_=L"先にポートチェックを実行してください。";return;}
  settings_.port=n;
  try{save_ports(store_,settings_);saved_=true;notice_=L"設定を保存しました。対戦相手からの接続可否は未確認です。";}
  catch(...){saved_=false;notice_=L"設定を保存できませんでした。保存先を確認してください。";}
 }
 void PortScreen::activate(){
- cues_.push_back(93);
- switch(focus_){case 0:settings_.automatic=!settings_.automatic;invalidate();break;case 1:focus(2);break;case 2:check();break;case 3:save();break;case 4:settings_={};number_=L"5730";invalidate();break;case 5:back_=true;reservation_.reset();break;case 6:open_speed();break;case 7:if(continue_enabled)proceed=true;break;}
+ switch(focus_){
+ case 0:if(fixedPort_){fixed_port_notice();break;}settings_.automatic=!settings_.automatic;invalidate();cue(menu_audio::Cursor);break;
+ case 1:focus(2,false);cue(menu_audio::Confirm);break;
+ case 2:check();cue(menu_audio::Confirm);break;
+ case 3:save();cue(menu_audio::Confirm);break;
+ case 4:settings_={};number_=L"5730";enforce_fixed_port();invalidate();if(fixedPort_)fixed_port_notice();cue(menu_audio::Confirm);break;
+ case 5:back_=true;reservation_.reset();cue(menu_audio::Cancel);break;
+ case 6:open_speed();cue(menu_audio::Confirm);break;
+ case 7:if(continue_enabled){proceed=true;cue(menu_audio::Confirm);}break;
+ }
 }
 bool PortScreen::message(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
  update_probe();
@@ -78,51 +89,52 @@ bool PortScreen::message(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
  if(!controls_->capturing()&&!pending_){
   int tab=-1;if(msg==WM_KEYDOWN){if(wp==VK_F1)tab=0;if(wp==VK_F2)tab=1;if(wp==VK_F3)tab=2;}
   if(msg==WM_LBUTTONUP){RECT r{};GetClientRect(hwnd,&r);if(r.right&&r.bottom){int x=int(short(LOWORD(lp)))*1280/r.right,y=int(short(HIWORD(lp)))*720/r.bottom;if(y>=153&&y<197){if(x>=120&&x<450)tab=0;else if(x>=470&&x<810)tab=1;else if(x>=830&&x<1160)tab=2;}}}
-  if(tab>=0){controls_tab_=tab==1;graphics_tab_=tab==2;speed_open_=false;controls_->clear_back();cues_.push_back(93);return true;}
+  if(tab>=0){bool changed=controls_tab_!=(tab==1)||graphics_tab_!=(tab==2);controls_tab_=tab==1;graphics_tab_=tab==2;speed_open_=false;controls_->clear_back();if(changed)cue(menu_audio::Cursor);return true;}
  }
  if(graphics_tab_){bool used=graphics_->message(hwnd,msg,wp,lp);if(graphics_->back())graphics_tab_=false;return used;}
  if(controls_tab_){bool used=controls_->message(hwnd,msg,wp,lp);if(controls_->back()){controls_->clear_back();controls_tab_=false;}return used;}
  if(pending_&&(msg==WM_KEYDOWN||msg==WM_CHAR||msg==WM_LBUTTONUP)){
-  if(msg==WM_KEYDOWN&&wp==VK_ESCAPE){stop_probe();stun_={};stun_.status=StunStatus::cancelled;notice_=L"確認を中止しました。再チェックできます。";std::osyncstream(std::cout)<<"{\"stun_cancelled\":true}"<<std::endl;}return true;
+  if(msg==WM_KEYDOWN&&wp==VK_ESCAPE){stop_probe();stun_={};stun_.status=StunStatus::cancelled;notice_=L"確認を中止しました。再チェックできます。";cue(menu_audio::Cancel);std::osyncstream(std::cout)<<"{\"stun_cancelled\":true}"<<std::endl;}return true;
  }
- if(continue_enabled&&!speed_open_&&msg==WM_KEYDOWN&&wp==VK_F4){proceed=true;cues_.push_back(93);return true;}
+ if(continue_enabled&&!speed_open_&&msg==WM_KEYDOWN&&wp==VK_F4){proceed=true;cue(menu_audio::Confirm);return true;}
  if(speed_open_){
   if(msg==WM_CHAR)return true;
   if(msg==WM_KEYDOWN){
-   if(wp==VK_ESCAPE){speed_open_=false;cues_.push_back(93);}
+   if(wp==VK_ESCAPE){speed_open_=false;cue(menu_audio::Cancel);}
    else if((wp==VK_RETURN||wp==VK_SPACE)&&!(lp&(1LL<<30)))accept_speed();
-   else if(wp==VK_TAB){accept_speed();focus((GetKeyState(VK_SHIFT)&0x8000)?1:2);}
+   else if(wp==VK_TAB){accept_speed();focus((GetKeyState(VK_SHIFT)&0x8000)?1:2,false);}
    else {int previous=speed_choice_;
     if(wp==VK_UP||wp==VK_LEFT)speed_choice_=speed_choice_>0?speed_choice_-1:0;
     else if(wp==VK_DOWN||wp==VK_RIGHT)speed_choice_=speed_choice_<7?speed_choice_+1:7;
     else if(wp==VK_HOME)speed_choice_=0;else if(wp==VK_END)speed_choice_=7;
-    if(previous!=speed_choice_&&cues_.size()<32)cues_.push_back(94);
+    if(previous!=speed_choice_&&cues_.size()<32)cue(menu_audio::Cursor);
    }return true;
   }
   if(msg==WM_LBUTTONUP){RECT r{};GetClientRect(hwnd,&r);if(!r.right||!r.bottom)return true;
    int x=int(short(LOWORD(lp)))*1280/r.right,y=int(short(HIWORD(lp)))*720/r.bottom;
    if(x>=410&&x<700&&y>=383&&y<623){speed_choice_=(y-383)/30;accept_speed();}
-   else speed_open_=false;
+   else{speed_open_=false;cue(menu_audio::Cancel);}
    SetFocus(hwnd);return true;
   }
  }
+ if(fixedPort_&&focus_==1&&(msg==WM_CHAR||(msg==WM_KEYDOWN&&(wp==VK_BACK||wp==VK_DELETE)))){fixed_port_notice();return true;}
  if(msg==WM_CHAR){if(focus_==1&&wp>=L'0'&&wp<=L'9'){if(selected_){number_.clear();selected_=false;}if(number_.size()<5){number_+=wchar_t(wp);invalidate();}}return true;}
  if(msg==WM_KEYDOWN){
-  if(wp==VK_ESCAPE){back_=true;reservation_.reset();cues_.push_back(93);}
+  if(wp==VK_ESCAPE){back_=true;reservation_.reset();cue(menu_audio::Cancel);}
   else if(wp==VK_TAB||wp==VK_DOWN||wp==VK_UP){bool prev=wp==VK_UP||(wp==VK_TAB&&(GetKeyState(VK_SHIFT)&0x8000));const int next[]={1,6,3,4,5,0,2},prior[]={5,0,6,2,3,4,1};focus(focus_==7?(prev?5:0):continue_enabled&&((prev&&focus_==0)||(!prev&&focus_==5))?7:prev?prior[focus_]:next[focus_]);}
   else if((wp==VK_RETURN||wp==VK_SPACE)&&!(lp&(1LL<<30))){if(wp==VK_RETURN||focus_!=1)activate();}
-  else if((wp==VK_LEFT||wp==VK_RIGHT)&&focus_==0){settings_.automatic=!settings_.automatic;invalidate();cues_.push_back(94);}
+  else if((wp==VK_LEFT||wp==VK_RIGHT)&&focus_==0){if(fixedPort_){fixed_port_notice();return true;}settings_.automatic=!settings_.automatic;invalidate();cue(menu_audio::Cursor);}
   else if(focus_==1){if(wp=='A'&&(GetKeyState(VK_CONTROL)&0x8000))selected_=true;
    else if(wp==VK_BACK||wp==VK_DELETE){if(selected_||wp==VK_DELETE)number_.clear();else if(!number_.empty())number_.pop_back();selected_=false;invalidate();}}
   return true;
  }
  if(msg==WM_LBUTTONUP){RECT r{};GetClientRect(hwnd,&r);if(!r.right||!r.bottom)return true;
   int x=int(short(LOWORD(lp)))*1280/r.right,y=int(short(HIWORD(lp)))*720/r.bottom;
-  if(continue_enabled&&y>=625&&y<667&&x>=825&&x<1165){focus(7);activate();}
-  else if(y>=219&&y<=264&&x>=410&&x<=1130){focus(0);activate();}
+  if(continue_enabled&&y>=625&&y<667&&x>=825&&x<1165){focus(7,false);activate();}
+  else if(y>=219&&y<=264&&x>=410&&x<=1130){focus(0,false);activate();}
   else if(y>=282&&y<=332&&x>=410&&x<=710){focus(1);selected_=true;}
-  else if(y>=341&&y<383&&x>=410&&x<700){focus(6);activate();}
-  else if(y>=558&&y<=610){for(int i=0;i<4;++i)if(x>=120+i*270&&x<=365+i*270){focus(i+2);activate();break;}}
+  else if(y>=341&&y<383&&x>=410&&x<700){focus(6,false);activate();}
+  else if(y>=558&&y<=610){for(int i=0;i<4;++i)if(x>=120+i*270&&x<=365+i*270){focus(i+2,false);activate();break;}}
   SetFocus(hwnd);return true;
  }return false;
 }
@@ -133,8 +145,8 @@ const void* PortScreen::draw(){
  auto text=[&](std::wstring_view s,int x,int y,int w,int h,int font,COLORREF c,UINT flags=DT_LEFT){RECT r{x,y,x+w,y+h};SelectObject(dc_,fonts_[font]);SetTextColor(dc_,menu_text_color(c));SetBkMode(dc_,TRANSPARENT);DrawTextW(dc_,s.data(),int(s.size()),&r,flags|DT_NOPREFIX);};
  menu_heading(dc_,fonts_[0],L"OPTION");
  POINT guide{120,219};
- if(graphics_tab_){guide=graphics_->draw(dc_,fonts_);for(auto c:graphics_->cues())if(cues_.size()<32)cues_.push_back(c);}
- else if(controls_tab_){guide=controls_->draw(dc_,fonts_);for(auto c:controls_->cues())if(cues_.size()<32)cues_.push_back(c);}
+ if(graphics_tab_){guide=graphics_->draw(dc_,fonts_);}
+ else if(controls_tab_){guide=controls_->draw(dc_,fonts_);}
  else {
  text(L"OpenMGO2",850,82,310,30,1,RGB(215,227,200),DT_RIGHT);
  menu_row(dc_,120,219,1040,50,0,focus_==0);
@@ -147,7 +159,7 @@ const void* PortScreen::draw(){
  text(L"UDPポート番号",125,296,280,34,1,RGB(224,232,212));
  fill(410,282,290,50,focus_==1?RGB(161,180,133):RGB(89,105,83));fill(412,284,286,46,selected_?RGB(66,91,55):RGB(23,33,27));
  text(number_,426,294,255,34,1,RGB(235,240,227));
- text(L"1024～65535 / 初期値 5730",730,299,420,30,3,RGB(188,201,172));
+ text(fixedPort_?L"ローカル試験：この番号で固定":L"1024～65535 / 初期値 5730",730,299,420,30,3,RGB(188,201,172));
  text(L"通信速度",125,350,280,30,1,RGB(224,232,212));
  fill(410,341,290,42,focus_==6?RGB(161,180,133):RGB(89,105,83));fill(412,343,286,38,RGB(23,33,27));
  text(std::to_wstring(settings_.bandwidth_kbps)+L" kbps",426,350,220,30,1,RGB(235,240,227));
@@ -186,5 +198,6 @@ const void* PortScreen::draw(){
  menu_focus_guides(dc_,guide.x,guide.y);
  finish_menu_surface(pixels_);return pixels_;
 }
-void PortScreen::report()const{controls_->report();std::osyncstream(std::cout)<<"{\"port_settings_report\":true,\"checks\":"<<checks_<<",\"saved\":"<<(saved_?"true":"false")<<",\"restored\":"<<(restored_?"true":"false")<<",\"returned\":"<<(back_?"true":"false")<<",\"bandwidth_kbps\":"<<settings_.bandwidth_kbps<<",\"external_reachability_tested\":false}"<<std::endl;}
+std::vector<unsigned> PortScreen::cues(){for(auto c:controls_->cues())cue(c);for(auto c:graphics_->cues())cue(c);auto out=std::move(cues_);cues_.clear();return out;}
+void PortScreen::report()const{controls_->report();std::osyncstream(std::cout)<<"{\"port_settings_report\":true,\"checks\":"<<checks_<<",\"saved\":"<<(saved_?"true":"false")<<",\"restored\":"<<(restored_?"true":"false")<<",\"returned\":"<<(back_?"true":"false")<<",\"automatic\":"<<(settings_.automatic?"true":"false")<<",\"port_number\":\""<<std::string(number_.begin(),number_.end())<<"\",\"bandwidth_kbps\":"<<settings_.bandwidth_kbps<<",\"external_reachability_tested\":false}"<<std::endl;}
 }

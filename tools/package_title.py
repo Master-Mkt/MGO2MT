@@ -13,14 +13,73 @@ import shutil
 import subprocess
 import sys
 
-from gwp import ROOT, load, record, lobby_membership_text
+from gwp import ROOT, load, record, lobby_membership_text, STAGE_OBJECT_ASSETS
 
-DESTINATIONS = {'stage_lighting20':'stage/n022a.lighting.cfg','stage_collision20':'stage/n022a.collision.cfg',**{f'stage_env{i}':f'stage/audio/env_s01a30l_{i:02d}.gwa' for i in (1,4,5,7,8)},'stage_preview20':'stage/n022a.gwm','character_catalog':'character/appearance.gwc','network_keys':'network.gnk','login_background':'login/frame.m2pv',**{f'login_texture{i}':f'login/images/{i}.dds' for i in range(6)},'agreement_motion':'motion/animated.m2an',**{f'motion_texture{i}':f'motion/images/{i}.dds' for i in range(8)},'agreement_background':'agreement/frame.m2pv','lobby_bgm':'audio/lobby.gwa',**{f'agreement_texture{i}':f'agreement/images/{i}.dds' for i in range(6)},'menu93':'audio/93.gwa','menu94':'audio/94.gwa','scenario': 'title.gwp', 'animation': 'title/animated.m2an',
+DESTINATIONS = {'stage_lighting20':'stage/n022a.lighting.cfg','stage_collision20':'stage/n022a.collision.cfg',**{f'stage_env{i}':f'stage/audio/env_s01a30l_{i:02d}.gwa' for i in (1,4,5,7,8)},'stage_preview20':'stage/n022a.gwm','character_catalog':'character/appearance.gwc','network_keys':'network.gnk','login_background':'login/frame.m2pv',**{f'login_texture{i}':f'login/images/{i}.dds' for i in range(6)},'agreement_motion':'motion/animated.m2an',**{f'motion_texture{i}':f'motion/images/{i}.dds' for i in range(8)},'agreement_background':'agreement/frame.m2pv','lobby_bgm':'audio/lobby.gwa',**{f'agreement_texture{i}':f'agreement/images/{i}.dds' for i in range(6)},'menu92':'audio/92.gwa','menu93':'audio/93.gwa','menu94':'audio/94.gwa','scenario': 'title.gwp', 'animation': 'title/animated.m2an',
                 'bgm23': 'audio/title.gwa', 'start18999':'audio/start.gwa','loading':'loading/loading.m2an','loading_texture0':'loading/images/0.dds','loading_texture1':'loading/images/1.dds', **{f'texture{i}': f'title/images/{i}.dds' for i in range(10)}}
-DOCUMENTS = ('README.md', 'README.ja.md', 'THIRD_PARTY_NOTICES.md', 'PUBLICATION.md', 'LICENSE_STATUS.md')
+DOCUMENTS = ('README.md', 'README.ja.md', 'THIRD_PARTY_NOTICES.md', 'PUBLICATION.md', 'LICENSE_STATUS.md', 'LOCAL_TWO_CLIENT_PLAYTEST.md', 'START_KEYBOARD.cmd', 'START_PAD_1.cmd')
 DESTINATIONS.update({f'voice{g}_{v}':f'voice/{g}_{v}.gwa' for g in range(2) for v in range(8)})
 DESTINATIONS.update({**{f'stage_item{i}':f'stage/items/{i}.gwm' for i in (113,140)},'bgm_catalog':'bgm/catalog.json','stage_placements20':'stage/n022a.placements.cfg',**{f'stage_prop{i}':f'stage/props/{i}.gwm' for i in range(6)}})
 DESTINATIONS['stage_cbox20']='stage/n022a.cbox.cfg'
+DESTINATIONS['stage_spawns20']='stage/n022a.tdm-spawns.cfg'
+DESTINATIONS['player_motion']='character/player.gwmot'
+DESTINATIONS['weapon_icons']='weapon-icons/index.tsv'
+DESTINATIONS.update({f'weapon_icon{i}':f'weapon-icons/weapon_{i}.png' for i in range(256)})
+DESTINATIONS.update({'combat_audio_index':'sfx/combat.txt',**{f'combat_body{i}':f'sfx/body_impact_{i}_v0.wav' for i in (1369,8168)}})
+DESTINATIONS['combat_ak102_shot']='sfx/ak102_10002_v0.wav'
+DESTINATIONS.update({role:'stage/'+name for role,name in STAGE_OBJECT_ASSETS.items()})
+SKILL_ICON_FILES = ('skill_star.png', 'participants.png', 'rules.png', 'deploy.png',
+                    'skills.png', 'equipment.png', 'options.png')
+
+
+def skill_package_sources():
+    """Fixed reviewed inputs only; never copy preferences or an asset directory."""
+    folder = ROOT/'work/skills-resources-20260913/icons'
+    result = [(ROOT/'assets/skill_catalog.tsv', 'skill_catalog.tsv')]
+    ui = ROOT/'outputs/briefing_ui_20260913'
+    briefing = {(101 if selected else 1)+i: name+('_selected.png' if selected else '_normal.png')
+                for selected in (False,True) for i,name in enumerate(('start','map','rules','skills','host','options','quit'))}
+    for path, destination, expected in (
+            (folder/'index.tsv', 'skills/index.tsv', {i: 'skill_star.png' for i in range(1, 26)}),
+            (ui/'icons/index.tsv', 'skills/briefing.tsv', briefing),
+            (ui/'map/index.tsv', 'briefing-map/index.tsv', {1:'n022a-online-map-0.png',2:'n022a-online-map-1.png'})):
+        index_name = path.name
+        if not path.is_file() or path.is_symlink() or path.stat().st_size > 16384:
+            raise ValueError('Missing or invalid skill icon index: '+index_name)
+        lines = path.read_text(encoding='utf-8').splitlines()
+        if not lines or lines[0] != 'MGO2WIN_WEAPON_ICONS\t1':
+            raise ValueError('Skill icon index version')
+        rows = {}
+        for line in lines[1:]:
+            match = re.fullmatch(r'ICON\t([1-9][0-9]*)\t([a-z0-9_-]+\.png)', line)
+            if not match or int(match[1]) in rows:
+                raise ValueError('Skill icon index row')
+            rows[int(match[1])] = match[2]
+        if rows != expected:
+            raise ValueError('Skill icon index does not match reviewed input set')
+        result.append((path, destination))
+        if path.parent != folder:
+            for name in expected.values():
+                source=path.parent/name
+                if not source.is_file() or source.is_symlink() or not 24 <= source.stat().st_size <= 4*1024*1024:
+                    raise ValueError('Missing briefing image: '+name)
+                if source.read_bytes()[:8] != b'\x89PNG\r\n\x1a\n':raise ValueError('Briefing image must be PNG')
+                result.append((source, str(Path(destination).parent/name).replace('\\','/')))
+    for name in SKILL_ICON_FILES:
+        source = folder/name
+        if not source.is_file() or source.is_symlink() or not 24 <= source.stat().st_size <= 4*1024*1024:
+            raise ValueError('Missing skill icon: '+name)
+        with source.open('rb') as stream:
+            header = stream.read(24)
+        if header[:8] != b'\x89PNG\r\n\x1a\n' or header[12:16] != b'IHDR':
+            raise ValueError('Skill icon must be a PNG: '+name)
+        result.append((source, 'skills/'+name))
+    catalog = result[0][0]
+    if not catalog.is_file() or catalog.is_symlink() or not 1 <= catalog.stat().st_size <= 65536:
+        raise ValueError('Missing reviewed skill catalog')
+    if not catalog.read_text(encoding='utf-8').startswith('MGO2WIN_SKILLS\t1\n'):
+        raise ValueError('Skill catalog version')
+    return result
 
 
 def build_release(root=ROOT):
@@ -31,7 +90,8 @@ def build_release(root=ROOT):
     folder = root/'build/package'
     logs = root/'outputs/package'; logs.mkdir(parents=True, exist_ok=True)
     commands = [('configure', [cmake, '-S', str(root), '-B', str(folder), '-A', 'x64',
-                               '-DMGO2WIN_STATIC_RUNTIME=ON']),
+                               '-DMGO2WIN_STATIC_RUNTIME=ON',
+                               '-DMGO2WIN_BUILD_TIMESTAMP='+datetime.datetime.now().strftime('%Y%m%d%H%M%S')]),
                 ('build', [cmake, '--build', str(folder), '--config', 'Release']),
                 ('test', [str(Path(cmake).with_name('ctest.exe')), '--test-dir', str(folder), '-C', 'Release', '--output-on-failure'])]
     for name, command in commands:
@@ -46,7 +106,7 @@ def build_release(root=ROOT):
 
 def package(gwp_path, exe, output, seconds=None):
     document, assets, inputs = load(gwp_path)
-    if not {'start18999','loading','loading_texture0','loading_texture1','menu93','menu94','agreement_background','lobby_bgm','agreement_motion','login_background','network_keys','character_catalog',*[f'voice{g}_{v}' for g in range(2) for v in range(8)]}<=set(assets):
+    if not {'start18999','loading','loading_texture0','loading_texture1','menu92','menu93','menu94','agreement_background','lobby_bgm','agreement_motion','login_background','network_keys','character_catalog',*[f'voice{g}_{v}' for g in range(2) for v in range(8)]}<=set(assets):
         raise ValueError('Desktop v7 requires START, loading and agreement assets in the GWP.')
     output = Path(output).resolve()
     if output.exists():
@@ -60,6 +120,14 @@ def package(gwp_path, exe, output, seconds=None):
     for path in documents.values():
         if not path.is_file():
             raise ValueError('Missing distribution document: '+path.name)
+    skill_sources = skill_package_sources()
+    for name, target in (('selection0.gwmot', 'character/selection0.gwmot'),
+                         ('selection1.gwmot', 'character/selection1.gwmot'),
+                         ('salute.gwa', 'audio/salute.gwa')):
+        source = ROOT/'work/pc-selection'/name
+        if not source.is_file() or source.is_symlink():
+            raise ValueError('Missing reviewed PC selection asset: '+name)
+        skill_sources.append((source, target))
     music=[];catalog=None
     if 'bgm_catalog' in assets:
         catalog=json.loads(assets['bgm_catalog'].read_text(encoding='utf-8'))
@@ -112,6 +180,11 @@ def package(gwp_path, exe, output, seconds=None):
     if weapon_catalog.is_file():
         shutil.copyfile(weapon_catalog, data/'weapon_catalog.tsv')
         hashes['weapon_catalog.tsv'] = record(data/'weapon_catalog.tsv')['sha256']
+    for source, name in skill_sources:
+        target = data/name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source, target)
+        hashes[name] = record(target)['sha256']
     runtime = document['runtime']
     duration = runtime['preview_seconds'] if seconds is None else seconds
     (data/'launch.cfg').write_text(f"MGO2WIN.TITLE 7\n{duration} {runtime['entry_procedure']} {int(runtime['audio_enabled'])}\n{document['network']['policy_url']}\n", encoding='ascii')
@@ -133,13 +206,17 @@ def package(gwp_path, exe, output, seconds=None):
         'LOCAL BUILD WITH GAME-DERIVED ASSETS. Do not upload this folder or its data to GitHub.\n'
         'ゲーム由来のデータを含むローカル専用ビルドです。このフォルダーをGitHubにアップロードしないでください。\n', encoding='utf-8')
     files = [{**record(p), 'path': p.relative_to(output).as_posix()} for p in sorted(output.rglob('*')) if p.is_file()]
-    manifest = {'format': 'MGO2WIN.LOCAL_PACKAGE', 'version': 1, 'distribution': 'local_only_contains_game_assets',
+    version_output = subprocess.run([str(exe.resolve()), '--version'], capture_output=True, text=True, check=True, timeout=10).stdout.strip()
+    if not re.fullmatch(r'MGO2WIN v0\.01-[0-9]{14}', version_output):
+        raise ValueError('Executable build version is missing or invalid')
+    manifest = {'format': 'MGO2WIN.LOCAL_PACKAGE', 'version': 1, 'build_version': version_output.split()[1], 'distribution': 'local_only_contains_game_assets',
                 'created_utc': datetime.datetime.now(datetime.timezone.utc).isoformat(),
                 'source_gwp_sha256': record(gwp_path)['sha256'],
                 'packager_sha256': record(Path(__file__))['sha256'],
-                'input_asset_hashes': {x['role']: x['sha256'] for x in inputs if 'role' in x},
+                'input_asset_hashes': {**{x['role']: x['sha256'] for x in inputs if 'role' in x},
+                                       **{'native:'+name: record(source)['sha256'] for source, name in skill_sources}},
                 'runtime': gwp['runtime'], 'files': files,
-                'limitations': ['START native stereo mix, original DSP parity pending', 'OpenMGO2 login, character selection, host admission, roster and map metadata implemented; gameplay and peer mesh pending', 'Map20 textured static preview, spatial hemisphere approximation and world collision query; debug bind-pose placements and local reset; original actor activation, full material/prelighting and gameplay pending', 'selected appearance and original lobby motion implemented; some equipment/materials and exact original clip assignment pending', 'F4 ordinary n022a/TDM weapon draft with recovered prices/restrictions; live DP balance, START readiness, loadout transmission and spawning pending', 'no PS3 audiovisual parity claim'],
+                'limitations': ['START native stereo mix, original DSP parity pending', 'OpenMGO2 login, character selection, host admission, roster and map metadata implemented; full gameplay and peer mesh pending', 'n022a/TDM reviewed32 object snapshot/delta applies stable models, GEOM walking collision and GM_HIT targets; fragment FX, other profiles and full original scene behavior pending', 'GWM v2 authored RGB restored for reviewed 0x120000 materials; full original prelighting, transparency, reflection and material constants pending', 'Local native capsule rigid body and13-body12-joint ragdoll use matched current MGO2 skeleton data; original solver parity, self collision and networked death pending', 'selected appearance and original lobby motion implemented; some equipment/materials and exact original clip assignment pending', 'Native GWCB v5 READY/cancel, host DP/loadout and respawn approval; native three-second death wait, original spawn placement and same-track music continuity; n022a/map20 TDM/rule1 flags0 supports only native basic AK102', 'Host-scheduled trigger/automatic fire, host-driven reload display, collision/hit/HP/ammo and reliable combat effects implemented and tested with two local protocol peers; AK102 uses original30tick threshold at native nominal100.1ms and normal reload motion; limited live path enabled, actual two-PC combat untested; GWAV v1 remote appearance and interpolated original pose clips implemented with limited state coverage', 'Original body-impact WAV cues1369/8168 variant0 restored; AK102 normal cue10002 restored as a native near-distance choice; random variation, original spatial DSP and other effects pending', 'Original skill cost budget defaults to four, future server entitlement may allow eight; native database endpoint candidate not deployed, no purchase UI, skill combat modifiers pending', 'HUD uses Japanese text, verified 64x64 EM64 clan downloads and a host-owned native DM/TDM round clock; absent values remain blank/unknown. Original glyphs have native skill/briefing assignments', 'Native single-rotation n022a/TDM timeout stops combat, displays ended state and rebuilds the next epoch after three seconds; original ticket/winner/rotation rules pending', 'Explicit isolated keyboard and background XInput local test profiles use UDP5730/5731 with manual session-only login; physical dual-client trial pending', 'no PS3 audiovisual parity claim'],
                 'runtime_dependencies': ['Windows 10/11 x64 system D3D11, D3DCompiler, XAudio2, BCrypt; MSVC runtime statically linked'],
                 'not_bundled': ['IDA', 'vgmstream/FFmpeg DLLs', 'Noesis', 'Drebin', 'Python', 'SDK installers']}
     (output/'package.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')

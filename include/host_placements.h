@@ -39,7 +39,7 @@ class ObjectStates {
 public:
  enum class Update {bits,maximum};
 private:
- std::vector<uint8_t> widths_,values_,initial_;std::vector<Update> updates_;uint8_t slot_=255;bool complete_=false;
+ std::vector<uint8_t> widths_,values_,initial_,pending_;std::vector<Update> updates_;uint8_t slot_=255;bool complete_=false;
 public:
  ObjectStates(uint8_t localSlot,std::vector<uint8_t> widths,std::vector<Update> updates={});
  std::optional<std::array<uint8_t,2>> snapshot_request()const{return complete_?std::nullopt:std::optional{std::array<uint8_t,2>{0xe1,slot_}};}

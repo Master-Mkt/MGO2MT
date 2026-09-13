@@ -1,4 +1,5 @@
-﻿#include "menu_theme.h"
+#include "menu_audio.h"
+#include "menu_theme.h"
 #include "character_screen.h"
 #include <cstring>
 #include <stdexcept>
@@ -11,30 +12,111 @@ CharacterScreen::CharacterScreen(std::function<CharacterReply(const std::atomic_
  bitmap_=CreateDIBSection(dc_,&i,DIB_RGB_COLORS,&pixels_,nullptr,0);if(!bitmap_){DeleteDC(dc_);throw std::runtime_error("Character surface failure");}old_=SelectObject(dc_,bitmap_);
  for(int size:{30,23,20,17})fonts_.push_back(CreateFontW(-size,0,0,0,FW_NORMAL,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,ANTIALIASED_QUALITY,FIXED_PITCH,L"MS Gothic"));start();
 }
+namespace {
+std::wstring skill_text(std::string_view value){int n=MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,value.data(),int(value.size()),nullptr,0);if(!n)return {};std::wstring result(n,L' ');MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,value.data(),int(value.size()),result.data(),n);return result;}
+}
+void CharacterScreen::skill_catalog(const std::filesystem::path& path){
+ auto catalog=std::make_shared<skills::Catalog>();std::string error;
+ if(!catalog->load(path,error)){skillCatalog_.reset();skillNotice_=L"スキル一覧を読み込めませんでした。";return;}
+ skillCatalog_=std::move(catalog);if(creation_)creation_->require_skills(true);
+}
+bool CharacterScreen::skills_editable()const{
+ if(creation_)return !creation_->registration_busy()&&!creation_->confirming()&&!creation_->discarding();
+ if(!selected_character_id()||pending_)return false;
+ if(detailReply_.join_status==RoomJoinStatus::joined){const auto&p=detailReply_.preparation;return !matchVisible_&&p&&p->phase==combat::wire::RoundPhase::waiting;}
+ return !matchVisible_;
+}
+skills::Loadout CharacterScreen::active_skills()const{
+ if(!skillCatalog_||!roomRequests_.skills)return {};
+ const auto state=roomRequests_.skills->state();if(!state.profile||state.profile->character!=selected_character_id()||state.profile->status)return {};
+ return ([&]{auto check=skills::validate(*skillCatalog_,state.profile->loadout,state.profile->capacity);return check&&check.used==state.profile->used;})()?state.profile->loadout:skills::Loadout{};
+}
+std::vector<std::wstring> CharacterScreen::skill_hud_labels()const{
+ std::vector<std::wstring> result;if(!skillCatalog_)return result;
+ for(const auto&choice:active_skills().entries)if(auto entry=skillCatalog_->find(choice.id,choice.level))result.push_back(skill_text(entry->display_name.empty()?entry->name:entry->display_name)+L"  LV "+std::to_wstring(choice.level));
+ return result;
+}
+void CharacterScreen::open_skills(){
+ if(skill_visible())return;
+ if(!skills_editable()){skillNotice_=L"スキルはPC選択後、ラウンド開始前に変更できます。";lobbyNotice_=detailNotice_=skillNotice_;return;}
+ if(!skillCatalog_){skillNotice_=L"スキル一覧を読み込めませんでした。データを確認してください。";lobbyNotice_=detailNotice_=skillNotice_;return;}
+ if(!skillMenu_){skillMenu_=std::make_unique<SkillMenu>();skillMenu_->icons(skillIcons_);}
+ skills::Loadout selected;unsigned capacity=skills::base_capacity;
+ if(creation_){selected=creationSkills_;skillNotice_=L"作成内容に追加します。PC選択・ロビー接続後にサーバーへ保存します。";}
+ else{
+  auto state=roomRequests_.skills->state();selected=active_skills();
+  if(state.profile&&state.profile->character==selected_character_id()&&!state.profile->status){auto check=skills::validate(*skillCatalog_,state.profile->loadout,state.profile->capacity);if(check&&check.used==state.profile->used)capacity=state.profile->capacity;}
+  if(auto pending=skillDrafts_.find(selected_character_id());pending!=skillDrafts_.end())selected=pending->second.value;
+  if(state.status==skills::RemoteStatus::ready)skillNotice_=L"適用するとサーバーへ保存します。利用できるレベルはサーバーが確認します。";
+  else if(state.status==skills::RemoteStatus::saving)skillNotice_=L"スキルを保存しています。結果を待ってください。";
+  else if(state.status==skills::RemoteStatus::unsupported)skillNotice_=L"サーバーのスキル設定対応を確認できません。変更は下書きになります。";
+  else if(state.status==skills::RemoteStatus::rejected||state.status==skills::RemoteStatus::conflict||state.status==skills::RemoteStatus::outcome_unknown){skillNotice_=L"前回の変更の保存結果を確認できていません。最新の設定を取得しています。";roomRequests_.skills->fetch();}
+  else skillNotice_=L"変更は下書きです。ロビーへ接続して設定を取得後、サーバーへ保存します。";
+ }
+ const bool editable=creation_||roomRequests_.skills->state().status!=skills::RemoteStatus::saving;
+ skillMenu_->open(skillCatalog_,selected,capacity,editable);skillMenu_->notice(skillNotice_);if(cues_.size()<32)cues_.push_back(menu_audio::Confirm);
+}
+void CharacterScreen::update_skills(){
+ if(!roomRequests_.skills)return;
+ if(skill_visible()&&!creation_&&!skills_editable()){skillMenu_->close(true);for(auto cue:skillMenu_->cues())if(cues_.size()<32)cues_.push_back(cue);skillNotice_=L"ラウンドが開始されたためスキル編集を終了しました。";}
+ auto state=roomRequests_.skills->state();if(state.serial==skillSerial_){auto pending=skillDrafts_.find(selected_character_id());if(pending==skillDrafts_.end()||!pending->second.queued||state.status!=skills::RemoteStatus::ready||!skills_editable())return;}skillSerial_=state.serial;
+ const auto id=selected_character_id();if(!id||state.character!=id)return;
+ auto pending=skillDrafts_.find(id);
+ if(state.status==skills::RemoteStatus::ready&&state.profile&&state.profile->character==id&&skillCatalog_){
+  auto verified=skills::validate(*skillCatalog_,state.profile->loadout,state.profile->capacity);if(!verified||verified.used!=state.profile->used){skillNotice_=lobbyNotice_=detailNotice_=L"サーバーのスキル設定を確認できません。保存を停止しました。";if(skill_visible())skillMenu_->notice(skillNotice_);return;}
+  if(pending!=skillDrafts_.end()&&pending->second.sending){if(state.profile->loadout==pending->second.value){skillDrafts_.erase(pending);pending=skillDrafts_.end();skillNotice_=L"選択したスキルがサーバーの設定に反映されています。";}else{pending->second.sending=pending->second.queued=false;skillNotice_=L"サーバーの設定が下書きと異なります。確認してから再度適用してください。";}}
+  if(pending!=skillDrafts_.end()&&pending->second.queued&&skillCatalog_){
+   // Only an explicitly applied draft may replace the newly read server profile.
+   if(!skills::validate(*skillCatalog_,pending->second.value,state.profile->capacity)){pending->second.queued=false;skillNotice_=L"現在のスキル枠では下書きを保存できません。選び直してください。";}
+   else if(skills_editable()&&roomRequests_.skills->save(pending->second.value)){pending->second.queued=false;pending->second.sending=true;skillNotice_=L"スキルをサーバーへ保存しています…";}
+  }
+ }else if(state.status==skills::RemoteStatus::rejected||state.status==skills::RemoteStatus::conflict||state.status==skills::RemoteStatus::outcome_unknown||state.status==skills::RemoteStatus::offline){
+  if(pending!=skillDrafts_.end()&&pending->second.sending){pending->second.sending=false;pending->second.queued=false;}
+  if(state.status==skills::RemoteStatus::rejected)skillNotice_=L"スキルを保存できませんでした。レベル・使用枠を確認し、選び直してください。";
+  else if(state.status==skills::RemoteStatus::conflict)skillNotice_=L"サーバーの設定が変更されています。スキル画面を開き直して確認してください。";
+  else if(state.status==skills::RemoteStatus::outcome_unknown)skillNotice_=L"保存結果を確認できません。再送せず、スキル画面を開き直して確認してください。";
+  else if(pending!=skillDrafts_.end())skillNotice_=L"スキルの下書きがあります。ロビー接続後に保存状態を確認してください。";
+ }
+ if(!skillNotice_.empty()){lobbyNotice_=skillNotice_;if(detailVisible_)detailNotice_=skillNotice_;if(skill_visible())skillMenu_->notice(skillNotice_);}
+}
+bool CharacterScreen::skill_message(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
+ bool handled=skillMenu_->message(hwnd,msg,wp,lp);
+ if(auto chosen=skillMenu_->take_saved()){
+  if(creation_){creationSkills_=std::move(*chosen);creation_->skills_complete(creationSkillContinue_);creationSkillContinue_=false;for(auto cue:creation_->cues())if(cues_.size()<32)cues_.push_back(cue);}
+  else if(auto id=selected_character_id()){
+   skillDrafts_[id]={std::move(*chosen),true,false};skillNotice_=L"スキルの下書きを適用しました。サーバーへの保存は未完了です。";
+   skillSerial_=~uint64_t(0);update_skills();
+  }
+ }
+ for(auto cue:skillMenu_->cues())if(cues_.size()<32)cues_.push_back(cue);
+ if(!skill_visible())creationSkillContinue_=false;
+ return handled;
+}
 void CharacterScreen::stop(){cancel_=true;if(worker_.joinable())worker_.join();pending_=false;}
 CharacterScreen::~CharacterScreen(){stop_rooms();stop();SelectObject(dc_,old_);DeleteObject(bitmap_);DeleteDC(dc_);for(auto f:fonts_)DeleteObject(f);}
-void CharacterScreen::start(){if(pending_||GetTickCount64()<retryAt_)return;stop();slots_.load({});notice_.clear();reply_={};cancel_=false;done_=false;pending_=true;focus_=0;++requests_;cues_.push_back(93);
+void CharacterScreen::start(){if(pending_||GetTickCount64()<retryAt_)return;stop();slots_.load({});notice_.clear();reply_={};cancel_=false;done_=false;pending_=true;focus_=0;++requests_;cues_.push_back(menu_audio::Confirm);
  try{worker_=std::thread([this]{try{reply_=transport_(cancel_);}catch(...){reply_={};}done_=true;});}catch(...){pending_=false;reply_.status=CharacterStatus::network_error;}
  std::osyncstream(std::cout)<<"{\"character_request_started\":true}"<<std::endl;
 }
 void CharacterScreen::begin_registration(CharacterCreateRequest request){
  if(pending_||!createTransport_||registrationState_->unresolved){creation_->registration_failed(L"前回の登録結果を一覧で確認してください。");return;}
- stop();registrationState_->unresolved=true;registrationState_->expected_id=0;registrationState_->expected_name=request.name;
+ stop();registrationState_->unresolved=true;registrationState_->expected_id=0;registrationState_->expected_name=request.name;if(skillCatalog_)registrationState_->skills=creationSkills_;
  cancel_=false;done_=false;pending_=registering_=true;createReply_={};
  try{worker_=std::thread([this,request=std::move(request)]{try{createReply_=createTransport_(request,cancel_);}catch(...){createReply_.status=CharacterCreateStatus::outcome_unknown;createReply_.request_may_have_been_sent=true;}done_=true;});}
  catch(...){pending_=registering_=false;*registrationState_={};creation_->registration_failed(L"登録処理を開始できませんでした。もう一度お試しください。");}
 }
 void CharacterScreen::update(){
- update_rooms();
- if(!pending_||!done_)return;worker_.join();pending_=false;
+ update_rooms();update_skills();
+ selectionPresentation_.observe(!creation_&&!lobbyVisible_&&!skill_visible()?preview_character_id():0,clock_());
+ if(!pending_||!done_||(selecting_&&selectionPresentation_.selecting(clock_())))return;worker_.join();pending_=false;
  if(selecting_){selecting_=false;auto status=selectionReply_.status;
   if((status==CharacterSelectionStatus::success&&(!selectionReply_.request_may_have_been_sent||selectionReply_.character.id!=selectionTarget_))||(selectionReply_.request_may_have_been_sent&&status!=CharacterSelectionStatus::success&&status!=CharacterSelectionStatus::rejected))status=CharacterSelectionStatus::outcome_unknown;
   selectionReply_.status=status;selectionState_->unresolved=status==CharacterSelectionStatus::outcome_unknown;
-  if(status==CharacterSelectionStatus::success){lobbyVisible_=true;lobbyCategories_=false;lobbyGroup_=0;lobbyFocus_=0;lobbyNotice_.clear();report_lobby_group();}
+  if(status==CharacterSelectionStatus::success){lobbyVisible_=true;lobbyCategories_=false;lobbyGroup_=0;lobbyFocus_=0;lobbyNotice_.clear();roomRequests_.skills->character(selectionReply_.character.id);skillSerial_=~uint64_t(0);report_lobby_group();}
   else notice_=status==CharacterSelectionStatus::unavailable?L"PC選択はサーバー側の対応確認後に利用できます。":status==CharacterSelectionStatus::missing?L"選んだPCが一覧に見つかりません。一覧を再取得してください。":status==CharacterSelectionStatus::rejected?L"PC選択が受け付けられませんでした。ログインからやり直してください。":status==CharacterSelectionStatus::outcome_unknown?L"PC選択の結果を確認できませんでした。再送せずログインからやり直してください。":status==CharacterSelectionStatus::cancelled?L"PC選択を中止しました。":L"PC選択前に通信を確認できませんでした。もう一度お試しください。";
-  cues_.push_back(93);std::osyncstream(std::cout)<<"{\"character_selection_result\":true,\"status\":"<<int(status)<<",\"error\":"<<selectionReply_.error<<",\"may_have_been_sent\":"<<(selectionReply_.request_may_have_been_sent?"true":"false")<<",\"lobby_visible\":"<<(lobbyVisible_?"true":"false")<<",\"lobby_count\":"<<selectionReply_.lobbies.size()<<"}"<<std::endl;return;
+  if(status==CharacterSelectionStatus::success)cues_.push_back(menu_audio::Confirm);std::osyncstream(std::cout)<<"{\"character_selection_result\":true,\"status\":"<<int(status)<<",\"error\":"<<selectionReply_.error<<",\"may_have_been_sent\":"<<(selectionReply_.request_may_have_been_sent?"true":"false")<<",\"lobby_visible\":"<<(lobbyVisible_?"true":"false")<<",\"lobby_count\":"<<selectionReply_.lobbies.size()<<"}"<<std::endl;return;
  }
- if(registering_){registering_=false;cues_.push_back(93);
+ if(registering_){registering_=false;
   auto status=createReply_.status;
   // A successful response without an ID or an inconsistent transport result is ambiguous.
   if((status==CharacterCreateStatus::success&&!createReply_.created_id)||(createReply_.request_may_have_been_sent&&status!=CharacterCreateStatus::success&&status!=CharacterCreateStatus::rejected))status=CharacterCreateStatus::outcome_unknown;
@@ -51,30 +133,31 @@ void CharacterScreen::update(){
  }
  retryAt_=GetTickCount64()+2000;slots_.load(reply_.status==CharacterStatus::success?reply_.list:CharacterList{});focus_=slots_.count()?0:1;
  if(registrationState_->unresolved){
-  bool confirmed=false;if(reply_.status==CharacterStatus::success)for(unsigned i=0;i<reply_.list.entries.size();++i){const auto&e=reply_.list.entries[i];if(registrationState_->expected_id?e.id==registrationState_->expected_id:e.name==registrationState_->expected_name){slots_.select(i);focus_=int(i);confirmed=true;break;}}
+  bool confirmed=false;if(reply_.status==CharacterStatus::success)for(unsigned i=0;i<reply_.list.entries.size();++i){const auto&e=reply_.list.entries[i];if(registrationState_->expected_id?e.id==registrationState_->expected_id:e.name==registrationState_->expected_name){slots_.select(i);focus_=int(i);if(registrationState_->skills)skillDrafts_[e.id]={*registrationState_->skills,true,false};confirmed=true;break;}}
   if(confirmed){*registrationState_={};registrationNotice_=L"登録されたPCを一覧で確認しました。";}
   else registrationNotice_=L"前回の登録を一覧で確認できていません。再取得して確認してください。新規登録は一時停止中です。";
  }
- notice_=registrationNotice_;cues_.push_back(93);report();
+ notice_=registrationNotice_;if(reply_.status==CharacterStatus::success)cues_.push_back(menu_audio::Confirm);report();
 }
 void CharacterScreen::begin_selection(){
  if(pending_||!slots_.occupied())return;
  if(!selectTransport_){notice_=L"PC選択はサーバー側の対応確認後に利用できます。";return;}
  if(selectionState_->unresolved){notice_=L"前回のPC選択結果が不明です。ログインからやり直してください。";return;}
- stop();slots_.reset_hold();slots_.cancel_dialog();selectionTarget_=slots_.preview_id();selectionState_->unresolved=true;
+ stop();slots_.reset_hold();slots_.cancel_dialog();selectionTarget_=slots_.preview_id();selectionPresentation_.observe(selectionTarget_,clock_());selectionPresentation_.select(clock_());selectionState_->unresolved=true;
  selectionReply_={};cancel_=false;done_=false;pending_=selecting_=true;
  try{worker_=std::thread([this,id=selectionTarget_]{try{selectionReply_=selectTransport_(id,cancel_);}catch(...){selectionReply_.status=CharacterSelectionStatus::outcome_unknown;selectionReply_.request_may_have_been_sent=true;}done_=true;});}
  catch(...){pending_=selecting_=false;selectionState_->unresolved=false;notice_=L"PC選択を開始できませんでした。";}
 }
 void CharacterScreen::stop_rooms(){
- roomCancel_=true;if(roomWorker_.joinable())roomWorker_.join();std::lock_guard lock(roomMutex_);roomInbox_.clear();roomRequests_.clear();detailVisible_=false;detailBusy_=false;update_weapons();SecureZeroMemory(detailAction_.password.data(),sizeof(detailAction_.password));
+ roundIntro_.reset();
+ roomCancel_=true;if(roomWorker_.joinable())roomWorker_.join();std::lock_guard lock(roomMutex_);roomInbox_.clear();roomRequests_.clear();combatEvents_.clear();detailVisible_=false;detailBusy_=false;update_weapons();SecureZeroMemory(detailAction_.password.data(),sizeof(detailAction_.password));
 }
 void CharacterScreen::begin_rooms(){
  auto rows=lobby_group_rows(selectionReply_.lobbies,lobbyGroup_);if(roomVisible_||lobbyFocus_>=rows.size())return;
  if(!roomTransport_){lobbyNotice_=L"このプレビューではロビーへ接続しません。";return;}
- stop_rooms();roomLobby_=selectionReply_.lobbies[rows[lobbyFocus_]];roomReply_={};roomFocus_=0;roomNotice_.clear();roomCancel_=false;roomRefresh_=false;roomVisible_=true;cues_.push_back(93);
+ stop_rooms();roomLobby_=selectionReply_.lobbies[rows[lobbyFocus_]];roomReply_={};roomFocus_=0;roomNotice_.clear();roomCancel_=false;roomRefresh_=false;roomVisible_=true;cues_.push_back(menu_audio::Confirm);
  try{roomWorker_=std::thread([this,id=selectionReply_.character.id,lobby=roomLobby_]{
-  auto publish=[this](RoomReply reply){std::lock_guard lock(roomMutex_);if(reply.host_roster&&!roomInbox_.empty()){auto&last=roomInbox_.back();if(last.host_roster&&last.event==reply.event&&last.requested_room==reply.requested_room&&last.join_status==reply.join_status&&last.status==reply.status){last=std::move(reply);return;}}roomInbox_.push_back(std::move(reply));};
+  auto publish=[this](RoomReply reply){std::lock_guard lock(roomMutex_);if(reply.host_roster&&!roomInbox_.empty()){auto&last=roomInbox_.back();if(last.host_roster&&last.event==reply.event&&last.requested_room==reply.requested_room&&last.join_status==reply.join_status&&last.status==reply.status){if(last.combat_offer==reply.combat_offer){if(last.combat_events.size()+reply.combat_events.size()>128){roomCancel_=true;return;}reply.combat_events.insert(reply.combat_events.begin(),last.combat_events.begin(),last.combat_events.end());}last=std::move(reply);return;}}roomInbox_.push_back(std::move(reply));};
   try{roomTransport_(id,lobby,roomCancel_,roomRefresh_,publish,roomRequests_);}catch(...){if(!roomCancel_)publish({RoomStatus::network_error,{},0});}
  });}catch(...){roomReply_.status=RoomStatus::network_error;}
  std::osyncstream(std::cout)<<"{\"game_lobby_started\":true,\"lobby_id\":"<<roomLobby_.id<<",\"port\":"<<roomLobby_.port<<"}"<<std::endl;
@@ -84,9 +167,20 @@ void CharacterScreen::update_rooms(){
  if(next->event!=RoomEvent::list){
   if(!detailVisible_||next->requested_room!=detailAction_.id)return;
   if(!next->detail)next->detail=detailReply_.detail;
-  auto previousStage=detailReply_.join_status;auto previousRequest=detailReply_.host_match?detailReply_.host_match->request:std::optional<host::LoadRequest>{};
-  detailBusy_=next->status==RoomStatus::connecting;detailReply_=std::move(*next);detailNotice_.clear();update_weapons();
-  if(detailReply_.join_status!=RoomJoinStatus::joined)matchVisible_=false;
+  auto previousPreparation=detailReply_.preparation;auto previousStage=detailReply_.join_status;auto previousRequest=detailReply_.host_match?detailReply_.host_match->request:std::optional<host::LoadRequest>{};
+  if(previousPreparation&&next->preparation&&previousPreparation->phase!=next->preparation->phase){briefingPanel_=briefing::Panel::none;briefingYes_=false;}
+  if(previousPreparation&&!next->preparation){briefingPanel_=briefing::Panel::none;briefingYes_=false;}
+  if(previousPreparation&&next->preparation){const auto& a=*previousPreparation;const auto& b=*next->preparation;
+   const auto before=a.self.slot<a.players.size()?a.players[a.self.slot]:std::nullopt,after=b.self.slot<b.players.size()?b.players[b.self.slot]:std::nullopt;
+   if(bool(before)!=bool(after)||(before&&after&&(before->id!=after->id||before->life!=after->life||before->deployed!=after->deployed||(briefingPanel_==briefing::Panel::ready&&before->ready!=after->ready)))){briefingPanel_=briefing::Panel::none;briefingYes_=false;}
+  }
+  if((next->host_match?next->host_match->request:std::optional<host::LoadRequest>{})!=previousRequest){briefingPanel_=briefing::Panel::none;briefingFocus_=0;}
+  if(next->combat_offer!=detailReply_.combat_offer){combatEvents_.clear();combatCommandSequence_=loadoutPending_=0;combatLoaded_.reset();combatEntered_=false;matchVisible_=false;weaponsVisible_=false;briefingPanel_=briefing::Panel::none;briefingFocus_=0;roomRequests_.clear_combat();}
+  if(combatEvents_.size()+next->combat_events.size()>128){roomCancel_=true;combatEvents_.clear();}else combatEvents_.insert(combatEvents_.end(),next->combat_events.begin(),next->combat_events.end());
+  next->combat_events.clear();
+  detailBusy_=next->status==RoomStatus::connecting;detailReply_=std::move(*next);detailNotice_.clear();update_weapons();update_round();
+  if(detailReply_.preparation&&detailReply_.preparation->phase!=combat::wire::RoundPhase::waiting&&detailReply_.preparation->phase!=combat::wire::RoundPhase::ended&&(!previousPreparation||previousPreparation->phase==combat::wire::RoundPhase::waiting)&&!detailReply_.preparation->players[detailReply_.preparation->self.slot]->deployed)open_weapons();
+  if(detailReply_.join_status!=RoomJoinStatus::joined){matchVisible_=false;briefingPanel_=briefing::Panel::none;briefingFocus_=0;}
   if(detailReply_.join_status==RoomJoinStatus::permission_checked)detailNotice_=L"参加許可の確認が完了しました。この確認モードではホストへ接続せず、参加予約を解除します。";
   else if(detailReply_.join_status==RoomJoinStatus::outcome_unknown)detailNotice_=L"参加要求の結果を確認できません。再送せず、ログインし直してください。";
   else if(detailReply_.join_status==RoomJoinStatus::invalid_input)detailNotice_=L"パスワードは3〜16バイトで入力してください（日本語は1文字3バイトが目安）。";
@@ -105,19 +199,19 @@ void CharacterScreen::update_rooms(){
   else if(detailReply_.status!=RoomStatus::ready)detailNotice_=L"ルームの応答を確認できません。ロビー一覧へ戻って接続し直してください。";
   if(detailReply_.status==RoomStatus::protocol_error&&detailReply_.join_status!=RoomJoinStatus::invalid_input)roomReply_.status=RoomStatus::protocol_error;
   if(detailReply_.detail&&detailReply_.event==RoomEvent::detail)detailFocus_=detailReply_.detail->password?0:1;
-  if(previousStage!=detailReply_.join_status||detailReply_.event==RoomEvent::detail||(detailReply_.host_match&&detailReply_.host_match->request!=previousRequest))cues_.push_back(93);
+  if(detailReply_.status==RoomStatus::ready&&(detailReply_.join_status==RoomJoinStatus::none||detailReply_.join_status==RoomJoinStatus::permission_checked||detailReply_.join_status==RoomJoinStatus::joined)&&(previousStage!=detailReply_.join_status||detailReply_.event==RoomEvent::detail||(detailReply_.host_match&&detailReply_.host_match->request!=previousRequest)))cues_.push_back(menu_audio::Confirm);
   std::osyncstream(std::cout)<<"{\"room_action_result\":true,\"event\":"<<int(detailReply_.event)<<",\"status\":"<<int(detailReply_.status)<<",\"join_status\":"<<int(detailReply_.join_status)<<",\"error\":"<<detailReply_.error<<",\"room_id\":"<<detailReply_.requested_room<<",\"host_roster_complete\":"<<(detailReply_.host_roster&&detailReply_.host_roster->complete?"true":"false")<<",\"host_roster_count\":"<<(detailReply_.host_roster?detailReply_.host_roster->count():0)<<",\"host_roster_revision\":"<<(detailReply_.host_roster?detailReply_.host_roster->revision:0)<<",\"host_match_revision\":"<<(detailReply_.host_match?detailReply_.host_match->revision:0)<<",\"host_match_request\":"<<(detailReply_.host_match&&detailReply_.host_match->request?detailReply_.host_match->request->sequence:0)<<"}"<<std::endl;return;
  }
  if(detailVisible_&&next->status!=RoomStatus::ready){detailReply_.host_match.reset();detailReply_.host_roster.reset();matchVisible_=false;detailBusy_=false;detailNotice_=L"ロビー接続が終了しました。一覧へ戻って接続し直してください。";}
  auto old=roomFocus_<roomReply_.rooms.size()?roomReply_.rooms[roomFocus_].id:0;auto was=roomReply_.status;roomReply_=std::move(*next);roomFocus_=0;
  for(size_t i=0;i<roomReply_.rooms.size();++i)if(roomReply_.rooms[i].id==old)roomFocus_=i;
- roomNotice_.clear();if(was!=roomReply_.status&&cues_.size()<32)cues_.push_back(93);
+ roomNotice_.clear();if(was!=roomReply_.status&&roomReply_.status==RoomStatus::ready&&cues_.size()<32)cues_.push_back(menu_audio::Confirm);
  std::osyncstream(std::cout)<<"{\"room_list_result\":true,\"status\":"<<int(roomReply_.status)<<",\"error\":"<<roomReply_.error<<",\"count\":"<<roomReply_.rooms.size()<<",\"lobby_id\":"<<roomLobby_.id<<"}"<<std::endl;
 }
 bool CharacterScreen::room_message(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
  if(detailVisible_)return detail_message(hwnd,msg,wp,lp);
- auto n=roomReply_.rooms.size();auto leave=[&]{stop_rooms();roomVisible_=false;roomReply_={};cues_.push_back(93);std::osyncstream(std::cout)<<"{\"game_lobby_left\":true}"<<std::endl;};
- auto refresh=[&]{if(roomReply_.status==RoomStatus::ready&&GetTickCount64()>=roomRefreshAt_){roomRefresh_=true;roomRefreshAt_=GetTickCount64()+1000;roomNotice_=L"一覧を更新しています…";cues_.push_back(93);}};
+ auto n=roomReply_.rooms.size();auto leave=[&]{stop_rooms();roomVisible_=false;roomReply_={};cues_.push_back(menu_audio::Cancel);std::osyncstream(std::cout)<<"{\"game_lobby_left\":true}"<<std::endl;};
+ auto refresh=[&]{if(roomReply_.status==RoomStatus::ready&&GetTickCount64()>=roomRefreshAt_){roomRefresh_=true;roomRefreshAt_=GetTickCount64()+1000;roomNotice_=L"一覧を更新しています…";cues_.push_back(menu_audio::Confirm);}};
  auto activate=[&]{if(roomFocus_==n+1)leave();else if(roomFocus_==n)refresh();else open_room_detail();};
  if(msg==WM_CHAR||msg==WM_KEYUP)return true;
  if(msg==WM_KEYDOWN){if((lp&(1LL<<30))&&(wp==VK_RETURN||wp==VK_SPACE||wp==VK_ESCAPE||wp==VK_F5))return true;
@@ -125,7 +219,7 @@ bool CharacterScreen::room_message(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
   else if(wp==VK_HOME)roomFocus_=0;else if(wp==VK_END)roomFocus_=n+1;
   else if(wp==VK_UP)roomFocus_=(roomFocus_+n+1)%(n+2);else if(wp==VK_DOWN||wp==VK_TAB)roomFocus_=(roomFocus_+1)%(n+2);
   else if(wp==VK_NEXT)roomFocus_=std::min(n,roomFocus_+7);else if(wp==VK_PRIOR)roomFocus_=roomFocus_>=7?roomFocus_-7:0;
-  else if(wp==VK_RETURN||wp==VK_SPACE)activate();if(previous!=roomFocus_&&cues_.size()<32)cues_.push_back(94);return true;
+  else if(wp==VK_RETURN||wp==VK_SPACE)activate();if(previous!=roomFocus_&&cues_.size()<32)cues_.push_back(menu_audio::Cursor);return true;
  }
  if(msg==WM_LBUTTONUP){RECT r{};GetClientRect(hwnd,&r);if(!r.right||!r.bottom)return true;int x=int(short(LOWORD(lp)))*1280/r.right,y=int(short(HIWORD(lp)))*720/r.bottom;
   if(y>=617&&y<662){if(x>=850&&x<1160)leave();else if(x>=510&&x<820)refresh();}
@@ -157,7 +251,7 @@ void CharacterScreen::report_lobby_group()const{
 }
 void CharacterScreen::set_lobby_group(unsigned group){
  if(group>=lobby_group_count(selectionReply_.lobbies)||group==lobbyGroup_)return;
- lobbyGroup_=group;lobbyFocus_=0;lobbyNotice_.clear();if(cues_.size()<32)cues_.push_back(94);report_lobby_group();
+ lobbyGroup_=group;lobbyFocus_=0;lobbyNotice_.clear();if(cues_.size()<32)cues_.push_back(menu_audio::Cursor);report_lobby_group();
 }
 namespace {
 int lobby_list_top(unsigned group,size_t count){return std::min(219+int(group)*42,548-int(std::clamp(count,size_t(1),size_t(6)))*42);}
@@ -177,11 +271,11 @@ bool CharacterScreen::lobby_message(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
  if(roomVisible_)return room_message(hwnd,msg,wp,lp);
  const size_t n=lobby_group_rows(selectionReply_.lobbies,lobbyGroup_).size();
  const unsigned groups=lobby_group_count(selectionReply_.lobbies);
- auto leave=[&]{lobbyVisible_=false;notice_=L"PCを選び直せます。";cues_.push_back(93);};
- auto activate=[&]{if(lobbyCategories_){lobbyCategories_=false;lobbyFocus_=0;cues_.push_back(93);}else if(lobbyFocus_==n)leave();else begin_rooms();};
+ auto leave=[&]{lobbyVisible_=false;notice_=L"PCを選び直せます。";cues_.push_back(menu_audio::Cancel);};
+ auto activate=[&]{if(lobbyCategories_){lobbyCategories_=false;lobbyFocus_=0;cues_.push_back(menu_audio::Confirm);}else if(lobbyFocus_==n)leave();else begin_rooms();};
  if(msg==WM_CHAR||msg==WM_KEYUP)return true;
  if(msg==WM_KEYDOWN){if(lp&(1LL<<30)){if(wp==VK_RETURN||wp==VK_SPACE||wp==VK_ESCAPE)return true;}
-  auto previous=lobbyFocus_;bool oldColumn=lobbyCategories_;
+  auto previous=lobbyFocus_;bool oldColumn=lobbyCategories_;const auto before=cues_.size();
   if(wp==VK_ESCAPE)leave();
   else if(wp==VK_LEFT)lobbyCategories_=true;
   else if(wp==VK_RIGHT)lobbyCategories_=false;
@@ -197,14 +291,15 @@ bool CharacterScreen::lobby_message(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
    else if(wp==VK_DOWN)lobbyFocus_=(lobbyFocus_+1)%(n+1);
    else if(wp==VK_NEXT)lobbyFocus_=std::min(n,lobbyFocus_+6);else if(wp==VK_PRIOR)lobbyFocus_=lobbyFocus_>=6?lobbyFocus_-6:0;
   }
-  if((previous!=lobbyFocus_||oldColumn!=lobbyCategories_)&&cues_.size()<32)cues_.push_back(94);return true;
+  if((previous!=lobbyFocus_||oldColumn!=lobbyCategories_)&&cues_.size()==before&&cues_.size()<32)cues_.push_back(menu_audio::Cursor);return true;
  }
  if(msg==WM_LBUTTONUP){RECT r{};GetClientRect(hwnd,&r);if(!r.right||!r.bottom)return true;int x=int(short(LOWORD(lp)))*1280/r.right,y=int(short(HIWORD(lp)))*720/r.bottom;
   int top=lobby_list_top(lobbyGroup_,n);
-  if(x>=120&&x<635&&y>=219&&y<219+int(groups)*42){lobbyCategories_=true;set_lobby_group(unsigned(y-219)/42);}
+  if(x>=120&&x<635&&y>=219&&y<219+int(groups)*42){const bool oldColumn=lobbyCategories_;const auto before=cues_.size();lobbyCategories_=true;set_lobby_group(unsigned(y-219)/42);if(!oldColumn&&cues_.size()==before)cues_.push_back(menu_audio::Cursor);}
   else if(x>=640&&x<1160&&y>=top&&y<top+int(std::min(n,size_t(6)))*42){size_t page=lobbyFocus_<n?lobbyFocus_/6:n?(n-1)/6:0;size_t row=page*6+(y-top)/42;
-   if(row<n){if((row!=lobbyFocus_||lobbyCategories_)&&cues_.size()<32)cues_.push_back(94);lobbyFocus_=row;lobbyCategories_=false;if(x>=1110)begin_rooms();}}
-  else if(n>6&&y>=552&&y<585){if(x>=955&&x<1000)lobbyFocus_=lobbyFocus_>=6?lobbyFocus_-6:0;else if(x>=1120&&x<1160)lobbyFocus_=std::min(n-1,(lobbyFocus_<n?lobbyFocus_/6+1:0)*6);lobbyCategories_=false;}
+   if(row<n){const bool moved=row!=lobbyFocus_||lobbyCategories_;lobbyFocus_=row;lobbyCategories_=false;if(x>=1110)begin_rooms();else if(moved&&cues_.size()<32)cues_.push_back(menu_audio::Cursor);}}
+  else if(n>6&&y>=552&&y<585){const auto previous=lobbyFocus_;const bool oldColumn=lobbyCategories_;if(x>=955&&x<1000)lobbyFocus_=lobbyFocus_>=6?lobbyFocus_-6:0;else if(x>=1120&&x<1160)lobbyFocus_=std::min(n-1,(lobbyFocus_<n?lobbyFocus_/6+1:0)*6);lobbyCategories_=false;if(previous!=lobbyFocus_||oldColumn)cues_.push_back(menu_audio::Cursor);}
+  else if(x>=830&&x<1160&&y>=111&&y<139)open_skills();
   else if(x>=850&&x<1160&&y>=617&&y<662)leave();SetFocus(hwnd);return true;
  }
  return false;
@@ -216,6 +311,7 @@ void CharacterScreen::draw_lobbies(){
  const auto&games=selectionReply_.lobbies;auto rows=lobby_group_rows(games,lobbyGroup_);size_t n=rows.size(),page=lobbyFocus_<n?lobbyFocus_/6:n?(n-1)/6:0;
  text(L"OpenMGO2",850,82,310,30,1,RGB(215,227,200),DT_RIGHT);
  text(selectionReply_.character.name,640,139,520,26,3,RGB(186,200,173),DT_RIGHT);
+ text(L"スキル設定 [F6]",830,112,330,25,3,RGB(248,204,133),DT_RIGHT);
  text(L"GAME TYPE",138,145,470,25,3,RGB(187,215,214));
  menu_cursor(dc_,120,172,515,42);text(L"ロビー選択",140,178,470,35,0,RGB(240,244,232));
  text(L"LOBBY",660,177,340,25,3,RGB(187,215,214));text(L"PC",1050,177,85,25,3,RGB(187,215,214),DT_RIGHT);
@@ -242,31 +338,36 @@ void CharacterScreen::draw_lobbies(){
  else if(lobbyFocus_<n)menu_focus_guides(dc_,640,top+int(lobbyFocus_%6)*42);
  else menu_focus_guides(dc_,850,617);
 }
-void CharacterScreen::tick_hold(){if(!pending_&&!lobbyVisible_&&slots_.tick(clock_())){++deleteDialogs_;cues_.push_back(93);}}
-void CharacterScreen::confirm_delete(){if(slots_.confirm()){++deleteYes_;notice_=L"PC削除の通信は準備中です。キャラクターは削除していません。";}cues_.push_back(93);}
-void CharacterScreen::focus(int i){if(i!=focus_){slots_.reset_hold();focus_=i;if(i<int(slots_.count())){slots_.select(unsigned(i));notice_.clear();}if(cues_.size()<32)cues_.push_back(94);}}
-void CharacterScreen::activate(){int n=int(slots_.count());if(focus_<n||focus_==n){if(n){if(slots_.occupied())begin_selection();else if(slots_.purchase_required())notice_=L"追加のPCスロット購入は準備中です。購入方法・価格は後日ご案内します。";else if(slots_.can_create()){slots_.reset_hold();creation_=std::make_unique<CharacterCreation>(catalog_,bool(createTransport_)&&!registrationState_->unresolved);notice_.clear();}cues_.push_back(93);}}else if(focus_==n+1)start();else if(focus_==n+2){stop();back_=true;cues_.push_back(93);}}
+void CharacterScreen::tick_hold(){if(!pending_&&!lobbyVisible_&&slots_.tick(clock_())){++deleteDialogs_;cues_.push_back(menu_audio::Confirm);}}
+void CharacterScreen::confirm_delete(){const bool accepted=slots_.confirm();if(accepted){++deleteYes_;notice_=L"PC削除の通信は準備中です。キャラクターは削除していません。";}cues_.push_back(accepted?menu_audio::Confirm:menu_audio::Cancel);}
+void CharacterScreen::focus(int i,bool audible){if(i!=focus_){slots_.reset_hold();focus_=i;if(i<int(slots_.count())){slots_.select(unsigned(i));notice_.clear();}if(audible&&cues_.size()<32)cues_.push_back(menu_audio::Cursor);}}
+void CharacterScreen::activate(){int n=int(slots_.count());if(focus_<n||focus_==n){if(n){if(slots_.occupied()){begin_selection();if(pending_)cues_.push_back(menu_audio::Confirm);}else if(slots_.purchase_required())notice_=L"追加のPCスロット購入は準備中です。購入方法・価格は後日ご案内します。";else if(slots_.can_create()){slots_.reset_hold();creation_=std::make_unique<CharacterCreation>(catalog_,bool(createTransport_)&&!registrationState_->unresolved);creation_->unicode_names(reply_.list.unicode_names);creation_->require_skills(bool(skillCatalog_));creationSkills_={};creationSkillContinue_=false;notice_.clear();cues_.push_back(menu_audio::Confirm);}}}else if(focus_==n+1)start();else if(focus_==n+2){stop();back_=true;cues_.push_back(menu_audio::Cancel);}}
 bool CharacterScreen::message(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){update();
+ if(!lobbyVisible_&&!creation_&&!skill_visible()&&(msg==WM_KEYDOWN||msg==WM_LBUTTONDOWN||msg==WM_MOUSEWHEEL))selectionPresentation_.activity(clock_());
+ if(selecting_&&selectionPresentation_.selecting(clock_()))return true;
+ if(skill_visible())return skill_message(hwnd,msg,wp,lp);
+ if(msg==WM_KEYDOWN&&wp==VK_F6&&(creation_||lobbyVisible_)){if(!(lp&(1LL<<30)))open_skills();return true;}
  if(lobbyVisible_)return lobby_message(hwnd,msg,wp,lp);
- if(creation_){if(creation_->registration_busy())return true;if(msg==WM_KEYDOWN&&(wp==VK_PRIOR||wp==VK_NEXT)&&!creation_->confirming()&&!creation_->discarding()){modelYaw_+=(wp==VK_PRIOR?-.12f:.12f);if(modelYaw_>3.141593f)modelYaw_-=6.283186f;if(modelYaw_< -3.141593f)modelYaw_+=6.283186f;return true;}bool handled=creation_->message(hwnd,msg,wp,lp);if(auto request=creation_->take_registration())begin_registration(std::move(*request));for(auto c:creation_->cues())if(cues_.size()<32)cues_.push_back(c);if(creation_->closed()){creation_->report();creation_.reset();}return handled;}
+ if(creation_){if(creation_->registration_busy())return true;if(msg==WM_KEYDOWN&&(wp==VK_PRIOR||wp==VK_NEXT)&&!creation_->confirming()&&!creation_->discarding()){modelYaw_+=(wp==VK_PRIOR?-.12f:.12f);if(modelYaw_>3.141593f)modelYaw_-=6.283186f;if(modelYaw_< -3.141593f)modelYaw_+=6.283186f;return true;}bool handled=creation_->message(hwnd,msg,wp,lp);if(creation_->take_skill_request()){creationSkillContinue_=true;open_skills();}if(auto request=creation_->take_registration())begin_registration(std::move(*request));for(auto c:creation_->cues())if(cues_.size()<32)cues_.push_back(c);if(creation_->closed()){creation_->report();creation_.reset();}return handled;}
  if(msg==WM_KILLFOCUS||(msg==WM_ACTIVATEAPP&&!wp)){slots_.reset_hold();slots_.cancel_dialog();return false;}
  if(msg==WM_KEYUP&&wp==VK_BACK){slots_.release();return true;}
  if(msg==WM_CHAR)return true;
  if(msg==WM_KEYDOWN){
+  if((lp&(1LL<<30))&&(wp==VK_ESCAPE||wp==VK_RETURN||wp==VK_SPACE))return true;
   if(wp==VK_BACK){if(!pending_&&focus_<=int(slots_.count())&&!(lp&(1LL<<25)))slots_.press(clock_(),(lp&(1LL<<30))!=0);return true;}
   // Navigation/confirmation cancels a partial hold; key repeats cannot rearm it.
   slots_.reset_hold();
-  if(slots_.dialog()){if(wp==VK_ESCAPE){slots_.cancel_dialog();cues_.push_back(93);}else if(wp==VK_LEFT||wp==VK_RIGHT||wp==VK_TAB){slots_.choose(wp==VK_TAB?!slots_.yes():wp==VK_LEFT);cues_.push_back(94);}else if((wp==VK_RETURN||wp==VK_SPACE)&&!(lp&(1LL<<30)))confirm_delete();return true;}
+  if(slots_.dialog()){if(wp==VK_ESCAPE){slots_.cancel_dialog();cues_.push_back(menu_audio::Cancel);}else if(wp==VK_LEFT||wp==VK_RIGHT||wp==VK_TAB){const bool next=wp==VK_TAB?!slots_.yes():wp==VK_LEFT;if(next!=slots_.yes()){slots_.choose(next);cues_.push_back(menu_audio::Cursor);}}else if((wp==VK_RETURN||wp==VK_SPACE)&&!(lp&(1LL<<30)))confirm_delete();return true;}
   if(modelAvailable_&&slots_.occupied()&&(wp==VK_LEFT||wp==VK_RIGHT)){modelYaw_+=(wp==VK_LEFT?-.12f:.12f);if(modelYaw_>3.141593f)modelYaw_-=6.283186f;if(modelYaw_< -3.141593f)modelYaw_+=6.283186f;return true;}
-  if(wp==VK_ESCAPE){stop();back_=true;cues_.push_back(93);}else if(!pending_){int first=slots_.count()?0:1,last=int(slots_.count())+2,n=last-first+1;if(wp==VK_DOWN||wp==VK_TAB){bool prev=wp==VK_TAB&&(GetKeyState(VK_SHIFT)&0x8000);focus(first+(focus_-first+(prev?n-1:1))%n);}else if(wp==VK_UP)focus(first+(focus_-first+n-1)%n);else if(wp==VK_HOME)focus(first);else if(wp==VK_END)focus(last);else if((wp==VK_RETURN||wp==VK_SPACE)&&!(lp&(1LL<<30)))activate();}return true;
+  if(wp==VK_ESCAPE){stop();back_=true;cues_.push_back(menu_audio::Cancel);}else if(!pending_){int first=slots_.count()?0:1,last=int(slots_.count())+2,n=last-first+1;if(wp==VK_DOWN||wp==VK_TAB){bool prev=wp==VK_TAB&&(GetKeyState(VK_SHIFT)&0x8000);focus(first+(focus_-first+(prev?n-1:1))%n);}else if(wp==VK_UP)focus(first+(focus_-first+n-1)%n);else if(wp==VK_HOME)focus(first);else if(wp==VK_END)focus(last);else if((wp==VK_RETURN||wp==VK_SPACE)&&!(lp&(1LL<<30)))activate();}return true;
  }
  if(msg==WM_LBUTTONUP){RECT r{};GetClientRect(hwnd,&r);if(!r.right||!r.bottom)return true;int x=int(short(LOWORD(lp)))*1280/r.right,y=int(short(HIWORD(lp)))*720/r.bottom;slots_.reset_hold();
   if(slots_.dialog()){if(y>=395&&y<449){if(x>=390&&x<610){slots_.choose(true);confirm_delete();}else if(x>=670&&x<890){slots_.choose(false);confirm_delete();}}return true;}
-  if(y>=617&&y<662&&x>=850&&x<1160){stop();back_=true;cues_.push_back(93);}else if(!pending_){int n=int(slots_.count());if(y>=225&&y<225+n*39&&x>=120&&x<690)focus((y-225)/39);else if(y>=617&&y<662){if(x>=120&&x<480){focus(n);activate();}else if(x>=510&&x<820){focus(n+1);activate();}}}SetFocus(hwnd);return true;
+  if(y>=617&&y<662&&x>=850&&x<1160){stop();back_=true;cues_.push_back(menu_audio::Cancel);}else if(!pending_){int n=int(slots_.count());if(y>=225&&y<225+n*39&&x>=120&&x<690)focus((y-225)/39);else if(y>=617&&y<662){if(x>=120&&x<480){focus(n,false);activate();}else if(x>=510&&x<820){focus(n+1,false);activate();}}}SetFocus(hwnd);return true;
  }return false;
 }
-const void* CharacterScreen::draw(){update();tick_hold();memset(pixels_,0,1280*720*4);
- if(lobbyVisible_){draw_lobbies();finish_menu_surface(pixels_);return pixels_;}
+const void* CharacterScreen::draw(){update();tick_hold();drawClanImage_=false;if(skill_visible())return skillMenu_->draw();memset(pixels_,0,1280*720*4);
+ if(lobbyVisible_){draw_lobbies();finish_menu_surface(pixels_);if(weaponsVisible_)draw_weapon_icons();else if(detailVisible_&&detailReply_.join_status==RoomJoinStatus::joined&&!matchVisible_)draw_briefing_icons();if(drawClanImage_&&clanBitmap_)hud::paint_clan_image({static_cast<uint32_t*>(pixels_),1280*720},1280,720,clanBitmap_->get());return pixels_;}
  if(creation_){creation_->draw(dc_,fonts_);finish_menu_surface(pixels_);return pixels_;}
  auto fill=[&](int x,int y,int w,int h,COLORREF c){menu_fill(dc_,x,y,w,h,c);};
  auto text=[&](std::wstring_view s,int x,int y,int w,int h,int font,COLORREF c,UINT flags=DT_LEFT){RECT r{x,y,x+w,y+h};SelectObject(dc_,fonts_[font]);SetTextColor(dc_,menu_text_color(c));SetBkMode(dc_,TRANSPARENT);DrawTextW(dc_,s.data(),int(s.size()),&r,flags|DT_NOPREFIX);};
@@ -274,8 +375,8 @@ const void* CharacterScreen::draw(){update();tick_hold();memset(pixels_,0,1280*7
  text(L"OpenMGO2",850,82,310,30,1,RGB(215,227,200),DT_RIGHT);text(L"プレイヤースロット",120,160,1000,42,0,RGB(229,238,214));
  text(L"4キャラまで無料 ／ 5キャラ目以降はPCスロットを購入",120,202,1040,22,3,RGB(192,204,178));
  // Worker owns reply_ until done/join. Never read it while pending.
- int n=pending_?0:int(slots_.count());
- if(!pending_&&reply_.status==CharacterStatus::success){for(int i=0;i<n;++i){int y=225+39*i;bool occupied=i<int(reply_.list.entries.size());menu_row(dc_,120,y,570,37,i,i==focus_);text(std::to_wstring(i+1),130,y+8,35,28,2,RGB(192,211,173));text(occupied?reply_.list.entries[i].name:i>=int(slots_.capacity())?L"PCスロットを購入":i<4?L"PC新規登録（無料）":L"PC新規登録（追加枠）",180,y+7,420,31,1,RGB(233,240,220));if(occupied&&reply_.list.entries[i].main)text(L"MAIN",604,y+9,76,27,3,RGB(224,213,164),DT_RIGHT);}if(!n)text(L"利用可能なプレイヤースロットはありません。",120,245,1040,42,1,RGB(228,235,213));
+ int n=pending_&&!selection_preview_active()?0:int(slots_.count());
+ if((!pending_||selection_preview_active())&&reply_.status==CharacterStatus::success){for(int i=0;i<n;++i){int y=225+39*i;bool occupied=i<int(reply_.list.entries.size());menu_row(dc_,120,y,570,37,i,i==focus_);text(std::to_wstring(i+1),130,y+8,35,28,2,RGB(192,211,173));text(occupied?reply_.list.entries[i].name:i>=int(slots_.capacity())?L"PCスロットを購入":i<4?L"PC新規登録（無料）":L"PC新規登録（追加枠）",180,y+7,420,31,1,RGB(233,240,220));if(occupied&&reply_.list.entries[i].main)text(L"MAIN",604,y+9,76,27,3,RGB(224,213,164),DT_RIGHT);}if(!n)text(L"利用可能なプレイヤースロットはありません。",120,245,1040,42,1,RGB(228,235,213));
   // Occupancy gates the selected account appearance.
   if(slots_.occupied())text(modelAvailable_?(modelPartial_?L"外見表示（一部の装備・色は未対応）":L"キャラクター表示"):L"3Dモデル未読込",720,196,440,24,3,RGB(186,200,173),DT_CENTER);
   menu_description(dc_,fonts_[3],120,545,570);
@@ -293,4 +394,3 @@ const void* CharacterScreen::draw(){update();tick_hold();memset(pixels_,0,1280*7
 }
 void CharacterScreen::report()const{if(pending_)return;std::osyncstream(std::cout)<<"{\"character_list_result\":true,\"status\":"<<int(reply_.status)<<",\"stage\":"<<int(reply_.stage)<<",\"error\":"<<reply_.error<<",\"count\":"<<reply_.list.entries.size()<<",\"slots\":"<<slots_.capacity()<<",\"display_rows\":"<<slots_.count()<<",\"server_slots\":"<<reply_.list.slots<<",\"purchase_required\":"<<(slots_.purchase_required()?"true":"false")<<",\"occupied_slot\":"<<(slots_.occupied()?"true":"false")<<",\"delete_dialogs\":"<<deleteDialogs_<<",\"delete_yes\":"<<deleteYes_<<",\"requests\":"<<requests_<<",\"selection_sent\":"<<(selectionReply_.request_may_have_been_sent?"true":"false")<<",\"deletion_sent\":false,\"model_rendered\":"<<(modelRendered_?"true":"false")<<"}"<<std::endl;}
 }
-

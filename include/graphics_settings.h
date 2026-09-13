@@ -18,6 +18,7 @@ class GraphicsSettings {
  bool request_=false,undo_=false;ULONGLONG until_=0;
  int focus_=0;bool back_=false;
  std::vector<unsigned> cues_;
+ void cue(unsigned sound){if(cues_.size()<32)cues_.push_back(sound);}
  void change(int);void activate();
 public:
  GraphicsConfig active,draft;

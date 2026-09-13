@@ -1,4 +1,4 @@
-/build/
+/build*/
 /dist/
 /work/
 /outputs/
@@ -10,6 +10,9 @@ __pycache__/
 *.exe
 *.dll
 *.pdb
+*.obj
+*.lib
+*.exp
 *.gwp
 *.gcw
 *.gwc
@@ -18,6 +21,7 @@ __pycache__/
 *.gwa
 *.gws
 *.gwm
+*.gwmot
 *.gnk
 *.m2an
 *.dds
@@ -27,6 +31,6 @@ __pycache__/
 *.idb
 *.elf
 *.self
-*.pdf
 .env
 .env.*
+/updater/

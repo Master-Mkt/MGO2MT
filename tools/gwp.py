@@ -8,12 +8,23 @@ import datetime
 import hashlib
 import json
 import math
+import re
 from pathlib import Path
 import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 HOOKS = ['load_gcx', 'execute_entry', 'run_title', 'selected', 'completed']
+STAGE_OBJECT_ASSETS = {
+    'stage_objects20':'n022a.objects.cfg', 'stage_bindings20':'n022a.bindings.cfg',
+    **{f'stage_object_{name}':f'objects/{name}.gwm' for name in (
+        's01a_car_a0_sk','s01a_car_a0_glass','s01a_car_b0_sk','s01a_car_b0_glass',
+        's01a_drum_a0_sk','cbox_a_sk','cbox_a_kuzure_sk',
+        *[f's01a_btle_{c}0_sk' for c in 'abcde'])},
+    **{f'stage_geom_{key}':f'objects/geom_{key}.collision.cfg' for key in ('982f38','982fb8','9ebb66','0ae4e5')},
+    **{f'stage_hit_bottle_{c}':f'objects/s01a_btle_{c}0_sk.hit.cfg' for c in 'abcde'},
+    **{f'stage_hit_drum_{i}':f'objects/blast_drum_{i}.hit.cfg' for i in range(6)},
+}
 
 def record(path):
     path = Path(path).resolve()
@@ -80,6 +91,9 @@ def load(path):
     if any(node['status'] not in ('implemented', 'partial', 'pending') for node in d['flow']):
         raise ValueError('invalid progress status')
     assets = d['assets']
+    object_roles=set(STAGE_OBJECT_ASSETS)
+    if set(assets)&object_roles and not object_roles|{'stage_preview20','stage_collision20','stage_lighting20','stage_cbox20'}<=set(assets):
+        raise ValueError('Complete reviewed stage object bundle required')
     prop_roles={'stage_placements20',*[f'stage_prop{i}' for i in range(6)]}
     item_roles={'stage_item113','stage_item140'}
     if set(assets)&item_roles and (not item_roles<=set(assets) or 'stage_preview20' not in assets):
@@ -88,10 +102,22 @@ def load(path):
         raise ValueError('Complete stage placement bundle required')
     if 'stage_cbox20' in assets and 'stage_preview20' not in assets:
         raise ValueError('Stage CBOX layout requires the stage preview')
-    asset_roles=set(assets)-prop_roles-item_roles-{'bgm_catalog','stage_cbox20'}
+    if 'stage_spawns20' in assets and not {'stage_preview20','stage_collision20'}<=set(assets):
+        raise ValueError('TDM spawn profile requires its stage and collision data')
+    if 'player_motion' in assets and 'character_catalog' not in assets:
+        raise ValueError('Player motion requires the character skeleton catalog')
+    combat_roles={'combat_audio_index','combat_body1369','combat_body8168'}
+    if set(assets)&combat_roles and not combat_roles<=set(assets):
+        raise ValueError('Complete combat effect bundle required')
+    if 'combat_ak102_shot' in assets and not combat_roles<=set(assets):
+        raise ValueError('AK102 shot requires the combat effect bundle')
+    icon_roles={f'weapon_icon{i}' for i in range(256)}
+    if set(assets)&icon_roles and 'weapon_icons' not in assets:
+        raise ValueError('Weapon images require their index')
+    asset_roles=set(assets)-prop_roles-item_roles-object_roles-combat_roles-icon_roles-{'bgm_catalog','stage_cbox20','stage_spawns20','player_motion','weapon_icons','combat_ak102_shot'}
     required = {'scenario', 'animation', 'bgm23', *[f'texture{i}' for i in range(10)]}
     extra={'start18999','loading','loading_texture0','loading_texture1'}
-    agreement_roles={'menu93','menu94'}
+    agreement_roles={'menu92','menu93','menu94'}
     login_roles={'login_background',*[f'login_texture{i}' for i in range(6)]}
     motion_roles={'agreement_motion',*[f'motion_texture{i}' for i in range(8)]}
     original_roles={'agreement_background','lobby_bgm',*[f'agreement_texture{i}' for i in range(6)]}
@@ -125,6 +151,37 @@ def load(path):
     for i in range(10):
         if resolved[f'texture{i}'] != resolved['animation'].parent / 'images' / f'{i}.dds':
             raise ValueError('v1 texture paths must match the animation adapter directory')
+    if 'weapon_icons' in resolved:
+        index=resolved['weapon_icons']
+        if index.stat().st_size>16384:raise ValueError('Weapon icon index extent')
+        lines=index.read_text(encoding='ascii').splitlines()
+        if not lines or lines[0]!='MGO2WIN_WEAPON_ICONS\t1' or not 1<=len(lines)-1<=128:raise ValueError('Weapon icon index contract')
+        seen=set()
+        for line in lines[1:]:
+            parts=line.split('\t')
+            if len(parts)!=3 or parts[0]!='ICON' or not re.fullmatch(r'[0-9]{1,3}',parts[1]) or int(parts[1])>255:raise ValueError('Weapon icon row')
+            ident=int(parts[1]);role=f'weapon_icon{ident}'
+            if ident in seen or parts[2]!=f'weapon_{ident}.png' or role not in resolved or resolved[role]!=index.parent/parts[2]:raise ValueError('Weapon icon bundle mismatch')
+            seen.add(ident)
+        if set(resolved)&icon_roles!={f'weapon_icon{i}' for i in seen}:raise ValueError('Unindexed weapon icon')
+    if 'combat_audio_index' in resolved:
+        for cue in (1369,8168):
+            if resolved[f'combat_body{cue}']!=resolved['combat_audio_index'].parent/f'body_impact_{cue}_v0.wav':
+                raise ValueError('Combat effect bundle directory mismatch')
+        if 'combat_ak102_shot' in resolved and resolved['combat_ak102_shot'] != resolved['combat_audio_index'].parent/'ak102_10002_v0.wav':
+            raise ValueError('AK102 shot bundle directory mismatch')
+        index = resolved['combat_audio_index']
+        if index.stat().st_size > 16384:
+            raise ValueError('Combat effect index too large')
+        expected = ['1369 body_impact_1369_v0.wav', '8168 body_impact_8168_v0.wav']
+        if 'combat_ak102_shot' in resolved:
+            expected.append('10002 ak102_10002_v0.wav')
+        if index.read_text(encoding='ascii').splitlines() != [f'MGO2WIN.COMBAT_AUDIO 1 {len(expected)}', *expected]:
+            raise ValueError('Combat effect index and hashed assets disagree')
+    if 'stage_objects20' in resolved:
+        for role,name in STAGE_OBJECT_ASSETS.items():
+            if resolved[role]!=resolved['stage_preview20'].parent/name:
+                raise ValueError('Stage object bundle directory mismatch')
     if 'loading' in resolved and resolved['loading_texture0']!=resolved['loading'].parent/'images/0.dds':
         raise ValueError('loading texture path must match its animation directory')
     if 'loading' in resolved and resolved['loading_texture1']!=resolved['loading'].parent/'images/1.dds':
@@ -210,7 +267,7 @@ def main():
     if 'loading' in assets:
         command.extend(['--loading',str(assets['loading']),'--se',str(assets['start18999'])])
     if 'network' in d:
-        command.extend(['--policy-url',d['network']['policy_url'],'--menu-confirm',str(assets['menu93']),'--menu-move',str(assets['menu94'])])
+        command.extend(['--policy-url',d['network']['policy_url'],'--menu-cancel',str(assets['menu92']),'--menu-confirm',str(assets['menu93']),'--menu-move',str(assets['menu94'])])
     if 'agreement_background' in assets:
         command.extend(['--agreement-background',str(assets['agreement_background']),'--lobby-music',str(assets['lobby_bgm'])])
     if 'login_background' in assets:command.extend(['--login-background',str(assets['login_background'])])

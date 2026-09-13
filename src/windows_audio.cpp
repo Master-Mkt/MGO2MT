@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <optional>
 #include <syncstream>
 #include <stdexcept>
 #include <vector>
@@ -88,7 +89,35 @@ int run_audio_probe(int argc, wchar_t** argv, const std::atomic_bool* cancel, co
            fmt.nBlockAlign!=fmt.nChannels*2 || fmt.nAvgBytesPerSec!=fmt.nSamplesPerSec*fmt.nBlockAlign || dataSize%fmt.nBlockAlign ||
            !((fmt.wFormatTag==WAVE_FORMAT_PCM && fmt.cbSize==0) || (fmt.wFormatTag==WAVE_FORMAT_EXTENSIBLE && fmt.cbSize==22 && IsEqualGUID(format.SubFormat,pcm))))
             throw std::runtime_error("Expected valid 16-bit PCM WAV");
-        XAUDIO2_BUFFER buffer{}; buffer.AudioBytes=dataSize; buffer.pAudioData=bytes.data()+dataAt; buffer.Flags=XAUDIO2_END_OF_STREAM;
+        std::optional<mgo2win::PcmLayerPair> layers;
+        std::optional<mgo2win::AudioLayerFader> layerFader;
+        const bool layersRequested=control&&!control->alternateWave.empty();
+        if(layersRequested){
+            try{
+                std::ifstream alt(control->alternateWave,std::ios::binary|std::ios::ate);
+                if(!alt)throw std::runtime_error("Missing alternate WAV");
+                const auto altSize=alt.tellg();
+                if(altSize<44||altSize>256*1024*1024)throw std::runtime_error("Alternate WAV size");
+                std::vector<unsigned char> altBytes(static_cast<size_t>(altSize));
+                alt.seekg(0);alt.read(reinterpret_cast<char*>(altBytes.data()),altSize);
+                if(!alt)throw std::runtime_error("Alternate WAV read");
+                auto paired=mgo2win::interleave_audio_layers(bytes,altBytes,control->loopWhole);
+                layerFader.emplace(control->layerMix,control->alternate.load());
+                layers.emplace(std::move(paired));
+            }catch(const std::exception&){
+                // Optional music must never prevent the validated normal WAV
+                // or GWA from playing. No partially modified source format.
+                layers.reset();layerFader.reset();
+                std::osyncstream(std::cout)<<"{\"audio_layers\":\"normal_fallback\"}"<<std::endl;
+            }
+        }
+        if(layers){
+            format={};fmt.wFormatTag=WAVE_FORMAT_PCM;fmt.nChannels=4;fmt.nSamplesPerSec=layers->rate;
+            fmt.wBitsPerSample=16;fmt.nBlockAlign=8;fmt.nAvgBytesPerSec=fmt.nSamplesPerSec*8;
+            dataSize=static_cast<uint32_t>(layers->pcm.size());
+            nativeLoopBegin=layers->loopBegin;nativeLoopEnd=layers->loopEnd;
+        }
+        XAUDIO2_BUFFER buffer{}; buffer.AudioBytes=dataSize; buffer.pAudioData=layers?layers->pcm.data():bytes.data()+dataAt; buffer.Flags=XAUDIO2_END_OF_STREAM;
         if(nativeLoopEnd){buffer.LoopBegin=nativeLoopBegin;buffer.LoopLength=nativeLoopEnd-nativeLoopBegin;buffer.LoopCount=XAUDIO2_LOOP_INFINITE;}
         if(argc==6) {
             auto frame=[&](int i){auto n=std::stoull(argv[i]); if(n>dataSize/fmt.nBlockAlign) throw std::runtime_error("Frame outside audio"); return static_cast<UINT32>(n);};
@@ -98,19 +127,36 @@ int run_audio_probe(int argc, wchar_t** argv, const std::atomic_bool* cancel, co
             buffer.LoopLength=end-buffer.LoopBegin; buffer.LoopCount=XAUDIO2_LOOP_INFINITE;
         }
         Com com; Callback callback; Audio audio;
-        check(XAudio2Create(&audio.engine)); check(audio.engine->CreateMasteringVoice(&audio.master));
+        check(XAudio2Create(&audio.engine)); check(audio.engine->CreateMasteringVoice(&audio.master,layers?2:XAUDIO2_DEFAULT_CHANNELS));
         check(audio.engine->CreateSourceVoice(&audio.source,&fmt,0,XAUDIO2_DEFAULT_FREQ_RATIO,&callback));
+        bool lastAlternate=control?control->alternate.load():false;
+        std::array<float,2> layerGains{};unsigned matrixUpdates=0,layerSwitches=0;
+        if(layers){
+            layerGains=layerFader->update(lastAlternate,0);
+            const auto matrix=mgo2win::audio_layer_matrix(layerGains);
+            check(audio.source->SetOutputMatrix(audio.master,4,2,matrix.data()));
+        }
         float lastRatio=control?control->frequencyRatio.load():1.f;
         if(!(lastRatio>=.5f&&lastRatio<=2.f))throw std::runtime_error("Audio pitch range");
         check(audio.source->SetFrequencyRatio(lastRatio));
         float initialGain=control?control->gain.load():1.f;if(!(initialGain>=0&&initialGain<=1))throw std::runtime_error("Audio gain range");
         check(audio.source->SetVolume(0.20f*initialGain)); check(audio.source->SubmitSourceBuffer(&buffer)); check(audio.source->Start());
-        const auto deadline=GetTickCount64()+static_cast<ULONGLONG>(seconds*1000);
+        const auto started=GetTickCount64(),deadline=started+static_cast<ULONGLONG>(seconds*1000);
         XAUDIO2_VOICE_STATE state{};UINT64 observedSamples=0;
         unsigned volumeUpdates=0;float lastGain=initialGain;
         do { Sleep(20); check(callback.error.load());
             if(control){float gain=control->gain.load();if(!(gain>=0&&gain<=1))throw std::runtime_error("Audio gain range");if(gain!=lastGain){check(audio.source->SetVolume(.2f*gain));lastGain=gain;++volumeUpdates;}}
             if(control){float ratio=control->frequencyRatio.load();if(!(ratio>=.5f&&ratio<=2.f))throw std::runtime_error("Audio pitch range");if(ratio!=lastRatio){check(audio.source->SetFrequencyRatio(ratio));lastRatio=ratio;}}
+            if(layers){
+                const bool alternate=control->alternate.load();
+                if(alternate!=lastAlternate){lastAlternate=alternate;++layerSwitches;}
+                const auto gains=layerFader->update(alternate,GetTickCount64()-started);
+                if(gains!=layerGains){
+                    const auto matrix=mgo2win::audio_layer_matrix(gains);
+                    check(audio.source->SetOutputMatrix(audio.master,4,2,matrix.data()));
+                    layerGains=gains;++matrixUpdates;
+                }
+            }
             audio.source->GetState(&state);
             observedSamples=(std::max)(observedSamples,state.SamplesPlayed);
         } while(GetTickCount64()<deadline && state.BuffersQueued && !(cancel && cancel->load()));
@@ -123,6 +169,7 @@ int run_audio_probe(int argc, wchar_t** argv, const std::atomic_bool* cancel, co
         std::osyncstream(std::cout) << "{\"cue\":"<<(control?control->cue:0)<<",\"stream\":\""<<(control?control->stream:"other")<<"\",\"sample_rate\":"<<fmt.nSamplesPerSec<<",\"channels\":"<<fmt.nChannels<<",\"samples_played\":"<<played<<",\"raw_samples_counter\":"<<state.SamplesPlayed<<",\"stream_completed\":"<<(completed?"true":"false")<<",\"loop_callbacks\":"<<callback.loops.load()<<",\"volume\":0.2}"<<std::endl;
         std::osyncstream(std::cout)<<"{\"stream\":\""<<(control?control->stream:"other")<<"\",\"audio_format\":\""<<(native?"GWA1":"WAV")<<"\",\"gain_updates\":"<<volumeUpdates<<",\"final_gain\":"<<lastGain<<",\"loop_begin\":"<<buffer.LoopBegin<<",\"loop_length\":"<<buffer.LoopLength<<"}"<<std::endl;
         std::osyncstream(std::cout)<<"{\"stream\":\""<<(control?control->stream:"other")<<"\",\"frequency_ratio\":"<<lastRatio<<"}"<<std::endl;
+        if(layers)std::osyncstream(std::cout)<<"{\"audio_layers\":\"paired\",\"layer_switches\":"<<layerSwitches<<",\"matrix_updates\":"<<matrixUpdates<<",\"normal_gain\":"<<layerGains[0]<<",\"alternate_gain\":"<<layerGains[1]<<",\"source_voices\":1,\"buffer_submissions\":1}"<<std::endl;
         if(!played && !(cancel&&cancel->load())) throw std::runtime_error("No playback progress");
         return 0;
     } catch(const std::exception& e) {std::cerr<<e.what()<<std::endl;return 1;}

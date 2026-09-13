@@ -12,7 +12,7 @@ class AgreementScreen {
  std::wstring url_;HDC dc_=nullptr;HBITMAP bitmap_=nullptr;HGDIOBJ old_=nullptr;void* pixels_=nullptr;
  std::vector<HFONT> fonts_;
 public:
- enum Input:unsigned { left=1,right=2,confirm=4,up=8,down=16,pageUp=32,pageDown=64,home=128,end=256,retry=512 };
+ enum Input:unsigned { left=1,right=2,confirm=4,up=8,down=16,pageUp=32,pageDown=64,home=128,end=256,retry=512,cancel=1024 };
  explicit AgreementScreen(std::wstring url);
  ~AgreementScreen();
  void start();bool ready()const{return done_.load();}bool ok()const{return ready()&&response_.error.empty();}

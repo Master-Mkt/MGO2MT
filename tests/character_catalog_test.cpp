@@ -8,6 +8,19 @@ void check(bool v,const char* why){if(!v)throw std::runtime_error(why);}
 int main(int argc,char**argv){try{
  if(argc!=2)return 2;std::ifstream in(argv[1],std::ios::binary);std::vector<char>b((std::istreambuf_iterator<char>(in)),{});
  CharacterCatalog catalog(b);check(catalog.mesh_count()>100,"catalog coverage");
+ // Bone origins use exactly the same posed matrix as a vertex bound at that
+ // bone's bind position. Check parent composition, root motion and both rigs.
+ for(unsigned gender=0;gender<2;++gender){
+  auto bones=catalog.skeleton(gender);PreparedCharacter probe;probe.gender=gender;
+  for(size_t i=0;i<bones.size();++i){auto p=bones[i].position;ModelVertex v{};v.x=p[0];v.y=p[1];v.z=p[2];v.ny=1;probe.bind.push_back(v);SkinBinding binding{};binding.bones[0]=uint16_t(i);binding.weights[0]=1;probe.skin.push_back(binding);}
+  probe.model.vertices=probe.bind;MotionPose pose;pose.rootBone=bones.front().key;pose.root={17,-29,43};
+  catalog.pose(probe,pose);
+  for(const auto&bone:bones){auto p=probe.bone_position(bone.key);check(bool(p),"posed bone is available");for(unsigned axis=0;axis<3;++axis)check(std::abs((*p)[axis]-bone.position[axis]-pose.root[axis])<.01f,"identity pose preserves original coordinates and root translation");}
+  check(probe.bone_position(0x5B4A33).has_value()&&probe.bone_position(0xFB4232).has_value(),"both original foot-event bones exist");
+  pose.rotations[pose.rootBone]={0,std::sqrt(.5f),0,std::sqrt(.5f)};probe.bonePositions[0]={1,2,3};catalog.pose(probe,pose);
+  check(probe.bonePositions.size()==bones.size()&&!probe.bone_position(0),"unknown bones have no fallback and stale keys are removed");
+  for(size_t i=0;i<bones.size();++i){auto p=probe.bone_position(bones[i].key);const auto&v=probe.model.vertices[i];check(std::abs((*p)[0]-v.x)<.01f&&std::abs((*p)[1]-v.y)<.01f&&std::abs((*p)[2]-v.z)<.01f,"bone origins match rotated skinning positions");}
+ }
  std::array<uint8_t,28>a{};a[2]=11;a[3]=22;a[15]=46;a[17]=57;
  auto first=catalog.assemble(a);check(first.ready()&&first.selectedParts==5&&first.missingModels==0,"male parts");
  // Original mode2 RGB changes only shader0x10. The goggles' two frame

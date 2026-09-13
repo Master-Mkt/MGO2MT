@@ -55,6 +55,14 @@ std::array<uint8_t,room_environment_size> room_environment(const Settings&s){
  put(b,180,s.idle_kick_minutes,2);put(b,182,s.team_kill_kick,2);put(b,184,0x2e);b[189]=3;b[190]=3;b[191]=2;b[192]=20;b[193]=1;b[194]=5;b[195]=2;b[196]=5;b[197]=2;b[199]=s.non_stat?2:0;
  return b;
 }
+uint32_t round_duration_ms(const Settings&s,uint8_t rule){
+ // These are the rule IDs already used by the native DM/TDM room/profile.
+ // Read the exact advertised field so its native clock cannot drift from a
+ // separately hardcoded five-minute value. Other modes remain unknown.
+ size_t offset=0;if(rule==0)offset=0x88;else if(rule==1)offset=0x7c;else return 0;
+ auto environment=room_environment(s);const auto minutes=number(environment,offset);
+ if(!minutes||minutes>24*60)return 0;return minutes*60000;
+}
 std::vector<uint8_t> host_room_wire_payload(const NetworkKeys&keys,uint16_t command,std::span<const uint8_t>plain){
  size_t size=0;
  switch(command){case 0x4310:size=room_settings_size;break;case 0x4316:case 0x4392:case 0x43ca:size=1;break;case 0x4340:case 0x4342:size=4;break;case 0x4344:size=5;break;case 0x4394:size=room_environment_size-1;break;case 0x4380:size=0;break;default:throw std::invalid_argument("host room wire command");}

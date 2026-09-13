@@ -1,6 +1,8 @@
 #pragma once
 #include "character_model.h"
+#include "player_motion.h"
 #include <map>
+#include <optional>
 namespace mgo2win {
 struct SkinBinding {std::array<uint16_t,4> bones;std::array<float,4> weights;std::array<std::array<float,3>,4> offsets;};
 struct CatalogBone {uint32_t key;int32_t parent;std::array<float,3> position;std::vector<std::array<float,4>> rotation;};
@@ -12,6 +14,12 @@ struct PreparedCharacter {
  unsigned gender=0,missingModels=0,missingColors=0,selectedParts=0;
  bool defaultedLower=false;
  std::vector<AppearanceIssue> issues;
+ // Latest posed bone origins in model-local coordinates, including motion root
+ // translation. Actor placement/yaw are applied by the caller, as for vertices.
+ std::map<uint32_t,std::array<float,3>> bonePositions;
+ std::optional<std::array<float,3>> bone_position(uint32_t hash)const{
+  auto found=bonePositions.find(hash);if(found==bonePositions.end())return std::nullopt;return found->second;
+ }
  bool ready()const{return !model.vertices.empty();}
 };
 class CharacterCatalog {
@@ -26,6 +34,8 @@ public:
  // Local renderable choices; these do not assert server ownership or unlocks.
  std::vector<AppearanceRule> creation_choices(unsigned gender,unsigned kind)const;
  void pose(PreparedCharacter&,double seconds)const;
+ void pose(PreparedCharacter&,const MotionPose&)const;
+ std::span<const CatalogBone> skeleton(unsigned gender)const{return gender<2?std::span<const CatalogBone>(bones_[gender]):std::span<const CatalogBone>{};}
  unsigned frames()const{return frames_;}uint32_t clip()const{return clip_;}
  size_t mesh_count()const{return meshes_.size();}
 };

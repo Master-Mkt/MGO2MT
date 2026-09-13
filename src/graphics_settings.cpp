@@ -1,5 +1,6 @@
 ﻿#include "menu_theme.h"
 #include "graphics_settings.h"
+#include "menu_audio.h"
 #include <fstream>
 #include <stdexcept>
 #include <algorithm>
@@ -12,7 +13,7 @@ bool load_graphics(const std::filesystem::path& p,GraphicsConfig& c){if(!std::fi
 void save_graphics(const std::filesystem::path& p,const GraphicsConfig& c){if(!valid_graphics(c))throw std::runtime_error("Invalid graphics settings");std::filesystem::create_directories(p.parent_path());auto temp=p;temp+=L"."+std::to_wstring(GetCurrentProcessId())+L".tmp";
  try{{std::ofstream f(temp);f<<"MGO2WIN.GRAPHICS 1\n"<<c.fullscreen<<' '<<c.width<<' '<<c.height<<' '<<c.refresh_num<<' '<<c.refresh_den<<' '<<c.shadow<<' '<<c.vsync<<'\n';f.close();if(!f)throw std::runtime_error("Graphics write failed");}if(!MoveFileExW(temp.c_str(),p.c_str(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH))throw std::runtime_error("Graphics replace failed");}catch(...){std::error_code ec;std::filesystem::remove(temp,ec);throw;}}
 GraphicsSettings::GraphicsSettings(std::filesystem::path p):path_(std::move(p)){try{load_graphics(path_,draft);}catch(...){draft={};notice=L"保存した画質設定を読めませんでした。初期値を使用します。";}}
-bool GraphicsSettings::confirm(){if(!pending())return false;try{save_graphics(path_,active);until_=0;notice=L"画質設定を保存しました。";std::osyncstream(std::cout)<<"{\"graphics_confirmed\":true}"<<std::endl;return true;}catch(...){undo_=true;notice=L"保存できなかったため元の設定へ戻します。";return false;}}
+bool GraphicsSettings::confirm(){if(!pending())return false;try{save_graphics(path_,active);until_=0;notice=L"画質設定を保存しました。";cue(menu_audio::Confirm);std::osyncstream(std::cout)<<"{\"graphics_confirmed\":true}"<<std::endl;return true;}catch(...){undo_=true;notice=L"保存できなかったため元の設定へ戻します。";return false;}}
 void GraphicsSettings::tick(ULONGLONG now,bool foreground){
  if(pending()&&(undo_||now>=until_||!foreground)){
   if(!apply||!apply(previous_))throw std::runtime_error("Graphics rollback failed");active=previous_;draft=active;until_=0;undo_=false;request_=false;notice=L"元の画質設定へ戻しました。";std::osyncstream(std::cout)<<"{\"graphics_reverted\":true}"<<std::endl;
@@ -26,23 +27,24 @@ void GraphicsSettings::tick(ULONGLONG now,bool foreground){
  }
 }
 void GraphicsSettings::change(int step){
+ if(focus_>=5)return;const auto previous=draft;
  if(focus_==0){draft.fullscreen=1-draft.fullscreen;draft.refresh_num=0;draft.refresh_den=1;}
  if(focus_==1){std::vector<std::pair<unsigned,unsigned>> sizes;if(!draft.fullscreen)sizes={{1280,720},{1600,900},{1920,1080},{2560,1440},{3840,2160}};for(auto m:modes)sizes.push_back({m.width,m.height});std::sort(sizes.begin(),sizes.end());sizes.erase(std::unique(sizes.begin(),sizes.end()),sizes.end());if(sizes.empty())return;auto it=std::find(sizes.begin(),sizes.end(),std::pair{draft.width,draft.height});int i=it==sizes.end()?0:int(it-sizes.begin());i=(i+step+int(sizes.size()))%int(sizes.size());draft.width=sizes[i].first;draft.height=sizes[i].second;draft.refresh_num=0;draft.refresh_den=1;}
  if(focus_==2){if(!draft.fullscreen){notice=L"ウィンドウ表示のリフレッシュレートはWindowsの設定に従います。";return;}std::vector<std::pair<unsigned,unsigned>> rates={{0,1}};for(auto m:modes)if(m.width==draft.width&&m.height==draft.height&&std::find(rates.begin(),rates.end(),std::pair{m.num,m.den})==rates.end())rates.push_back({m.num,m.den});auto it=std::find(rates.begin(),rates.end(),std::pair{draft.refresh_num,draft.refresh_den});int i=it==rates.end()?0:int(it-rates.begin());i=(i+step+int(rates.size()))%int(rates.size());draft.refresh_num=rates[i].first;draft.refresh_den=rates[i].second;}
  if(focus_==3){const unsigned values[]={512,1024,2048,4096,8192};int i=0;while(i<4&&values[i]!=draft.shadow)++i;draft.shadow=values[(i+step+5)%5];}
  if(focus_==4)draft.vsync=1-draft.vsync;
- notice=L"変更後に「適用」を押してください。";cues_.push_back(94);
+ if(draft==previous)return;notice=L"変更後に「適用」を押してください。";cue(menu_audio::Cursor);
 }
-void GraphicsSettings::activate(){cues_.push_back(93);if(focus_<5)change(1);else if(focus_==5)request();else if(focus_==6){draft={};notice=L"初期値を選択しました。適用で反映します。";}else{draft=active;back_=true;}}
+void GraphicsSettings::activate(){if(focus_<5)change(1);else if(focus_==5){request();cue(menu_audio::Confirm);}else if(focus_==6){draft={};notice=L"初期値を選択しました。適用で反映します。";cue(menu_audio::Confirm);}else{draft=active;back_=true;cue(menu_audio::Cancel);}}
 bool GraphicsSettings::message(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
  if(pending()){
-  if(msg==WM_KEYDOWN){if(wp==VK_ESCAPE)cancel();else if(wp==VK_RETURN&&!(lp&(1LL<<30)))confirm();return true;}
-  if(msg==WM_LBUTTONUP){RECT r{};GetClientRect(hwnd,&r);if(r.right&&r.bottom){int x=int(short(LOWORD(lp)))*1280/r.right,y=int(short(HIWORD(lp)))*720/r.bottom;if(y>=599&&y<644){if(x>=120&&x<600)confirm();else if(x>=660&&x<1160)cancel();}}return true;}
+  if(msg==WM_KEYDOWN){if(wp==VK_ESCAPE&&!(lp&(1LL<<30))){cancel();cue(menu_audio::Cancel);}else if(wp==VK_RETURN&&!(lp&(1LL<<30)))confirm();return true;}
+  if(msg==WM_LBUTTONUP){RECT r{};GetClientRect(hwnd,&r);if(r.right&&r.bottom){int x=int(short(LOWORD(lp)))*1280/r.right,y=int(short(HIWORD(lp)))*720/r.bottom;if(y>=599&&y<644){if(x>=120&&x<600)confirm();else if(x>=660&&x<1160){cancel();cue(menu_audio::Cancel);}}}return true;}
   return msg==WM_CHAR;
  }
  if(msg==WM_CHAR)return true;
- if(msg==WM_KEYDOWN){if(wp==VK_ESCAPE){draft=active;back_=true;}else if(wp==VK_TAB||wp==VK_UP||wp==VK_DOWN){bool prev=wp==VK_UP||(wp==VK_TAB&&(GetKeyState(VK_SHIFT)&0x8000));focus_=(focus_+(prev?7:1))%8;cues_.push_back(94);}else if(wp==VK_LEFT||wp==VK_RIGHT)change(wp==VK_LEFT?-1:1);else if((wp==VK_RETURN||wp==VK_SPACE)&&!(lp&(1LL<<30)))activate();return true;}
- if(msg==WM_LBUTTONUP){RECT r{};GetClientRect(hwnd,&r);if(!r.right||!r.bottom)return true;int x=int(short(LOWORD(lp)))*1280/r.right,y=int(short(HIWORD(lp)))*720/r.bottom;if(x>=500&&x<1160&&y>=221&&y<491){focus_=(y-221)/54;change(x<570?-1:1);}else if(y>=599&&y<644){if(x>=120&&x<440)focus_=5;else if(x>=470&&x<800)focus_=6;else if(x>=830&&x<1160)focus_=7;else return true;activate();}SetFocus(hwnd);return true;}return false;
+ if(msg==WM_KEYDOWN){if(wp==VK_ESCAPE){draft=active;back_=true;cue(menu_audio::Cancel);}else if(wp==VK_TAB||wp==VK_UP||wp==VK_DOWN){bool prev=wp==VK_UP||(wp==VK_TAB&&(GetKeyState(VK_SHIFT)&0x8000));focus_=(focus_+(prev?7:1))%8;cue(menu_audio::Cursor);}else if(wp==VK_LEFT||wp==VK_RIGHT)change(wp==VK_LEFT?-1:1);else if((wp==VK_RETURN||wp==VK_SPACE)&&!(lp&(1LL<<30)))activate();return true;}
+ if(msg==WM_LBUTTONUP){RECT r{};GetClientRect(hwnd,&r);if(!r.right||!r.bottom)return true;int x=int(short(LOWORD(lp)))*1280/r.right,y=int(short(HIWORD(lp)))*720/r.bottom;int oldFocus=focus_;auto queued=cues_.size();if(x>=500&&x<1160&&y>=221&&y<491){focus_=(y-221)/54;change(x<570?-1:1);}else if(y>=599&&y<644){if(x>=120&&x<440)focus_=5;else if(x>=470&&x<800)focus_=6;else if(x>=830&&x<1160)focus_=7;else return true;activate();}if(focus_!=oldFocus&&cues_.size()==queued)cue(menu_audio::Cursor);SetFocus(hwnd);return true;}return false;
 }
 POINT GraphicsSettings::draw(HDC dc,const std::vector<HFONT>& fonts){
  auto fill=[&](int x,int y,int w,int h,COLORREF c){menu_fill(dc,x,y,w,h,c);};

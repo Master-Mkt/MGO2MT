@@ -34,12 +34,13 @@ bool update_roster(Roster&r,std::span<const uint8_t>b){
  // Keep routing data out of UI snapshots and do not infer readiness from flags.
  auto endpoints=body[11];if(endpoints>2)throw Invalid(Error::extent);
  size_t at=12+size_t(endpoints)*6;
- read(body,at,4);read(body,at+4,1);at+=5; // clan ID + emblem
+ p.clanId=read(body,at,4);p.emblem=uint8_t(read(body,at+4,1));at+=5;
  if(at>=body.size()||body.size()-at>47)throw Invalid(Error::extent);
  auto tail=body.subspan(at);auto end=std::find(tail.begin(),tail.end(),0);
  if(end==tail.end())throw Invalid(Error::extent);
  auto n=size_t(end-tail.begin());p.name=label(tail.first(n),true);p.clan=label(tail.subspan(n+1),false);
  for(size_t i=0;i<r.slots.size();++i)if(i!=p.slot&&r.slots[i]&&(r.slots[i]->instance==instance||r.slots[i]->character==p.character))throw Invalid(Error::identity);
+ if(r.slots[p.slot]&&r.slots[p.slot]->instance==p.instance&&r.slots[p.slot]->character==p.character)p.appearance=r.slots[p.slot]->appearance;
  if(!r.slots[p.slot]||*r.slots[p.slot]!=p){r.slots[p.slot]=std::move(p);++r.revision;}
  return true;
 }

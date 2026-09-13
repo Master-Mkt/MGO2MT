@@ -1,4 +1,5 @@
-﻿#include "menu_theme.h"
+#include "menu_audio.h"
+#include "menu_theme.h"
 #include "agreement_screen.h"
 #include <algorithm>
 #include <cstring>
@@ -27,19 +28,21 @@ void AgreementScreen::report(){
  <<"\",\"policy_ready\":"<<(ok()?"true":"false")<<",\"policy_error\":\""<<response_.error<<"\"}"<<std::endl;
 }
 int AgreementScreen::input(unsigned b,bool& close){
+ if(b&cancel){close=true;return menu_audio::Cancel;}
  if(!ready())return -1;
- if(b&retry&&!ok()){start();return -1;}
+ if(b&retry&&!ok()){start();return menu_audio::Confirm;}
+ const auto previousScroll=scroll_;
  if(b&up)scroll_=std::max(0,scroll_-23);if(b&down)scroll_=std::min(maximum_,scroll_+23);
  if(b&pageUp)scroll_=std::max(0,scroll_-276);if(b&pageDown)scroll_=std::min(maximum_,scroll_+276);
  if(b&home)scroll_=0;if(b&end)scroll_=maximum_;
  if(accepted_)return -1;
- if(ok()&&(b&(left|right))){bool next=(b&left)!=0;if(next!=yes_){yes_=next;std::osyncstream(std::cout)<<"{\"agreement_focus\":\""<<(yes_?"YES":"NO")<<"\"}"<<std::endl;return 94;}}
+ if(ok()&&(b&(left|right))){bool next=(b&left)!=0;if(next!=yes_){yes_=next;std::osyncstream(std::cout)<<"{\"agreement_focus\":\""<<(yes_?"YES":"NO")<<"\"}"<<std::endl;return menu_audio::Cursor;}}
  if(b&confirm){
   if(yes_&&ok()){accepted_=true;std::osyncstream(std::cout)<<"{\"agreement_choice\":\"YES\",\"authentication_started\":false}"<<std::endl;}
   else {close=true;std::osyncstream(std::cout)<<"{\"agreement_choice\":\"NO\",\"authentication_started\":false}"<<std::endl;}
-  return 93;
+  return accepted_?menu_audio::Confirm:menu_audio::Cancel;
  }
- return -1;
+ return scroll_!=previousScroll?int(menu_audio::Cursor):-1;
 }
 const void* AgreementScreen::draw(){
  auto fill=[&](int x,int y,int w,int h,COLORREF c){menu_fill(dc_,x,y,w,h,c);};
