@@ -43,7 +43,7 @@ class CharacterScreen {
  bool round_command(combat::wire::Command);void round_ready();void round_team();
  hud::Intro roundIntro_;unsigned briefingFocus_=0;bool gameplayOptionsRequest_=false;
  briefing::Panel briefingPanel_=briefing::Panel::none;bool briefingYes_=false;unsigned hostVoteFocus_=0;
- bool briefing_message(HWND,UINT,WPARAM,LPARAM);void draw_briefing();
+ bool briefing_message(HWND,UINT,WPARAM,LPARAM);void draw_briefing();void toggle_gameplay_briefing();void draw_room_loading();
  std::unique_ptr<clan::Bitmap> clanBitmap_;uint64_t clanSerial_=~uint64_t(0);bool drawClanImage_=false;
  void update_round();std::wstring round_notice()const;bool supported_weapon(uint16_t)const;
  RoomRequests roomRequests_;bool detailVisible_=false,detailBusy_=false,matchVisible_=false;stage::Status stageStatus_=stage::Status::idle;unsigned detailFocus_=1;RoomReply detailReply_;RoomAction detailAction_;std::wstring detailNotice_;
@@ -72,7 +72,17 @@ class CharacterScreen {
  std::function<uint64_t()> clock_;void tick_hold();void confirm_delete();
  void start();void update();void stop();void activate();void focus(int,bool audible=true);
 public:
+ uint64_t input_context()const{
+  return uint64_t(pending_)|(uint64_t(selecting_)<<1)|(uint64_t(lobbyVisible_)<<2)|(uint64_t(lobbyCategories_)<<3)|
+   (uint64_t(roomVisible_)<<4)|(uint64_t(detailVisible_)<<5)|(uint64_t(detailBusy_)<<6)|(uint64_t(matchVisible_)<<7)|
+   (uint64_t(weaponsVisible_)<<8)|(uint64_t(skill_visible())<<9)|(uint64_t(bool(creation_))<<10)|
+   (uint64_t(slots_.dialog())<<11)|(uint64_t(briefingPanel_)<<12)|(uint64_t(room_loading())<<20)|
+   (uint64_t(creation_&&creation_->confirming())<<21)|(uint64_t(creation_&&creation_->discarding())<<22);
+ }
  explicit CharacterScreen(std::function<CharacterReply(const std::atomic_bool&)>,std::function<uint64_t()> clock=[] {return GetTickCount64();});~CharacterScreen();
+ LobbyMonitorState lobby_monitor()const{return roomRequests_.lobbyMonitor->state();}
+ std::shared_ptr<LobbyMonitor> lobby_monitor_handle()const{return roomRequests_.lobbyMonitor;}
+ std::shared_ptr<notices::Session> notification_session()const{return roomRequests_.notifications;}
  uint32_t preview_character_id()const{return (!pending_||selection_preview_active())&&!lobbyVisible_&&reply_.status==CharacterStatus::success?slots_.preview_id():0;}
  std::optional<std::array<uint8_t,28>> preview_appearance()const {if(creation_)return creation_->appearance();if(preview_character_id())return reply_.list.entries[slots_.selected()].appearance;return {};}
  bool preview_visible()const{return bool(creation_)||preview_character_id()!=0;}
@@ -91,7 +101,9 @@ public:
  std::shared_ptr<items::ClientSession> inventory_session()const{return roomRequests_.inventorySession;}
  std::shared_ptr<radio::Session> radio_session()const{return roomRequests_.radioSession;}
  std::optional<host::LoadRequest> stage_load_request()const {return detailVisible_&&detailReply_.join_status==RoomJoinStatus::joined&&detailReply_.host_match?detailReply_.host_match->request:std::nullopt;}
- std::optional<host::LoadRequest> stage_request()const {return matchVisible_?stage_load_request():std::nullopt;}
+ // A local briefing overlay never tears down the admitted world or its clock.
+ std::optional<host::LoadRequest> stage_request()const {return matchVisible_||combatEntered_?stage_load_request():std::nullopt;}
+ bool room_loading()const;
  const std::optional<host::Placements>& stage_placements()const{return detailReply_.host_placements;}
  const std::optional<stage::SceneSnapshot>& stage_scene()const{return detailReply_.host_scene;}
  std::optional<combat::wire::Offer> combat_offer()const{return detailReply_.combat_offer;}
@@ -126,7 +138,8 @@ public:
  bool briefing_confirm_yes()const{return briefingYes_;}
  unsigned briefing_host_choice()const{return hostVoteFocus_;}
  void open_skills();
- bool skill_visible()const{return skillMenu_&&skillMenu_->visible();}
+  bool skill_visible()const{return skillMenu_&&skillMenu_->visible();}
+  const std::wstring& skill_notice()const{return skillNotice_;}
  skills::Loadout active_skills()const;std::vector<std::wstring> skill_hud_labels()const;
  void weapon_catalog(const std::filesystem::path&);
  void weapon_icons(const std::filesystem::path& path){std::string error;weaponIcons_.load(path,error);}

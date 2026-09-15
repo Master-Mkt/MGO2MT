@@ -64,6 +64,15 @@ int wmain(int argc,wchar_t** argv){try{
         std::cout<<"Enemy Japanese16 measured width "<<size.cx<<", panel "<<full.right-full.left+1<<'\n';
         SelectObject(dc,old);DeleteObject(font);DeleteDC(dc);
     }
+    std::vector<uint32_t> fullHp(w*h),halfHp(w*h),noHp(w*h);
+    using mgo2win::hud::EnemyVitals;
+    check(renderer.paint(fullHp,w,h,200,100,"Enemy",pattern64.value,EnemyVitals{22,1000,1000}),"target stats render");
+    check(renderer.paint(halfHp,w,h,200,100,"Enemy",pattern64.value,EnemyVitals{22,500,1000}),"target half HP");
+    check(renderer.paint(noHp,w,h,200,100,"Enemy",pattern64.value,EnemyVitals{22,0,1000}),"target empty HP");
+    auto fr=bounds(fullHp,w);check(fr.top==48&&fr.bottom==99,"stats bottom anchor");
+    size_t filled=0,empty=0;for(int x=fr.left+8;x<=fr.right-8;++x){auto at=size_t(fr.top+42)*w+x;filled+=halfHp[at]==fullHp[at];empty+=halfHp[at]==noHp[at];}check(filled&&empty&&std::abs(int(filled)-int(empty))<=1,"HP bar tracks exact authoritative fraction");
+    auto unchanged=halfHp;check(!renderer.paint(halfHp,w,h,200,100,"Enemy",nullptr,EnemyVitals{22,1,0})&&halfHp==unchanged,"invalid HP atomic");
+    check(renderer.paint(halfHp,w,h,200,100,"Enemy",nullptr,EnemyVitals{std::nullopt,1,1}),"unknown LV placeholder");
     if(argc==2){std::vector<uint32_t> preview(640*360,0xff343b43);
         renderer.paint(preview,640,360,320,75,"Enemy-01");renderer.paint(preview,640,360,320,145,japanese16,pattern64.value);
         renderer.paint(preview,640,360,22,240,"Enemy-name-clipped-left",pattern32.value);renderer.paint(preview,640,360,630,330,"Enemy-right-edge");bmp(argv[1],preview,640,360);}

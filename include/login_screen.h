@@ -21,6 +21,7 @@ class LoginScreen {
  ULONGLONG autoAt_=0,retryAt_=0;unsigned requests_=0;
  std::unique_ptr<PortScreen> ports_;
  std::unique_ptr<CharacterScreen> characters_;std::filesystem::path networkKeys_;
+ std::shared_ptr<LobbyMonitor> retiredMonitor_;
  std::shared_ptr<CharacterRegistrationState> registrationState_=std::make_shared<CharacterRegistrationState>();
  std::shared_ptr<CharacterSelectionState> selectionState_=std::make_shared<CharacterSelectionState>();
  std::shared_ptr<std::atomic_bool> roomJoinUncertain_=std::make_shared<std::atomic_bool>(false);
@@ -35,6 +36,9 @@ public:
  explicit LoginScreen(std::filesystem::path store,bool authEnabled=true,
    std::function<AuthReply(const AuthCredentials&,const std::atomic_bool&)> transport=authenticate,bool externalPorts=true,std::shared_ptr<ControllerInput> input={},std::shared_ptr<GraphicsSettings> graphics={},std::filesystem::path networkKeys={},bool manualOnly=false,uint16_t fixedLocalPort=0);~LoginScreen();
  bool controller_sample(const PadSample& s){return ports_&&ports_->controller_sample(s);}
+ bool capturing()const{return !characters_&&ports_&&ports_->capturing();}
+ bool text_entry()const{return characters_?characters_->creation_text_entry():ports_?ports_->text_entry():!pending_&&!authenticated_&&form_.focus()<2;}
+ uint64_t input_context()const{return characters_?0x10000000|characters_->input_context():ports_?0x20000000|ports_->input_context():0x30000000|uint64_t(pending_)|(uint64_t(authenticated_)<<1);}
  unsigned input_slot()const{return ports_?ports_->input_slot():input_->config.slot;}
  bool message(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp);
  bool back()const{return form_.back();}
@@ -43,6 +47,9 @@ public:
  bool creation_visible()const{return characters_&&characters_->creation_visible();}
  bool personal_overlay_visible()const{return characters_&&characters_->skill_visible();}
  bool gameplay_visible()const{return characters_&&characters_->room_match_visible()&&!characters_->weapon_visible()&&!characters_->skill_visible();}
+ LobbyMonitorState lobby_monitor()const{return characters_?characters_->lobby_monitor():retiredMonitor_?retiredMonitor_->state():LobbyMonitorState{};}
+ std::shared_ptr<notices::Session> notification_session()const{return characters_?characters_->notification_session():nullptr;}
+ bool room_loading()const{return characters_&&characters_->room_loading();}
  void selection_presentation(uint32_t saluteMs,bool magazine,bool box,uint32_t soundDelayMs=0){if(characters_)characters_->selection_presentation(saluteMs,magazine,box,soundDelayMs);}
  SelectionPresentation::Frame selection_frame(){return characters_?characters_->selection_frame():SelectionPresentation::Frame{};}
  bool take_selection_sound(){return characters_&&characters_->take_selection_sound();}

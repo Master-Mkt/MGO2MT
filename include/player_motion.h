@@ -7,7 +7,7 @@
 #include <vector>
 namespace mgo2win {
 // Windows action labels are selected from inspected poses, not recovered MTSQ names.
-enum class PlayerMotion : uint32_t {Idle,Walk,Run,CrouchIdle,CrouchWalk,ProneIdle,ProneForward,ProneBackward,SupineIdle,SupineForward,SupineBackward,PlayDeadProne,PlayDeadSupine,Aim,Reload,SelectionSalute,SelectionMagazine,SelectionBox,SelectionBoxEnter,Count};
+enum class PlayerMotion : uint32_t {Idle,Walk,Run,CrouchIdle,CrouchWalk,ProneIdle,ProneForward,ProneBackward,SupineIdle,SupineForward,SupineBackward,PlayDeadProne,PlayDeadSupine,Aim,Reload,SelectionSalute,SelectionMagazine,SelectionBox,SelectionBoxEnter,Roll,Backstep,RollRecover,Count};
 struct MotionPose {
  std::map<uint32_t,std::array<float,4>> rotations;
  std::array<float,3> root{};

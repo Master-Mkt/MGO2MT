@@ -1,3 +1,4 @@
+#include "menu_font.h"
 #include "menu_audio.h"
 #include "menu_theme.h"
 #include "login_screen.h"
@@ -20,7 +21,7 @@ LoginScreen::LoginScreen(std::filesystem::path store,bool authEnabled,std::funct
  info.bmiHeader.biPlanes=1;info.bmiHeader.biBitCount=32;info.bmiHeader.biCompression=BI_RGB;
  bitmap_=CreateDIBSection(dc_,&info,DIB_RGB_COLORS,&pixels_,nullptr,0);
  if(!bitmap_){DeleteDC(dc_);throw std::runtime_error("Login surface failure");}old_=SelectObject(dc_,bitmap_);
- for(int size:{26,22,18,16})fonts_.push_back(CreateFontW(-size,0,0,0,FW_NORMAL,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,ANTIALIASED_QUALITY,FIXED_PITCH,L"MS Gothic"));
+ for(int size:{26,22,18,16})fonts_.push_back(create_menu_font(size,FW_NORMAL));
  if(manualOnly_){form_.notice(L"ローカル試験：手動ログイン。ID・パスワードは復元・保存しません。");return;}
  try{restored_=load_login(store_,form_);if(restored_){persistedMode_=form_.save_mode();form_.notice(persistedMode_==2?L"保存した入力情報でログインします…":L"保存したGAME IDを復元しました。");}}
  catch(const std::exception&){form_.notice(L"保存した入力情報を読み込めませんでした。再入力してください。");}
@@ -94,7 +95,10 @@ bool LoginScreen::message(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
 }
 const void* LoginScreen::draw(){
  update();
- if(characters_){for(auto c:characters_->cues())cue(c);if(characters_->back()){characters_->report();characters_.reset();}else return characters_->draw();}
+ if(characters_){for(auto c:characters_->cues())cue(c);if(characters_->back()){retiredMonitor_=characters_->lobby_monitor_handle();characters_->report();characters_.reset();}else return characters_->draw();}
+ // Character teardown may race the watchdog. Retain its terminal state until
+ // the outer renderer has rebuilt START; do not open another session here.
+ if(retiredMonitor_&&retiredMonitor_->state().reason!=LobbyDisconnectReason::none)return pixels_;
  if(ports_&&ports_->proceed){ports_->proceed=false;open_characters();if(characters_)return characters_->draw();}
  if(ports_){for(auto c:ports_->cues())cue(c);if(ports_->back()){ports_->report();ports_.reset();}else return ports_->draw();}
  std::memset(pixels_,0,1280*720*4);

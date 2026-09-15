@@ -14,8 +14,8 @@ bool HostSession::receive(combat::Authority&a,combat::Identity id,std::span<cons
   auto it=peers_.find(id.character);if(it!=peers_.end()&&it->second.header==header)return true;
   if(it!=peers_.end()&&it->second.header.actor==header.actor)return false;
   Peer p;p.header=header;const auto state=a.item_state();
-  // AK102: drop, place, recover and equip for use. Explosive/mounted weapon
-  // behavior is not advertised by this inventory capability.
+  // AK102 world operations plus selection of owned slots. The equip bit does
+  // not advertise attack support for an explosive or a held-only sidearm.
   auto offer=wire::encode(wire::Offer{header,wire::all_capabilities,state.capacity});if(!offer)return false;
   p.pending.push_back(std::move(*offer));peers_.insert_or_assign(id.character,std::move(p));return true;
  }
@@ -23,7 +23,7 @@ bool HostSession::receive(combat::Authority&a,combat::Identity id,std::span<cons
  if(!command||it==peers_.end()||it->second.header.scope!=header.scope||it->second.header.actor!=header.actor||it->second.header.token!=header.token||it->second.priority.size()>4)return false;
  auto result=a.item_action(id,*command,now);auto held=a.item_held(id,header.token);const auto state=a.item_state();
  wire::Reply reply;reply.header=header;reply.action=command->action;reply.heldSlot=command->heldSlot;reply.result=result.code;reply.destroyed=result.destroyed;reply.worldRevision=state.revision;
- if(held&&command->heldSlot<3)reply.heldRevision=held->slots[command->heldSlot].revision;
+ if(held&&command->heldSlot<held_slot_count)reply.heldRevision=held->slots[command->heldSlot].revision;
  if(result.entity){reply.entity=result.entity->key.id;reply.entityRevision=result.entity->revision;}
  if(auto b=wire::encode(reply))it->second.priority.push_back(std::move(*b));if(held)if(auto b=wire::encode(*held)){it->second.priority.push_back(std::move(*b));it->second.held=*held;}it->second.nextPublish=0;return true;
 }

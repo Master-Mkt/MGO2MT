@@ -1,6 +1,8 @@
 #include "combat_service.h"
+#include "combat_wire_budget.h"
 #include "host_session.h"
 #include "dedicated_peer.h"
+#include "world_inventory_host.h"
 #include <iostream>
 #include <set>
 #include <limits>
@@ -42,27 +44,41 @@ int main(){try{
  check(service.authority().snapshot().players[2]->hp==0,"host owns lethal result");
  auto before=service.authority().snapshot();combat::wire::Input fake{1,5000,{{0,2,0}},999,true,false};check(!service.receive({1,0x999,200},combat::wire::encode(fake),4000),"forged incarnation rejected before authority");check(service.authority().snapshot()==before,"forged identity has no mutation");
  auto initial=before;combat::Replica late;check(late.snapshot(initial),"late join gets current HP snapshot");combat::Event old;old.epoch=1;old.id=initial.eventWatermark;old.source=ids[0];check(late.events(std::array{old}).empty(),"late join never plays historical shot sound");
- // Wire round-trip, exact extents, finite values and complete worst-case frame.
+ // Wire round-trip, exact extents, finite values and full-roster size boundary.
  combat::wire::Frame full;full.snapshot=before;full.status=combat::wire::Status::active;
  auto p=*before.players[1];for(unsigned i=0;i<24;++i){p.identity={uint8_t(i),uint16_t(i+1),1000+i};full.snapshot.players[i]=p;}
  full.snapshot.eventWatermark=4;for(unsigned i=0;i<4;++i){combat::Event e;e.epoch=full.snapshot.epoch;e.id=i+1;e.kind=combat::EventKind::shot;e.source=full.snapshot.players[i]->identity;e.weapon=25;full.events.push_back(e);}
+ // Derive the current roster capacity from exact encoded base and event
+ // extents; every retained event and the encrypted envelope must round-trip.
+ const auto budget=combat_test::budget(full);full.events.resize(budget.capacity);
  auto largest=combat::wire::encode(full);host::Packet envelope;envelope.messages.push_back({1,true,false,false,0,largest});auto datagram=host::encode(envelope);
- check(largest.size()<=2000&&datagram.size()<=host::max_datagram&&host::decode(datagram).messages[0].payload==largest,"24 players plus four events fit actual encrypted datagram");
- auto obsolete=largest;obsolete[5]=5;check(!combat::wire::recognized(obsolete),"v5 cannot be interpreted as v6");
- check(combat::wire::encode(full).size()<=2000,"24 players fit one bounded datagram record");
+ check(largest.size()==budget.fullBytes&&datagram.size()<=host::max_datagram&&host::decode(datagram).messages[0].payload==largest,"full current roster and maximum complete event chunk fit encrypted datagram");
+ auto smaller=full;smaller.snapshot.players[23].reset();const auto smallerBudget=combat_test::budget(smaller);check(smallerBudget.capacity>=budget.capacity&&smallerBudget.baseBytes<budget.baseBytes,"fewer players cannot reduce event capacity");
+ auto obsolete=largest;obsolete[5]=5;check(!combat::wire::recognized(obsolete),"obsolete v5 cannot be interpreted as the current native version");
+ std::cout<<"full_roster_events="<<budget.capacity<<" record_bytes="<<largest.size()<<" datagram_bytes="<<datagram.size()<<'\n';
  for(combat::wire::Record r:std::array<combat::wire::Record,4>{combat::wire::Offer{1,ids[0]},combat::wire::Accept{1},fake,full}){auto bytes=combat::wire::encode(r);check(combat::wire::decode(bytes)==r,"all record kinds round-trip");for(size_t n=0;n<bytes.size();++n){bool bad=false;try{combat::wire::decode(std::span(bytes).first(n));}catch(const combat::wire::Invalid&){bad=true;}check(bad,"all truncated records rejected");}bytes.push_back(0);bool bad=false;try{combat::wire::decode(bytes);}catch(const combat::wire::Invalid&){bad=true;}check(bad,"trailing bytes rejected");}
  fake.pose.feet[0]=std::numeric_limits<float>::infinity();bool bad=false;try{combat::wire::encode(fake);}catch(const combat::wire::Invalid&){bad=true;}check(bad,"nonfinite request rejected");
  combat::Service waiting(1);check(waiting.admit(ids[0]),"world may be waiting during room admission");waiting.deliveries();check(waiting.receive(ids[0],combat::wire::encode(combat::wire::Accept{1}),0),"capability handshake does not require a fake spawn");auto d=waiting.deliveries();check(std::get<combat::wire::Frame>(combat::wire::decode(d[0].payload)).status==combat::wire::Status::awaiting_world,"missing world explicitly remains unavailable");
  // A reliable gap releases several inputs in one host tick. Preserve the
  // button action and newest pose, without a catch-up burst of extra shots.
- combat::Service burst(1);burst.configure(floor(),std::array{gun});for(unsigned i=0;i<2;++i){check(burst.admit(ids[i]),"burst identity");combat::Pose p;p.feet={0,2,float(i*3000)};check(burst.authority().join(ids[i],uint8_t(i+1),p,100,100,std::array<uint16_t,1>{23},0),"burst host grant");check(burst.receive(ids[i],combat::wire::encode(combat::wire::Accept{1}),0),"burst handshake");}burst.authority().active(true);burst.deliveries();
+ combat::Service burst(1);burst.configure(floor(),std::array{gun});for(unsigned i=0;i<2;++i){check(burst.admit(ids[i]),"burst identity");combat::Pose burstPose;burstPose.feet={0,2,float(i*3000)};check(burst.authority().join(ids[i],uint8_t(i+1),burstPose,100,100,std::array<uint16_t,1>{23},0),"burst host grant");check(burst.receive(ids[i],combat::wire::encode(combat::wire::Accept{1}),0),"burst handshake");}burst.authority().active(true);burst.deliveries();
  combat::wire::Input move{1,1,{{0,2,100}},23,false,false},trigger{1,2,{{0,2,200}},23,true,false,true},latest{1,3,{{0,2,300}},23,false,false};
  check(burst.receive(ids[0],combat::wire::encode(move),100)&&burst.receive(ids[0],combat::wire::encode(trigger),100)&&burst.receive(ids[0],combat::wire::encode(latest),100),"same-tick move/fire/move accepted without receive-interval loss");
  check(!burst.receive(ids[0],combat::wire::encode(trigger),100),"burst replay rejected");burst.poll(100);auto state=burst.authority().snapshot();check(state.players[1]->pose.feet[2]==300&&state.players[1]->ammo==2&&state.players[2]->hp==65,"host applies latest allowed pose and exactly one queued trigger");
  burst.poll(101);check(burst.authority().snapshot().players[1]->ammo==2,"consumed trigger does not repeat next tick");
  trigger.sequence=4;latest.sequence=5;latest.reload=true;check(burst.receive(ids[0],combat::wire::encode(trigger),300)&&burst.receive(ids[0],combat::wire::encode(latest),300),"fire and reload coalesce");burst.poll(300);check(burst.authority().snapshot().players[1]->reloadUntil==600&&burst.authority().snapshot().players[2]->hp==65,"reload wins over same-tick fire");burst.deliveries();
  auto secondGun=gun;secondGun.id=7;combat::Service changing(1);changing.configure(floor(),std::array{gun,secondGun});check(changing.admit(ids[0]),"changing identity");check(changing.authority().join(ids[0],1,combat::Pose{{0,2,0}},100,100,std::array<uint16_t,2>{23,7},0),"both weapons explicitly granted");changing.authority().active(true);check(changing.receive(ids[0],combat::wire::encode(combat::wire::Accept{1}),0),"changing handshake");trigger.sequence=1;trigger.pose.feet={0,2,0};latest.sequence=2;latest.pose.feet={0,2,0};latest.weapon=7;latest.reload=false;
- check(changing.receive(ids[0],combat::wire::encode(trigger),100)&&changing.receive(ids[0],combat::wire::encode(latest),100),"new weapon pose follows earlier trigger");changing.poll(100);check(changing.authority().snapshot().players[1]->weapon==7&&changing.authority().snapshot().players[1]->ammo==3&&changing.authority().snapshot().eventWatermark==0,"changing weapon cancels an earlier weapon's pending trigger");
+ check(changing.receive(ids[0],combat::wire::encode(trigger),100)&&changing.receive(ids[0],combat::wire::encode(latest),100),"new observed weapon pose follows earlier trigger");changing.poll(100);check(changing.authority().snapshot().players[1]->weapon==23&&changing.authority().snapshot().players[1]->ammo==3&&changing.authority().snapshot().eventWatermark==0,"observed Input weapon neither equips nor transfers old trigger");
+ // Selection now goes through the authenticated, revision-checked inventory
+ // command, not the last observed weapon ID in an ordinary movement packet.
+ items::HostSession equipment;auto holdings=changing.authority().item_held(ids[0],777);check(holdings.has_value(),"real owned-slot revisions");
+ check(equipment.receive(changing.authority(),ids[0],*items::wire::encode(items::wire::Probe{holdings->header}),101),"inventory capability handshake");
+ trigger.sequence=3;latest.sequence=4;check(changing.receive(ids[0],combat::wire::encode(trigger),110),"old weapon press queued before equip");
+ items::wire::Command select;select.header=holdings->header;select.header.sequence=1;select.action=items::wire::Action::equip;select.heldSlot=1;select.heldRevision=holdings->slots[1].revision;
+ check(equipment.receive(changing.authority(),ids[0],*items::wire::encode(select),110)&&changing.authority().snapshot().players[1]->weapon==7,"HOST explicitly accepts owned second weapon");
+ check(changing.receive(ids[0],combat::wire::encode(latest),110),"new weapon released input follows equip");changing.poll(110);check(changing.authority().snapshot().players[1]->weapon==7&&changing.authority().snapshot().players[1]->ammo==3&&changing.authority().snapshot().eventWatermark==0,"approved weapon change cancels earlier weapon's pending trigger");
+ changing.poll(111);check(changing.authority().snapshot().eventWatermark==0,"cancelled edge cannot replay on next tick");
+ latest.sequence=5;latest.fire=latest.firePressed=true;check(changing.receive(ids[0],combat::wire::encode(latest),120),"fresh second-weapon press");changing.poll(120);check(changing.authority().snapshot().players[1]->ammo==2&&changing.authority().snapshot().eventWatermark==1,"new weapon remains usable through a fresh explicit press");
  // Fill the participant's eight reliable slots before allowing any ACKs.
  // A reload followed by movement must survive in the one coalesced pending slot.
  for(unsigned i=0;i<10;++i){combat::wire::Input in{1,6000+i,{{0,2,float(i*10)}},23,false,i==8};check(client[0].combat_input(in,3500),"congested participant retains latest pose and reload without dropping input");}

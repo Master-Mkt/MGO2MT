@@ -9,6 +9,8 @@ struct Player {
  uint32_t clanId=0;uint8_t emblem=0;
  // Optional Windows GWAV appearance; absent on older hosts.
  std::optional<std::array<uint8_t,28>> appearance;
+ // Personal-info 0x4122 byte 239, relayed as display metadata, never authority.
+ std::optional<uint8_t> level;
  bool operator==(const Player&)const=default;
 };
 struct Roster {

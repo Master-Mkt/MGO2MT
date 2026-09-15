@@ -1,5 +1,6 @@
 #include "combat_sop_view.h"
 #include "combat_service.h"
+#include "combat_wire_budget.h"
 #include "dedicated_peer.h"
 #include "host_session.h"
 #include <iostream>
@@ -16,14 +17,33 @@ wire::Frame frame(unsigned count=4,unsigned recipient=1){wire::Frame f;f.snapsho
 std::vector<combat::Event> events(unsigned n){std::vector<combat::Event> out;for(unsigned i=0;i<n;++i){combat::Event e;e.epoch=7;e.id=i+1;e.kind=combat::EventKind::impact;e.source=identity(1);e.weapon=25;e.position={0,2,float(i+1)};e.normal={0,0,-1};out.push_back(e);}return out;}
 void codec(){
  auto f=frame();auto bytes=wire::encode(f);check(std::get<wire::Frame>(wire::decode(bytes))==f,"recipient-specific SOP footer round-trip");
- constexpr size_t footerSize=37;check(bytes.size()>footerSize,"present footer extent");size_t footer=bytes.size()-footerSize;
+ // GWCB13 appends cover and special-PC ACKs after the GWCB11 cone. The three
+ // canonical boolean positions remain relative to the start of this footer.
+ constexpr size_t footerSize=1+7+4+3+4+12+1+4+1+4+2+4+4;check(bytes.size()>footerSize,"present footer extent");size_t footer=bytes.size()-footerSize;
  for(size_t n=0;n<bytes.size();++n)invalid([&]{wire::decode(std::span(bytes).first(n));},"truncated SOP frame rejected");
  for(unsigned kind=0;kind<12;++kind){auto bad=f;switch(kind){case 0:bad.sop.recipient.instance++;break;case 1:bad.sop.life++;break;case 2:bad.sop.visibleMask|=1u<<1;break;case 3:bad.sop.visibleMask=1u<<3;break;case 4:bad.sop.visibleMask=1u<<4;break;case 5:bad.sop.visibleMask|=1u<<24;break;case 6:bad.sop.jammed=true;break;case 7:bad.snapshot.players[2]->alive=false;bad.snapshot.players[2]->hp=0;break;case 8:bad.sop.activation=0;break;case 9:bad.sop.inputSequenced=false;break;case 10:bad.sop.origin[0]=std::numeric_limits<float>::quiet_NaN();break;case 11:bad.status=wire::Status::ended;break;}invalid([&]{wire::encode(bad);},"invalid identity/life/team/mask/jam/status footer rejected");}
- for(size_t offset:{footer,footer+31,footer+36}){auto bad=bytes;bad[offset]=2;invalid([&]{wire::decode(bad);},"noncanonical SOP boolean rejected");}
+ check(bytes[footer]==1&&bytes[footer+31]==0&&bytes[footer+36]==1,"fixture offsets identify present/jammed/inputSequenced booleans");
+ for(size_t offset:{footer,footer+31,footer+36})for(unsigned value:{2u,255u}){auto bad=bytes;bad[offset]=uint8_t(value);invalid([&]{wire::decode(bad);},"noncanonical SOP boolean rejected");}
  auto absent=f;absent.sop={};check(std::get<wire::Frame>(wire::decode(wire::encode(absent))).sop==combat::SopView{},"absent footer remains empty");absent.sop.activation=1;invalid([&]{wire::encode(absent);},"absent recipient cannot smuggle activation");
  auto jammed=f;jammed.sop.visibleMask=0;jammed.sop.jammed=true;check(std::get<wire::Frame>(wire::decode(wire::encode(jammed)))==jammed,"jammed recipient with no disclosed peers is valid");
  auto zero=f;zero.sop.activation=0;zero.sop.origin={};invalid([&]{wire::encode(zero);},"linked visibility needs a nonzero activation serial");
- auto big=frame(24);big.events=events(4);big.snapshot.eventWatermark=4;auto noSop=big;noSop.sop={};check(wire::encode(noSop).size()<=2000,"legacy 24-player four-event frame fits with absent footer");invalid([&]{wire::encode(big);},"24-player four-event present footer exceeds bounded record");big.events.resize(3);check(wire::encode(big).size()<=2000,"three events plus full snapshot and SOP fit");
+ for(uint16_t angle:{uint16_t(0),uint16_t(3),uint16_t(30)}){auto cone=f;cone.sop.spreadMilliRadians=angle;check(std::get<wire::Frame>(wire::decode(wire::encode(cone)))==cone,"recipient angle round-trip at zero/base/max");}
+ for(unsigned kind=0;kind<3;++kind){auto bad=f;bad.sop.spreadMilliRadians=7;if(kind==0)bad.sop.spreadMilliRadians=31;if(kind==1)bad.snapshot.players[1]->weapon=3;if(kind==2){bad.snapshot.players[1]->alive=false;bad.snapshot.players[1]->hp=0;bad.sop.visibleMask=0;}invalid([&]{wire::encode(bad);},"excessive/unsupported/dead recipient cone rejected");}
+ auto old=bytes;old[5]=10;check(!wire::recognized(old),"old GWCB10 cannot mix with GWCB11");invalid([&]{wire::decode(old);},"old wire version rejected");
+ auto malformed=bytes;malformed[malformed.size()-10]=31;invalid([&]{wire::decode(malformed);},"malformed cone byte rejected");
+ // Current compressed states retain exact nonzero reload deadlines. Use
+ // the worst human reload roster to prove the real 2000-byte boundary.
+ auto big=frame(24);for(auto&p:big.snapshot.players)p->reloadUntil=UINT64_MAX;
+ big.events=events(1);big.snapshot.eventWatermark=4;const auto capacity=combat_test::budget(big);
+ check(capacity.capacity<4&&capacity.baseBytes+(capacity.capacity+1)*capacity.eventBytes>2000,"worst human roster next event exceeds byte ceiling");
+ big.events=events(unsigned(capacity.capacity));auto bounded=wire::encode(big);
+ check(bounded.size()==capacity.fullBytes&&std::get<wire::Frame>(wire::decode(bounded))==big,"bounded full snapshot and complete SOP roundtrip");
+ auto noSop=big;noSop.sop={};auto absentBudget=combat_test::budget(noSop);check(absentBudget.baseBytes<capacity.baseBytes&&absentBudget.capacity>=capacity.capacity,"omitting footer only increases available event budget");
+ host::Message message;message.channel=1;message.serial=1;message.payload=bounded;
+ auto packet=host::encode({1,{message}},host::Keys{1,2});
+ auto decoded=host::decode(packet,host::Keys{1,2},1);
+ check(packet.size()<=host::max_datagram&&decoded.messages.size()==1&&decoded.messages[0].payload==bounded,"2000-byte SOP record round-trips inside encrypted datagram limit");
+ std::cout<<"full_roster_sop_events="<<capacity.capacity<<" record_bytes="<<bounded.size()<<" datagram_bytes="<<packet.size()<<'\n';
  wire::Input press;press.epoch=7;press.life=1;press.sequence=10;press.weapon=25;press.specialPressed=press.specialHeld=true;
  auto release=press;release.sequence=11;release.specialPressed=release.specialHeld=false;auto merged=wire::coalesce_input(press,release);check(merged.specialPressed&&!merged.specialHeld&&merged.sequence==11,"short Y press survives coalescing and newest release wins");check(std::get<wire::Input>(wire::decode(wire::encode(merged)))==merged,"coalesced Y input encodes");
  auto staleHold=press;staleHold.specialPressed=false;check(!wire::coalesce_input(staleHold,release).specialHeld,"held level cannot leak past newest release");
@@ -53,11 +73,14 @@ void machine(){
 }
 std::shared_ptr<const stage::Collision> floor(){return std::make_shared<const stage::Collision>(stage::Collision::make({{-100000,0,-100000},{100000,0,-100000},{100000,0,100000},{-100000,0,100000}},{{{0,2,1}},{{0,3,2}}}));}
 void service(){
- combat::Weapon ak{25,1000,0,100,300,30,90,10000,9001,9002,true};combat::Service svc(7);svc.configure(floor(),std::array{ak});check(svc.authority().configure_sop(100,100),"configure host SOP animation policy");
+ combat::Weapon ak{25,1000,0,100,300,30,90,10000,9001,9002,true};ak.nativeAkAccuracy=true;combat::Service svc(7);svc.configure(floor(),std::array{ak});check(svc.authority().configure_sop(100,100),"configure host SOP animation policy");
  for(unsigned slot=0;slot<24;++slot){auto id=identity(slot);combat::Pose p;p.feet=slot==0?combat::Vec3{0,2,0}:slot==1?combat::Vec3{0,2,3000}:combat::Vec3{float(slot*2000),2,0};check(svc.authority().join(id,slot==1?2:1,p,1000,1000,std::array<uint16_t,1>{25},0),"24 actual authority spawns");check(svc.admit(id)&&svc.receive(id,wire::encode(wire::Accept{7}),0),"24 accepted service recipients");}
- svc.authority().active(true);svc.deliveries();wire::Input fire;fire.epoch=7;fire.sequence=1;fire.pose=svc.authority().snapshot().players[0]->pose;fire.weapon=25;fire.firePressed=true;check(svc.receive(identity(0),wire::encode(fire),100),"accepted host fire creates multi-event frame");svc.poll(100);auto deliveries=svc.deliveries();std::array<unsigned,24> counts{};std::array<uint64_t,24> latest{};
- for(auto&d:deliveries){check(d.payload.size()<=2000,"every service delivery stays within datagram record bound");auto record=wire::decode(d.payload);if(auto f=std::get_if<wire::Frame>(&record)){check(f->sop.recipient==d.recipient&&f->sop.life==f->snapshot.players[d.recipient.slot]->life,"service footer belongs to actual recipient incarnation");check(f->events.size()<=3,"full snapshot plus SOP chunks at three events");for(auto&e:f->events){check(e.id==latest[d.recipient.slot]+1,"service chunk preserves event order");latest[d.recipient.slot]=e.id;++counts[d.recipient.slot];}}}
- for(auto n:counts)check(n==4,"24 recipients receive all four shot/impact/damage/death events without truncation");
+ svc.authority().active(true);svc.deliveries();wire::Input fire;fire.epoch=7;fire.sequence=1;fire.pose=svc.authority().snapshot().players[0]->pose;fire.weapon=25;fire.firePressed=true;check(svc.receive(identity(0),wire::encode(fire),100),"accepted host fire creates multi-event frame");svc.poll(100);auto deliveries=svc.deliveries();std::array<unsigned,24> counts{},eventFrames{};std::array<size_t,24> capacities{};std::array<uint64_t,24> latest{};
+ for(auto&d:deliveries){check(d.payload.size()<=2000,"every service delivery stays within datagram record bound");auto record=wire::decode(d.payload);if(auto f=std::get_if<wire::Frame>(&record)){check(f->sop.recipient==d.recipient&&f->sop.life==f->snapshot.players[d.recipient.slot]->life,"service footer belongs to actual recipient incarnation");if(!f->events.empty()){const auto budget=combat_test::budget(*f);auto& capacity=capacities[d.recipient.slot];if(!capacity)capacity=budget.capacity;check(capacity==budget.capacity,"same recipient roster retains exact encoded capacity");const size_t remaining=4-counts[d.recipient.slot];check(f->events.size()==(std::min)(capacity,remaining),"Service greedily fills the exact byte-bounded event chunk");++eventFrames[d.recipient.slot];}for(auto&e:f->events){check(e.id==latest[d.recipient.slot]+1,"service chunk preserves event order");latest[d.recipient.slot]=e.id;++counts[d.recipient.slot];}}}
+ for(unsigned slot=0;slot<24;++slot){check(counts[slot]==4,"24 recipients receive all four shot/impact/damage/death events without truncation");check(capacities[slot]&&eventFrames[slot]==(4+capacities[slot]-1)/capacities[slot],"exact per-recipient event chunk count follows current encoding capacity");}
+ check(svc.authority().sop_view(identity(0))->spreadMilliRadians==7&&svc.authority().sop_view(identity(1))->spreadMilliRadians==0&&svc.authority().sop_view(identity(2))->spreadMilliRadians==3,"only shooter blooms; dead target clears; other recipient base");
+ svc.poll(500);bool recovered=false;for(auto&d:svc.deliveries()){auto record=wire::decode(d.payload);if(auto f=std::get_if<wire::Frame>(&record);f&&d.recipient==identity(0)){check(f->events.empty()&&f->sop.spreadMilliRadians==3,"idle recovery arrives as HOST state without fake shot");recovered=true;}}
+ check(recovered,"service publishes recovered recipient cone");
 }
 void gesture(){
  combat::Weapon ak{25,35,0,100,300,30,90,10000,9001,9002,true};combat::Service svc(7);svc.configure(floor(),std::array{ak});check(svc.authority().configure_sop(100,50),"short gesture policy");

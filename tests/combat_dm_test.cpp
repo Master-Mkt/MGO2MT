@@ -24,6 +24,18 @@ int main(int argc,char**argv){try{
  auto tie=state;tie.players[2]->kills=1;auto tied=combat::standings(tie);check(tied[0].rank==1&&tied[1].rank==1,"equal kills share rank despite deaths");
  round.poll(authority,10001);check(round.state(a,10001).phase==combat::wire::RoundPhase::ended&&!authority.active(),"DM timeout ends combat");
  for(auto rule:{0,1}){std::ifstream input(std::filesystem::path(argv[2])/(rule?"n022a.tdm-spawns-v2.cfg":"n022a.dm-spawns.cfg"));auto profile=combat::spawn::StageProfile::read(input);for(uint8_t cap:{uint8_t(8),uint8_t(16)}){combat::spawn::StageSelector selector(profile,{1,cap,false,20,uint8_t(rule)},{{1,2,3,4}});std::set<uint8_t> order;unsigned count=rule?16:cap==8?16:32;for(unsigned i=0;i<count;++i){auto p=selector.propose(combat::spawn::Kind::initial,0);check(bool(p)&&p->arrayIndex<count,"permutation index");order.insert(p->arrayIndex);check(selector.commit(*p)&&!selector.commit(*p),"one commit");}check(order.size()==count,"every original initial entry used exactly once");auto resp=selector.propose(combat::spawn::Kind::respawn,0);check(bool(resp)&&resp->creationPose.feet[1]==resp->sourcePosition[1],"respawn original direct Y");}}
+ // Exercise the actual per-stage GEOM-derived respawn groups, both teams and capacities.
+ for(const auto& entry:std::filesystem::directory_iterator(argv[2]))if(entry.path().filename().string().ends_with(".tdm-spawns-v2.cfg")||entry.path().filename().string().ends_with(".dm-spawns.cfg")){
+  std::ifstream input(entry.path());auto profile=combat::spawn::StageProfile::read(input);
+  for(uint8_t cap:{uint8_t(8),uint8_t(16)})for(bool swap:{false,true})for(uint8_t team:{uint8_t(0),uint8_t(1)}){
+   combat::spawn::StageSelector selector(profile,{1,cap,swap,profile.map(),profile.rule()},{{1,2,3,4}});std::set<unsigned> used;
+   for(unsigned n=0;n<256;++n){auto p=selector.propose(combat::spawn::Kind::respawn,team);check(bool(p),"GEOM respawn proposal");
+    const uint8_t expected=profile.rule()==0?0:team^uint8_t(swap);const auto& group=profile.group(cap<=8?combat::spawn::Variant::mini:combat::spawn::Variant::normal,combat::spawn::Kind::respawn,expected);
+    check(p->normalizedTeam==expected&&p->sourcePosition==group.at(p->arrayIndex).position&&p->hash==group.at(p->arrayIndex).hash&&p->creationPose.feet==p->sourcePosition,"respawn selects original GEOM position from own team only");
+    check(selector.propose(combat::spawn::Kind::respawn,team)==p,"failed/uncommitted proposal cannot consume RNG");used.insert(p->arrayIndex);check(selector.commit(*p),"commit random respawn");
+   }check(used.size()>1,"repeated respawns vary original GEOM point");
+  }
+ }
  combat::wire::Input unarmed;unarmed.epoch=1;unarmed.sequence=1;check(std::get<combat::wire::Input>(combat::wire::decode(combat::wire::encode(unarmed)))==unarmed,"unarmed pose valid");bool rejected=false;unarmed.fire=true;try{combat::wire::encode(unarmed);}catch(...){rejected=true;}check(rejected,"unarmed fire invalid");
  std::cout<<"DM team0 lifecycle / confirmed individual scores / time expiry / original spawn groups / unarmed codec PASS\n";return 0;
 }catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}

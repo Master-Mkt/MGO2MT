@@ -9,7 +9,7 @@
 namespace mgo2win::host {
 // Server half of the existing room-admission protocol. Lobby 4340 must approve
 // a character before the caller publishes roster/global state to this peer.
-struct ProfileNames {std::string name,clan;uint32_t clanId=0;std::array<uint8_t,28> appearance{};};
+struct ProfileNames {std::string name,clan;uint32_t clanId=0;std::array<uint8_t,28> appearance{};uint8_t level=0;};
 ProfileNames profile_names(std::span<const uint8_t>);
 std::vector<uint8_t> roster_record(const Player&,const Hello&,uint32_t clanId=0);
 std::vector<uint8_t> roster_remove(uint16_t instance);

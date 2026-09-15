@@ -71,12 +71,26 @@ PreparedCharacter CharacterCatalog::assemble(const std::array<uint8_t,28>&a)cons
  }
  out.bind=out.model.vertices;if(out.ready()){pose(out,0);auto&b=out.model.bounds;b={1e9f,1e9f,1e9f,-1e9f,-1e9f,-1e9f};for(const auto&v:out.model.vertices){float xyz[]={v.x,v.y,v.z};for(int i=0;i<3;++i){b[i]=std::min(b[i],xyz[i]);b[i+3]=std::max(b[i+3],xyz[i]);}}}return out;
 }
-void CharacterCatalog::pose(PreparedCharacter&out,double seconds)const{
- using namespace DirectX;require(out.gender<2&&out.bind.size()==out.skin.size());if(!std::isfinite(seconds))seconds=0;
- double time=std::fmod(std::max(0.,seconds),double(frames_)/fps_)*fps_;unsigned frame=std::min(unsigned(time),frames_-1);float t=float(time-frame);MotionPose sampled;sampled.rootBone=bones_[out.gender].front().key;
- for(const auto&b:bones_[out.gender]){auto&a=b.rotation[frame];auto&z=b.rotation[frame+1];auto q=XMQuaternionSlerp(XMVectorSet(a[0],a[1],a[2],a[3]),XMVectorSet(z[0],z[1],z[2],z[3]),t);XMFLOAT4 value;XMStoreFloat4(&value,q);sampled.rotations[b.key]={value.x,value.y,value.z,value.w};}
+MotionPose CharacterCatalog::sample_pose(unsigned gender,double seconds)const{
+ using namespace DirectX;require(gender<2);if(!std::isfinite(seconds))seconds=0;
+ double time=std::fmod(std::max(0.,seconds),double(frames_)/fps_)*fps_;unsigned frame=std::min(unsigned(time),frames_-1);float t=float(time-frame);MotionPose sampled;sampled.rootBone=bones_[gender].front().key;
+ for(const auto&b:bones_[gender]){auto&a=b.rotation[frame];auto&z=b.rotation[frame+1];auto q=XMQuaternionSlerp(XMVectorSet(a[0],a[1],a[2],a[3]),XMVectorSet(z[0],z[1],z[2],z[3]),t);XMFLOAT4 value;XMStoreFloat4(&value,q);sampled.rotations[b.key]={value.x,value.y,value.z,value.w};}
  for(unsigned j=0;j<3;++j)sampled.root[j]=root_[frame][j]*(1-t)+root_[frame+1][j]*t;
- pose(out,sampled);
+ return sampled;
+}
+MotionPose CharacterCatalog::complete_pose(unsigned gender,const MotionPose&sampled)const{
+ require(gender<2&&sampled.rootBone==bones_[gender].front().key);
+ for(float v:sampled.root)require(std::isfinite(v)&&std::abs(v)<=1000000);
+ MotionPose out;out.root=sampled.root;out.rootBone=sampled.rootBone;
+ for(const auto&bone:bones_[gender]){
+  auto found=sampled.rotations.find(bone.key);auto q=found==sampled.rotations.end()?std::array<float,4>{0,0,0,1}:found->second;
+  float norm=0;for(float v:q){require(std::isfinite(v));norm+=v*v;}require(norm>.99f&&norm<1.01f);
+  out.rotations.emplace(bone.key,q);
+ }
+ return out;
+}
+void CharacterCatalog::pose(PreparedCharacter&out,double seconds)const{
+ require(out.gender<2&&out.bind.size()==out.skin.size());pose(out,sample_pose(out.gender,seconds));
 }
 void CharacterCatalog::pose(PreparedCharacter&out,const MotionPose&sampled)const{
  using namespace DirectX;require(out.gender<2&&out.bind.size()==out.skin.size()&&out.model.vertices.size()==out.bind.size());
@@ -87,6 +101,8 @@ void CharacterCatalog::pose(PreparedCharacter&out,const MotionPose&sampled)const
   if(b.parent<0)for(int j=0;j<3;++j)pos[j]+=sampled.root[j];
   world[i]=XMMatrixRotationQuaternion(q)*XMMatrixTranslation(pos[0],pos[1],pos[2]);if(b.parent>=0)world[i]=world[i]*world[b.parent];skin[i]=XMMatrixTranslation(-b.position[0],-b.position[1],-b.position[2])*world[i];}
  std::map<uint32_t,std::array<float,3>> bonePositions;
+ out.boneFrames.clear();
+ for(size_t i=0;i<bones.size();++i){XMFLOAT4X4 m;XMStoreFloat4x4(&m,world[i]);std::array<float,16> frame;std::memcpy(frame.data(),&m,sizeof(m));out.boneFrames.emplace(bones[i].key,frame);}
  for(size_t i=0;i<bones.size();++i){XMFLOAT3 xyz;XMStoreFloat3(&xyz,XMVector3TransformCoord(XMVectorZero(),world[i]));bonePositions.emplace(bones[i].key,std::array<float,3>{xyz.x,xyz.y,xyz.z});}
  for(size_t i=0;i<out.bind.size();++i){const auto&v=out.bind[i];auto p=XMVectorSet(v.x,v.y,v.z,1),n=XMVectorSet(v.nx,v.ny,v.nz,0),result=XMVectorZero(),normal=XMVectorZero();
   for(int j=0;j<4;++j){float weight=out.skin[i].weights[j];if(weight){auto bone=out.skin[i].bones[j];const auto&off=out.skin[i].offsets[j];auto bound=XMVectorAdd(p,XMVectorSet(off[0],off[1],off[2],0));result=XMVectorMultiplyAdd(XMVectorReplicate(weight),XMVector3TransformCoord(bound,skin[bone]),result);normal=XMVectorMultiplyAdd(XMVectorReplicate(weight),XMVector3TransformNormal(n,skin[bone]),normal);}}

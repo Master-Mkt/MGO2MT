@@ -8,10 +8,10 @@ int main(){try{
  auto probe=w::encode(w::Probe{header});check(probe&&probe->size()==56&&w::decode(*probe),"probe56");
  auto offer=w::encode(w::Offer{header,5,{64,64}});check(offer&&offer->size()==72&&w::decode(*offer),"offer72 capabilities");
  w::Held held;held.header=header;held.selectedSlot=0;held.slots[0].contents={25,1,17,93,0,Resource::ammunition};held.slots[0].revision=19;
- auto holdings=w::encode(held);check(holdings&&holdings->size()==156&&holdings->at(6)==7&&w::decode(*holdings),"held156 kind7");auto heldDecoded=std::get<w::Held>(*w::decode(*holdings));check(heldDecoded.slots[0]==held.slots[0]&&heldDecoded.slots[1].revision==1,"held contents/revision");held.slots[0].contents={};held.selectedSlot=255;check(w::encode(held).has_value(),"unarmed holdings");held.selectedSlot=0;check(!w::encode(held),"selected empty holding rejected");
+ auto holdings=w::encode(held);check(holdings&&holdings->size()==220&&holdings->at(6)==7&&w::decode(*holdings),"held188 kind7");auto heldDecoded=std::get<w::Held>(*w::decode(*holdings));check(heldDecoded.slots[0]==held.slots[0]&&heldDecoded.slots[1].revision==1,"held contents/revision");held.slots[0].contents={};held.selectedSlot=255;check(w::encode(held).has_value(),"unarmed holdings");held.selectedSlot=0;check(!w::encode(held),"selected empty holding rejected");
  w::Command cmd;cmd.header=header;cmd.header.sequence=1;cmd.action=w::Action::drop;cmd.heldSlot=0;cmd.heldRevision=3;
  auto encoded=w::encode(cmd);check(encoded&&encoded->size()==88,"command88");
- std::vector<uint8_t> golden{0xec,'G','W','I','V',1,3,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,9,0,0,0,0,0,0,0,123,1,0,1,1,0,0,0,200,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0};
+ std::vector<uint8_t> golden{0xec,'G','W','I','V',3,3,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,9,0,0,0,0,0,0,0,123,1,0,1,1,0,0,0,200,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0};
  check(*encoded==golden,"literal BE command golden");
  for(size_t i=0;i<encoded->size();++i)check(!w::decode(std::span(*encoded).first(i)),"all truncations");auto trailing=*encoded;trailing.push_back(0);check(!w::decode(trailing),"trailing bytes");
  for(size_t offset:{size_t(0),size_t(1),size_t(2),size_t(3),size_t(4),size_t(5),size_t(7),size_t(33),size_t(44),size_t(45),size_t(46),size_t(47),size_t(59)}){auto bad=*encoded;bad[offset]^=0x80;check(!w::decode(bad),"strict header/reserved");}

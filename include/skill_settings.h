@@ -37,6 +37,8 @@ public:
  const Loadout& original()const{return original_;}
  unsigned capacity()const{return capacity_;}
  bool changed()const{return draft_!=original_;}
+ // Refresh the authoritative baseline without discarding an in-progress edit.
+ void synchronize(const Loadout& value,unsigned capacity,bool preserveDraft){if(!preserveDraft)draft_=value;original_=value;capacity_=capacity;}
  void reset(){draft_=original_;}
  void clear(){draft_.entries.clear();}
 };

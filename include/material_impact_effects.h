@@ -6,8 +6,12 @@ using Vec3=decals::Vec3;
 using Scope=decals::Scope;
 using Impact=decals::Impact;
 enum class Kind : uint8_t { unknown, metal, wood, stone, glass };
-// No CURRENT event5 callback classification has yet been verified. This explicit
-// empty table prevents the legacy debug labels from silently enabling live effects.
+// Current GCX named option E86D7E -> material word5 -> typed resource registry.
+// Only maps 1/4/20/21 and the two verified callback families are classified.
+// Classification identifies the effect family, not original camera/effect gates,
+// renderer coefficients, shader or particle texture parity. See follow-up note.
+Kind verified_kind(uint8_t map,uint32_t currentMaterialHash) noexcept;
+// Without a verified stage, a material hash alone cannot enable an effect.
 inline Kind verified_kind(uint32_t /*currentMaterialHash*/) noexcept {return Kind::unknown;}
 // Explicit Windows procedural presentation. None of these numbers are original
 // EFF particle count, velocity, gravity, color or lifetime claims.

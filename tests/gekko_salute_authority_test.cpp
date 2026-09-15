@@ -1,0 +1,7 @@
+#include "gekko_test_profiles.h"
+#include "combat_authority.h"
+#include <iostream>
+#include <stdexcept>
+using namespace mgo2win;using namespace mgo2win::combat;
+void check(bool b,const char*m){if(!b)throw std::runtime_error(m);}
+int main(){try{auto world=std::make_shared<const stage::Collision>(stage::Collision::make({{-10000,0,-10000},{10000,0,-10000},{10000,0,10000},{-10000,0,10000}},{{{0,1,2}},{{0,2,3}}}));Weapon w;w.id=1;w.heldOnly=true;Authority a;a.begin(1,world,gekko_test_profiles(w));Identity id{0,1,1};Pose p;p.feet={0,2,0};check(a.join(id,1,p,1000,1000,std::array<uint16_t,1>{1},0),"join");check(a.assign_special(id,special_pc::Kind::gekko,true,0)==Reject::none,"Gekko grant");a.active(true);p=a.snapshot().players[0]->pose;check(a.pose(id,1,1,p,1)==Reject::none,"accepted pose");check(a.special_action(id,1,1,{special_pc::Action::salute,1},1)==Reject::none,"greeting admitted");check(a.advance_special_pc(2000).events.empty(),"greeting cannot perform kick damage");auto during=*a.snapshot().players[0];check(during.specialPc.action==special_pc::Action::salute&&during.pose==p,"greeting holds root and lasts authored clip");check(a.advance_special_pc(2335).events.empty()&&a.snapshot().players[0]->specialPc.action==special_pc::Action::none,"greeting completes");std::cout<<"Gekko greeting scope / root / no kick / authored duration PASS\n";return 0;}catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}

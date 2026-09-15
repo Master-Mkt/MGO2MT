@@ -17,6 +17,7 @@ public:
  bool message(HWND,UINT,WPARAM,LPARAM);
  bool sample(const PadSample&); // True consumes the sample while capturing.
  POINT draw(HDC,const std::vector<HFONT>&); // Active item origin for focus guides.
+ void paint_original(void* pixels)const;
  void cancel_capture(){capture_=-1;armed_=false;}
  void discard_changes(); // Reopen/close refreshes the draft from current saved runtime settings.
  void return_label(std::wstring label){back_label_=std::move(label);}

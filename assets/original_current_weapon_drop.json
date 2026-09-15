@@ -1,0 +1,732 @@
+{
+  "schema": "MGO2WIN.original_current_weapon_drop",
+  "version": 1,
+  "source_elf_sha256": "1a55a41ee5afdebd89075bd205e412c8311f569ba9dc022f629bb63fb4bfd13a",
+  "scope": "Read-only recovered current-weapon producer eligibility, not generic voluntary menu permission; not connected to native runtime.",
+  "namespace": "weapon static indices 0..72 only; equipment/world-item IDs never accepted",
+  "functions": {
+    "producer": "008C9EA0",
+    "ground_request": "00729888",
+    "menu_remove": "00AD8628",
+    "manager": "00728A90",
+    "actor_factory": "00B082E0",
+    "actor_initialize": "00B06E20",
+    "actor_act": "00B05078"
+  },
+  "actor_context": {
+    "proxy": "actor+8C == 8: host only; weapon byte actor+832; current local weapon pointer not used",
+    "local": "actor+8C != 8 and actor+88 != 2; current weapon pointer required",
+    "field_names": "Raw offsets are preserved; broader actor-role semantics are not inferred."
+  },
+  "tables": {
+    "local": "008CA064",
+    "host_proxy": "008CA1A4",
+    "count": 73,
+    "eligible": 56,
+    "excluded": 17,
+    "beyond_72": "Original default branch continues, but internal/unreviewed records remain unknown in this helper."
+  },
+  "menu_removal": {
+    "status_flags_blocking": [
+      110,
+      139
+    ],
+    "must_exist_in_selected_menu": true,
+    "online_protected_ids": [
+      1,
+      22,
+      27,
+      40,
+      9,
+      72,
+      47,
+      71,
+      10,
+      48,
+      16,
+      29,
+      36,
+      70,
+      12,
+      68
+    ],
+    "online_flag": "00036398 reads global+10/+14 OR bit00010000",
+    "effect": "clear matching selected-menu entry, select previous then weapon0; not a blanket availability-table erase"
+  },
+  "registration": {
+    "channel": 592,
+    "original_manager_capacity": 12,
+    "kind_nibble": 4,
+    "consumer": "734A10 -> 7321C0 case4 732998 chooses empty record, copies payload, sets record state3 at732EAC; 728A90 state3 -> B082E0 -> B06E20 registers B05078 act callback",
+    "failure": "Original 8C9EA0 attempts menu removal/proxy clear regardless of729888 result; native atomic inventory must not copy this failure behavior."
+  },
+  "ammo": {
+    "observed": "729888 transfers a magazine/capacity bounded amount from the referenced ammo pool and attachment data before registration; a null direction argument uses a separate path.",
+    "empty_discard": null,
+    "warning": "Ammo transfer and menu removal do not prove empty-disappearance lifetime policy."
+  },
+  "native": {
+    "wired": false,
+    "existing_general_policy_changed": false,
+    "override_and_capacity_changed": false
+  },
+  "entries": [
+    {
+      "weapon_spec_index": 0,
+      "name": "NONE",
+      "current_weapon_producer_eligible": false,
+      "local_target": "008C9EE8",
+      "host_proxy_target": "008C9EE8",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 1,
+      "name": "ST KNIFE",
+      "current_weapon_producer_eligible": false,
+      "local_target": "008C9EE8",
+      "host_proxy_target": "008C9EE8",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 2,
+      "name": "RUGER",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 3,
+      "name": "OPERATOR",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 4,
+      "name": "SOCOM",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 5,
+      "name": "D EAGLE",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 6,
+      "name": "FIVESEVEN",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 7,
+      "name": "SIG GSR",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 8,
+      "name": "D EAGLE",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 9,
+      "name": "D EAGLE L",
+      "current_weapon_producer_eligible": false,
+      "local_target": "008C9EE8",
+      "host_proxy_target": "008C9EE8",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 10,
+      "name": "THOR",
+      "current_weapon_producer_eligible": false,
+      "local_target": "008C9EE8",
+      "host_proxy_target": "008C9EE8",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 11,
+      "name": "M1911A1",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 12,
+      "name": "COOLANT",
+      "current_weapon_producer_eligible": false,
+      "local_target": "008C9EE8",
+      "host_proxy_target": "008C9EE8",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 13,
+      "name": "GUN DEL SOL",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 14,
+      "name": "PSS",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 15,
+      "name": "GLOCK",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 16,
+      "name": "R KNIFE",
+      "current_weapon_producer_eligible": false,
+      "local_target": "008C9EE8",
+      "host_proxy_target": "008C9EE8",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 17,
+      "name": "MP7",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 18,
+      "name": "MP5",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 19,
+      "name": "INGRAM",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 20,
+      "name": "P90",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 21,
+      "name": "BIZON",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 22,
+      "name": "PATRIOT",
+      "current_weapon_producer_eligible": false,
+      "local_target": "008C9EE8",
+      "host_proxy_target": "008C9EE8",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 23,
+      "name": "SKORPION",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 24,
+      "name": "M4",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 25,
+      "name": "AK102",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 26,
+      "name": "G3A3",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 27,
+      "name": "XM8SHORT",
+      "current_weapon_producer_eligible": false,
+      "local_target": "008C9EE8",
+      "host_proxy_target": "008C9EE8",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 28,
+      "name": "FAL",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 29,
+      "name": "TANTO",
+      "current_weapon_producer_eligible": false,
+      "local_target": "008C9EE8",
+      "host_proxy_target": "008C9EE8",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 30,
+      "name": "MK17",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 31,
+      "name": "XM8",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 32,
+      "name": "LMG",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 33,
+      "name": "HK21E",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 34,
+      "name": "PK",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 35,
+      "name": "M60E4",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 36,
+      "name": "V KNIFE",
+      "current_weapon_producer_eligible": false,
+      "local_target": "008C9EE8",
+      "host_proxy_target": "008C9EE8",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 37,
+      "name": "M870",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 38,
+      "name": "SAIGA",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 39,
+      "name": "VSS",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 40,
+      "name": "M82A2",
+      "current_weapon_producer_eligible": false,
+      "local_target": "008C9EE8",
+      "host_proxy_target": "008C9EE8",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 41,
+      "name": "DSR1",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 42,
+      "name": "M14EBR",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 43,
+      "name": "MOSIN N",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 44,
+      "name": "DRAGNOV",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 45,
+      "name": "RAILGUN",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 46,
+      "name": "TIME BOMB",
+      "current_weapon_producer_eligible": false,
+      "local_target": "008C9EE8",
+      "host_proxy_target": "008C9EE8",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 47,
+      "name": "MISSOURI",
+      "current_weapon_producer_eligible": false,
+      "local_target": "008C9EE8",
+      "host_proxy_target": "008C9EE8",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 48,
+      "name": "HF BLADE",
+      "current_weapon_producer_eligible": false,
+      "local_target": "008C9EE8",
+      "host_proxy_target": "008C9EE8",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 49,
+      "name": "JAVELIN",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 50,
+      "name": "RPG7",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 51,
+      "name": "M72A3",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 52,
+      "name": "GRENADE",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 53,
+      "name": "WP G",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 54,
+      "name": "STUN G",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 55,
+      "name": "CHAFF G",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 56,
+      "name": "SMOKE G",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 57,
+      "name": "SMOKE G.(R)",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 58,
+      "name": "SMOKE G.(G)",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 59,
+      "name": "SMOKE G.(Y)",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 60,
+      "name": "SMOKE G.(P)",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 61,
+      "name": "PETRO BOMB",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 62,
+      "name": "MAGAZINE",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 63,
+      "name": "EMP GRENADE",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 64,
+      "name": "CLAYMORE",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 65,
+      "name": "SLEEP CLAYMORE",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 66,
+      "name": "C4",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 67,
+      "name": "SLEEP C4",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 68,
+      "name": "BASE BUSTER",
+      "current_weapon_producer_eligible": false,
+      "local_target": "008C9EE8",
+      "host_proxy_target": "008C9EE8",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 69,
+      "name": "BOOK",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 70,
+      "name": "PSEUDO BOOK",
+      "current_weapon_producer_eligible": true,
+      "local_target": "008C9F2C",
+      "host_proxy_target": "008C9F90",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 71,
+      "name": "G.O.P.",
+      "current_weapon_producer_eligible": false,
+      "local_target": "008C9EE8",
+      "host_proxy_target": "008C9EE8",
+      "general_menu_drop": null,
+      "empty_discard": null
+    },
+    {
+      "weapon_spec_index": 72,
+      "name": "SONAR",
+      "current_weapon_producer_eligible": false,
+      "local_target": "008C9EE8",
+      "host_proxy_target": "008C9EE8",
+      "general_menu_drop": null,
+      "empty_discard": null
+    }
+  ]
+}

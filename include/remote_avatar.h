@@ -11,11 +11,12 @@ struct Avatar {
  combat::Vec3 origin{};float yaw=0;PlayerMotion motion=PlayerMotion::Idle;
  double seconds=0;bool alive=true,stunned=false;
  combat::SpecialPhase specialPhase=combat::SpecialPhase::none;double specialSeconds=0;
+ combat::EvadeKind evadeKind=combat::EvadeKind::none;uint32_t evadeSerial=0;double evadeSeconds=0;combat::cover::State cover;int8_t coverMove=0;special_pc::State specialPc;double specialPcSeconds=0;
 };
 class Scene {
  struct Track {
   Avatar avatar;combat::Player player;combat::Vec3 from{},target{};float fromYaw=0,targetYaw=0;
-  uint64_t at=0,motionAt=0,movedAt=0,specialAt=0;bool moving=false;float speed=0;
+  uint64_t at=0,motionAt=0,movedAt=0,specialAt=0,evadeAt=0,specialPcAt=0;bool moving=false;float speed=0;
  };
  combat::Replica replica_;uint64_t revision_=0,epoch_=0,lastNow_=0;combat::Identity self_;
  std::array<std::optional<Track>,24> tracks_;

@@ -51,10 +51,12 @@ bool Icons::load(const std::filesystem::path& path,std::string& error){
  }catch(const std::exception&e){images_.clear();error=e.what();return false;}
 }
 const Icon* Icons::find(uint16_t id)const{auto it=images_.find(id);return it==images_.end()?nullptr:&it->second;}
-void paint_icon(const Icon&icon,std::span<uint32_t> dst,int width,int height,int x,int y,int w,int h,bool muted){
+void paint_icon(const Icon&icon,std::span<uint32_t> dst,int width,int height,int x,int y,int w,int h,bool muted,double displayWidth,double displayHeight){
  if(width<=0||height<=0||dst.size()<size_t(width)*height||w<=0||h<=0||!icon.width||!icon.height||icon.bgra.size()!=size_t(icon.width)*icon.height)return;
- double scale=std::min(double(w)/icon.width,double(h)/icon.height);
- int dw=std::max(1,int(std::round(icon.width*scale))),dh=std::max(1,int(std::round(icon.height*scale)));x+=(w-dw)/2;y+=(h-dh)/2;
+ if(!displayWidth&&!displayHeight){displayWidth=icon.width;displayHeight=icon.height;}
+ if(!std::isfinite(displayWidth)||!std::isfinite(displayHeight)||displayWidth<=0||displayHeight<=0)return;
+ double scale=std::min(double(w)/displayWidth,double(h)/displayHeight);
+ int dw=std::max(1,int(std::round(displayWidth*scale))),dh=std::max(1,int(std::round(displayHeight*scale)));x+=(w-dw)/2;y+=(h-dh)/2;
  for(int j=0;j<dh;++j)for(int i=0;i<dw;++i){
   if(x+i<0||x+i>=width||y+j<0||y+j>=height)continue;
   double sx=std::clamp((i+.5)*icon.width/dw-.5,0.,double(icon.width-1)),sy=std::clamp((j+.5)*icon.height/dh-.5,0.,double(icon.height-1));

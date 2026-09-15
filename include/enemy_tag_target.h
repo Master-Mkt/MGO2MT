@@ -1,3 +1,4 @@
+#include "source_coordinates.h"
 #pragma once
 #include "combat_authority.h"
 #include "host_roster.h"
@@ -37,7 +38,7 @@ inline std::optional<Target> select(const combat::Snapshot&s,const host::Roster&
  if(objects)if(auto hit=objects->ray(origin,*rd,limit))limit=hit->distance;
  const combat::Player* nearest=nullptr;
  for(const auto&p:s.players)if(p&&p->identity!=self&&p->alive){auto t=capsule(origin,*rd,p->pose);if(t&&*t<limit){limit=*t;nearest=&*p;}}
- if(!nearest||nearest->identity.slot>=24)return {};
+ if(!nearest||nearest->identity.slot>=24||!nearest->specialPc.nameVisible)return {};
  if(rule==1&&(me->team<1||me->team>2||nearest->team<1||nearest->team>2||me->team==nearest->team))return {};
  const auto&entry=r.slots[nearest->identity.slot];
  if(!entry||entry->slot!=nearest->identity.slot||entry->instance!=nearest->identity.instance||entry->character!=nearest->identity.character||entry->name.empty())return {};
@@ -51,13 +52,16 @@ inline bool visible(Vec3 eye,Vec3 point,const stage::Collision&world,const stage
  return true;
 }
 struct Point {int x=0,y=0;};
-// Matches CharacterRenderer's LookToLH/FOV 1.0/aspect 616:392 and stage quad.
-inline std::optional<Point> project(Vec3 point,Vec3 eye,Vec3 direction,int left,int top,int width,int height){
- if(width<=0||height<=0||!finite(point)||!finite(eye))return {};auto z=unit(direction);if(!z)return {};
+struct Viewport {int left=620,top=120,width=616,height=392;float aspect=616.f/392.f;
+ bool valid()const{return left>=0&&top>=0&&width>0&&height>0&&width<=1280&&height<=720&&left<=1280-width&&top<=720-height&&std::isfinite(aspect)&&aspect>0&&aspect<=32;}
+};
+// Matches the world camera FOV and aspect; the destination UI rectangle is independent.
+inline std::optional<Point> project(Vec3 point,Vec3 eye,Vec3 direction,int left,int top,int width,int height,float aspect=616.f/392.f){
+ if(width<=0||height<=0||!std::isfinite(aspect)||aspect<=0||aspect>32||!finite(point)||!finite(eye))return {};auto z=unit(direction);if(!z)return {};
  auto x=unit(Vec3{(*z)[2],0,-(*z)[0]});if(!x)return {};
  Vec3 y{(*z)[1]*(*x)[2]-(*z)[2]*(*x)[1],(*z)[2]*(*x)[0]-(*z)[0]*(*x)[2],(*z)[0]*(*x)[1]-(*z)[1]*(*x)[0]};
  auto delta=sub(point,eye);float depth=dot(delta,*z);if(depth<10||depth>=500000)return {};
- float nx=dot(delta,*x)/(depth*std::tan(.5f)*(616.f/392)),ny=dot(delta,y)/(depth*std::tan(.5f));
+ float nx=source_screen_x*dot(delta,*x)/(depth*std::tan(.5f)*aspect),ny=dot(delta,y)/(depth*std::tan(.5f));
  if(!std::isfinite(nx)||!std::isfinite(ny)||std::abs(nx)>1||std::abs(ny)>1)return {};
  return Point{left+int((nx+1)*.5f*width),top+int((1-ny)*.5f*height)};
 }

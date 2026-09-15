@@ -20,6 +20,7 @@ ProfileNames profile_names(std::span<const uint8_t>b){
  std::copy_n(b.begin()+16,12,result.appearance.begin()+13);
  std::copy_n(b.begin()+37,2,result.appearance.begin()+25);
  if(result.appearance[0]>1)throw Invalid(Error::identity);
+ result.level=b[6]; // profile_payload copies personal[239] here.
  return result;
 }
 std::vector<uint8_t> roster_record(const Player&p,const Hello&h,uint32_t clanId){

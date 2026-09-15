@@ -1,5 +1,9 @@
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
 #include <windows.h>
 #include "item_settings_dialog.h"
 #include "item_settings.h"
@@ -27,7 +31,7 @@ INT_PTR CALLBACK procedure(HWND dialog,UINT message,WPARAM wp,LPARAM lp){auto* s
   control(dialog,L"BUTTON",L"他のプレイヤーが設置した武器も回収可",recoverId,207,149,205,24,WS_TABSTOP|BS_AUTOCHECKBOX);SendDlgItemMessageW(dialog,recoverId,BM_SETCHECK,s->settings.recoverOthers?BST_CHECKED:BST_UNCHECKED,0);
   control(dialog,L"STATIC",L"地面のアイテム数（0～4096）",0,207,179,150,12);control(dialog,L"EDIT",std::to_wstring(s->settings.capacity.dropped).c_str(),droppedId,358,177,45,16,WS_BORDER|WS_TABSTOP|ES_NUMBER);SendDlgItemMessageW(dialog,droppedId,EM_SETLIMITTEXT,4,0);
   control(dialog,L"STATIC",L"設置した武器数（0～4096）",0,207,202,150,12);control(dialog,L"EDIT",std::to_wstring(s->settings.capacity.installed).c_str(),installedId,358,200,45,16,WS_BORDER|WS_TABSTOP|ES_NUMBER);SendDlgItemMessageW(dialog,installedId,EM_SETLIMITTEXT,4,0);
-  control(dialog,L"STATIC",L"現在の配置・回収動作はAK102に対応。他の項目も設定を保存できます。",0,10,249,400,25);
+  control(dialog,L"STATIC",L"開始時の配置はHOSTの「ラウンド配置」で設定します。設置使用はAK102に対応。",0,10,249,400,25);
   control(dialog,L"BUTTON",L"保存",IDOK,287,280,55,18,WS_TABSTOP|BS_DEFPUSHBUTTON);control(dialog,L"BUTTON",L"キャンセル",IDCANCEL,348,280,65,18,WS_TABSTOP|BS_PUSHBUTTON);
   size_t initial=0;for(const auto&[key,e]:s->catalog.entries())if(e.domain==Domain::weapon){if(e.id==25)initial=s->ids.size();s->ids.push_back(e.id);const auto label=std::to_wstring(e.id)+L"  "+wide(e.name);SendDlgItemMessageW(dialog,listId,LB_ADDSTRING,0,LPARAM(label.c_str()));}
   SendDlgItemMessageW(dialog,listId,LB_SETCURSEL,initial,0);selection(dialog,*s);

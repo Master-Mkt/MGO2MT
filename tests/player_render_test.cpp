@@ -46,10 +46,10 @@ void synthetic(ID3D11Device* device,ID3D11DeviceContext* context){
  red.render(context,0,false,&camera,&wall,&origin);auto foreground=frame(device,context,wall);check(colored(foreground,0)>1000,"Foreground avatar absent from shared surface");check(colored(foreground,2)>100000,"Avatar pass cleared the stage");check(changed(background,foreground)==colored(foreground,0),"Avatar pass changed unrelated background pixels");
  origin[2]=2500;green.render(context,0,false,&camera,&wall,&origin);check(frame(device,context,wall).rgba==foreground.rgba,"Avatar did not write shared scene depth");
  wall.render(context,0,false,&camera);origin[2]=4000;red.render(context,0,false,&camera,&wall,&origin);check(frame(device,context,wall).rgba==background.rgba,"Avatar behind wall ignored existing depth");
- wall.render(context,0,false,&camera);origin={900,0,2000};red.render(context,0,false,&camera,&wall,&origin);auto translated=frame(device,context,wall);check(red_center(translated)>red_center(foreground)+100,"Avatar world origin translation not applied");
+ wall.render(context,0,false,&camera);origin={900,0,2000};red.render(context,0,false,&camera,&wall,&origin);auto translated=frame(device,context,wall);check(red_center(translated)<red_center(foreground)-100,"Avatar world origin translation not applied");
  CharacterRenderer asymmetric(device,quad(0,600,-250,250,0,0xf800));origin={0,0,2200};
  wall.render(context,0,false,&camera);asymmetric.render(context,0,false,&camera,&wall,&origin);auto right=frame(device,context,wall);
- wall.render(context,0,false,&camera);asymmetric.render(context,3.14159265358979323846f,false,&camera,&wall,&origin);auto left=frame(device,context,wall);check(red_center(right)>background.width*.5f+25&&red_center(left)<background.width*.5f-25,"Avatar world yaw did not rotate geometry");
+ wall.render(context,0,false,&camera);asymmetric.render(context,3.14159265358979323846f,false,&camera,&wall,&origin);auto left=frame(device,context,wall);check(red_center(right)<background.width*.5f-25&&red_center(left)>background.width*.5f+25,"Avatar world yaw did not rotate geometry");
  std::cout<<"Synthetic WARP shared surface, retained background, wall occlusion, shared depth write, origin translation and yaw verified\n";
 }
 void original(ID3D11Device* device,ID3D11DeviceContext* context,char** argv,int argc){

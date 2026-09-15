@@ -68,7 +68,7 @@ void TitleAnimation::tick(uint32_t delta,uint32_t pressed){
  if(background_){if(state_==0){start(foreground_?0x9aacfa:0x94eaa6);start(0x43478d);if(!foreground_)start(0x2c517d);for(uint32_t id=0x8854e6;id<=0x8854ec;++id)start(id);for(uint32_t id=0x883ce6;id<=0x883ceb;++id)start(id);state_=2;}advance(delta);return;}
  if(loading_){if(state_==0){start(0x9ca2fa);state_=2;}advance(delta);return;}
  if(state_==0){start(0xf7c4bc);state_=1;if(pressed&8)++rejected_;}
- else if(state_==1){wait_=std::min(621u,wait_+delta);remaining_=remaining_>delta?remaining_-delta:0;
+ else if(state_==1){wait_=std::min(621u,wait_+delta);if(!wait_for_start_)remaining_=remaining_>delta?remaining_-delta:0;
   if(wait_<=620){if(pressed&8)++rejected_;}
   else if(!remaining_){std::erase_if(active_,[](const Active&a){return a.id==0x298bf7;});start(0x850634);state_=3;result_=2;if(selected_)selected_(result_);}
   else if(pressed&8){std::erase_if(active_,[](const Active&a){return a.id==0x298bf7;});start(0xf8b0f2);state_=3;result_=1;++accepted_;accepted_tick_=ticks_;if(selected_)selected_(result_);}

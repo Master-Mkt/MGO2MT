@@ -1,6 +1,7 @@
 #pragma once
 #include "host_match.h"
 #include "character_model.h"
+#include "stage_surface_layers.h"
 #include "stage_collision.h"
 #include "stage_round.h"
 #include "stage_cbox.h"
@@ -29,6 +30,9 @@ struct ObjectBinding {uint32_t bindingId=0;uint8_t width=0;Vec3 position{},degre
 std::vector<ObjectBinding> read_object_bindings(const std::filesystem::path& root,bool loadModels=true,uint8_t map=20);
 struct Result {Status status=Status::idle;std::optional<host::LoadRequest> request;std::shared_ptr<const CharacterModel> model,debugModel,receivedModel;std::shared_ptr<const Collision> collision;uint64_t generation=0;Round round;std::vector<std::shared_ptr<const CharacterModel>> props;std::shared_ptr<const Lighting> lighting,authoredLighting;std::map<uint8_t,std::shared_ptr<const CharacterModel>> itemModels;std::optional<host::Placements> received;size_t missingItemModels=0;
  std::shared_ptr<const Collision> authoredCollision;std::shared_ptr<const CharacterModel> objectModel;
+ std::shared_ptr<const CharacterModel> skyModel;
+ // Render-only preparation, kept with cached static terrain across rounds.
+ SurfaceLayerStats surfaceLayers;
  std::shared_ptr<const Collision> objectHitCollision;
  std::optional<SceneSnapshot> objectSnapshot;size_t activeObjectComponents=0;
  std::shared_ptr<const std::vector<ObjectBinding>> objectBindings;

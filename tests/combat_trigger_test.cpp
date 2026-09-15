@@ -1,11 +1,14 @@
 #include "combat_service.h"
 #include <iostream>
+#include <memory>
 #include <stdexcept>
 using namespace mgo2win;
 namespace {
 void check(bool value,const char* message){if(!value)throw std::runtime_error(message);}
 struct Match {
- combat::Identity id{1,1,100};combat::Service host{1};uint32_t sequence=0;
+ // Nine independent matches live for the whole test. Keep their Services
+ // on the heap so their Authority state does not exhaust Windows' 1 MiB stack.
+ combat::Identity id{1,1,100};std::unique_ptr<combat::Service> hostStorage=std::make_unique<combat::Service>(1);combat::Service& host=*hostStorage;uint32_t sequence=0;
  explicit Match(bool automatic=true){
   auto floor=std::make_shared<const stage::Collision>(stage::Collision::make({{-20000,0,-20000},{20000,0,-20000},{20000,0,20000},{-20000,0,20000}},{{{0,1,2}},{{0,2,3}}}));
   // Synthetic timing and ammunition, deliberately unrelated to real AK102.
@@ -22,6 +25,17 @@ struct Match {
 };
 }
 int main(){try{
+ {
+  Match aiming;combat::wire::Input in;in.epoch=1;in.sequence=1;in.pose={{0,2,0}};in.weapon=23;in.aiming=true;
+  auto bytes=combat::wire::encode(in);check(bytes[5]==19&&std::get<combat::wire::Input>(combat::wire::decode(bytes)).aiming,"Aim state round trip");
+  check(aiming.host.receive(aiming.id,bytes,100),"Aim input admitted");aiming.tick(100);check(aiming.player().aiming&&aiming.player().ammo==20,"Aim presentation does not fire");
+  combat::wire::Frame frame;frame.status=combat::wire::Status::active;frame.snapshot=aiming.host.authority().snapshot();auto copied=std::get<combat::wire::Frame>(combat::wire::decode(combat::wire::encode(frame)));check(copied.snapshot.players[1]->aiming,"Remote aim state survives snapshot");
+  auto old=bytes;old[5]=17;check(!combat::wire::recognized(old),"Older peers rejected explicitly");
+  auto up=in;up.sequence=2;up.aiming=false;check(!combat::wire::coalesce_input(in,up).aiming,"Latest aim release wins");
+  auto reload=in;reload.sequence=2;reload.aiming=false;reload.reload=true;check(!combat::wire::coalesce_input(in,reload).aiming,"Reload cancels aim");
+  check(aiming.host.receive(aiming.id,combat::wire::encode(up),150),"Aim release admitted");aiming.tick(150);check(!aiming.player().aiming,"Aim release applied");
+  in.sequence=3;check(aiming.host.receive(aiming.id,combat::wire::encode(in),200),"Second aim admitted");aiming.tick(200);aiming.tick(2000);check(!aiming.player().aiming,"Timed-out aim clears");
+ }
  Match automatic;automatic.input(100,true);automatic.tick(100);automatic.tick(199);check(automatic.player().ammo==19,"interval enforced on host ticks");
  automatic.tick(200);automatic.tick(300);check(automatic.player().ammo==17,"held automatic fires without additional packets");
  automatic.input(350);automatic.tick(350);automatic.tick(450);check(automatic.player().ammo==17,"newest release stops automatic fire");
@@ -41,7 +55,12 @@ int main(){try{
  combat::wire::Input down{1,1,{{0,2,0}},23,true,false,true},up{1,2,{{0,2,20}},23};
  auto merged=combat::wire::coalesce_input(down,up);check(merged.pose.feet[2]==20&&!merged.fire&&merged.firePressed,"sender preserves tap and release separately");
  up.suspended=true;merged=combat::wire::coalesce_input(merged,up);check(merged.suspended&&!merged.firePressed,"sender suspension cancels pending actions");
- auto encoded=combat::wire::encode(down);auto old=encoded;old[5]=2;bool rejected=false;try{combat::wire::decode(old);}catch(const combat::wire::Invalid&){rejected=true;}check(rejected,"v2 cannot be decoded as v4 input");
- for(unsigned flags=0;flags<256;++flags){auto bytes=encoded;bytes[bytes.size()-5]=uint8_t(flags);bool accepted=true;try{combat::wire::decode(bytes);}catch(const combat::wire::Invalid&){accepted=false;}check(accepted==(flags==0||flags==1||flags==2||flags==4||flags==5||flags==8||flags==16||flags==32||flags==48),"only unambiguous input flags are accepted");}
- std::cout<<"host trigger scheduling: automatic, semi, release, coalesced pulse, reload, timeout, rejected pose/weapon, suspend, native v8 passed\n";return 0;
+ auto encoded=combat::wire::encode(down);auto old=encoded;old[5]=2;bool rejected=false;try{combat::wire::decode(old);}catch(const combat::wire::Invalid&){rejected=true;}check(rejected,"v2 cannot be decoded as v14 input");
+ // GWCB14 preserves the flags prefix and appends ladder action1/anchor2/axis4.
+ constexpr size_t flagsOffset=7+8+4+24+2+1+4;check(encoded.size()==flagsOffset+1+4+7+5+7&&encoded[flagsOffset]==5,"fixture identifies flags before life/cover/special-PC/ladder tails");
+ check(std::get<combat::wire::Input>(combat::wire::decode(encoded))==down,"neutral ladder preserves complete trigger input");
+ auto missingLadder=encoded;missingLadder.resize(missingLadder.size()-7);rejected=false;try{combat::wire::decode(missingLadder);}catch(const combat::wire::Invalid&){rejected=true;}check(rejected,"v14 rejects old input extent instead of defaulting absent ladder");
+ auto ladderWithFire=down;ladderWithFire.ladder={mgo2win::ladder::Action::enter,1,0};rejected=false;try{combat::wire::encode(ladderWithFire);}catch(const combat::wire::Invalid&){rejected=true;}check(rejected,"ladder and trigger cannot share active input");
+ for(unsigned flags=0;flags<256;++flags){auto bytes=encoded;bytes[flagsOffset]=uint8_t(flags);bool accepted=true;try{combat::wire::decode(bytes);}catch(const combat::wire::Invalid&){accepted=false;}check(accepted==(flags==0||flags==1||flags==2||flags==4||flags==5||flags==8||flags==16||flags==32||flags==48||flags==64||flags==65||flags==68||flags==69),"only unambiguous input flags are accepted");}
+ std::cout<<"host trigger scheduling: automatic, semi, release, coalesced pulse, reload, timeout, rejected pose/weapon, suspend, native v14 passed\n";return 0;
 }catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}

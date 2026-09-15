@@ -1,6 +1,7 @@
 #include "menu_audio.h"
 #include "character_screen.h"
 #include "menu_theme.h"
+#include "native_loadout.h"
 #include <algorithm>
 namespace mgo2win {
 namespace {
@@ -36,7 +37,9 @@ void CharacterScreen::update_weapons(){
   context=weapons::SelectionContext{};context->room_restrictions=detailReply_.detail->weapon_restrictions;
  }
  // A catalog's starting value must not masquerade as a received live balance.
+ if(context&&detailReply_.preparation)context->native_operator_grant=supported_weapon(3);
  weaponSelection_->context(context);
+ for(unsigned c=0;c<3;++c)if(!weaponSelection_->selected(weapons::Category(c))&&supported_weapon(weapons::native_loadout::initial[c]))weaponSelection_->choose(weapons::Category(c),weapons::native_loadout::initial[c]);
 }
 void CharacterScreen::open_weapons(){
  if(detailBusy_||detailReply_.join_status!=RoomJoinStatus::joined)return;

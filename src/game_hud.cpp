@@ -26,15 +26,18 @@ void draw(HDC dc,std::span<const HFONT> fonts,const Model&m,unsigned intro){
   DrawTextW(dc,m.name.data(),int(m.name.size()),&r,DT_LEFT|DT_NOPREFIX|DT_SINGLELINE|DT_END_ELLIPSIS);}
  text(m.clan,{96,49,343,67},3,amber);
  menu_fill(dc,96,74,246,10,RGB(54,42,30));if(m.maxHp)menu_fill(dc,96,74,int(uint64_t(246)*std::min(m.hp,m.maxHp)/m.maxHp),10,amber);
+ menu_rect(dc,96,88,246,8,RGB(40,44,30));if(m.maxStamina)menu_rect(dc,96,88,int(uint64_t(246)*std::min(m.stamina,m.maxStamina)/m.maxStamina),8,RGB(205,207,134));
+ if(m.faceSubmerged||m.oxygen<10000){menu_rect(dc,96,88,246,8,RGB(30,44,56));menu_rect(dc,96,88,int(uint64_t(246)*std::min<uint16_t>(m.oxygen,10000)/10000),8,RGB(72,156,225));text(m.oxygen?L"O2":L"O2  0",{350,80,440,103},3,m.oxygen?RGB(97,184,244):RGB(255,125,94));}
  menu_fill(dc,550,18,180,78,RGB(67,50,25));text(mode_label(m.rule,true),{550,21,730,43},3,amber,DT_CENTER);text(time_label(m.remainingMs),{550,44,730,82},0,amber,DT_CENTER);
  if(m.rule==0&&m.rank)text(std::to_wstring(m.rank)+L"位  K "+std::to_wstring(m.kills)+L" / D "+std::to_wstring(m.deaths),{770,30,1250,65},2,amber,DT_RIGHT);
  int y=465;if(m.dpKnown){text(L"DP : "+std::to_wstring(m.dp),{24,y,350,y+25},3,amber);y+=25;}
  for(const auto&skill:m.skills){if(y>668)break;text(L"★ "+skill,{24,y,425,y+23},3,amber);y+=23;}
- menu_fill(dc,945,606,310,87,RGB(45,38,28));text(m.weapon,{958,613,1246,640},2,amber,DT_RIGHT);text(std::to_wstring(m.ammo)+L" / "+std::to_wstring(m.reserve),{958,644,1246,681},0,amber,DT_RIGHT);
+ menu_fill(dc,945,606,310,87,RGB(45,38,28));text(m.weapon,{958,613,1246,640},2,amber,DT_RIGHT);text(m.infiniteAmmo?L"∞":std::to_wstring(m.ammo)+L" / "+std::to_wstring(m.reserve),{958,644,1246,681},0,amber,DT_RIGHT);
  if(m.ended){menu_fill(dc,0,228,1280,100,RGB(16,20,28));text(L"時間終了",{0,233,1280,263},1,amber,DT_CENTER);text(L"次のラウンドを準備しています",{0,266,1280,298},1,white,DT_CENTER);text(m.rule==0&&m.rank?(m.rank==1?(m.tied?L"同率1位":L"1位"):std::to_wstring(m.rank)+L"位"):L"チーム勝敗集計は未対応",{0,300,1280,326},3,white,DT_CENTER);}
- else if(!m.alive)text(L"戦闘不能 — 再出撃を待っています",{390,565,900,601},1,white,DT_CENTER);
+ else if(!m.alive){menu_fill(dc,360,486,560,113,RGB(27,31,31));text(L"戦闘不能",{370,495,910,532},0,amber,DT_CENTER);text(m.respawnWaiting?L"再出撃まで "+std::to_wstring((m.respawnRemainingMs+999)/1000)+L" 秒":L"再出撃を準備しています",{370,540,910,570},1,white,DT_CENTER);text(L"武器選択後に再出撃できます",{370,574,910,596},3,white,DT_CENTER);}
  else if(m.reloading)text(L"RELOADING",{948,582,1250,607},3,amber,DT_RIGHT);
- if(intro&&!m.ended){menu_fill(dc,0,228,1280,76,RGB(16,20,28));auto c=RGB(80*intro/255,143*intro/255,255*intro/255);text(mode_label(m.rule),{0,233,1280,263},1,c,DT_CENTER);text(m.rule==0?L"出会うPCを倒せ！":m.rule==1?L"敵チームのPCを倒せ！":L"ROUND START",{0,266,1280,298},1,c,DT_CENTER);}
+ if(!m.actionNotice.empty())text(m.actionNotice,{300,685,1250,716},3,amber,DT_RIGHT);
+ if(intro&&!m.ended&&m.alive){menu_fill(dc,0,228,1280,76,RGB(16,20,28));auto c=RGB(80*intro/255,143*intro/255,255*intro/255);text(mode_label(m.rule),{0,233,1280,263},1,c,DT_CENTER);text(m.rule==0?L"出会うPCを倒せ！":m.rule==1?L"敵チームのPCを倒せ！":L"ROUND START",{0,266,1280,298},1,c,DT_CENTER);}
  RestoreDC(dc,saved);
 }
 void paint_clan_image(std::span<uint32_t> surface,int width,int height,HBITMAP image){

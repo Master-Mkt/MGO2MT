@@ -26,6 +26,11 @@ int main(int argc,char**argv){
   auto saved=menu.take_saved();check(saved&&saved->entries==std::vector<skills::Choice>{{0,1}}&&!menu.take_saved()&&!menu.visible(),"save returns selection once after closing");
   menu.open(catalog,*saved,4,false);key(VK_RIGHT);key(VK_RETURN);key(VK_DELETE);key(VK_F6);check(menu.draft()==*saved&&menu.cues().empty(),"round-active read-only mode rejects all edit paths");key(VK_ESCAPE);cue(menu_audio::Cancel);
   menu.open(catalog,*saved,8);key(VK_F6);cue(menu_audio::Confirm);check(menu.draft().entries.empty(),"explicit clear removes selection");key(VK_ESCAPE);cue(menu_audio::Cancel);check(menu.draft()==*saved,"cancel also restores clear action");
+  menu.open(catalog,{});menu.apply_allowed(false);menu.notice(L"取得待機");key(VK_F10);check(menu.visible()&&!menu.take_saved()&&menu.displayed_notice()==L"取得待機","GET pending blocks save and explains waiting");
+  skills::Loadout remote{{{1,3},{2,3}}};menu.synchronize(remote,8);menu.apply_allowed(true);check(menu.draft()==remote&&menu.capacity()==8&&!menu.changed(),"pristine open editor receives authoritative selection and expanded capacity");
+  key(VK_F6);cue(menu_audio::Confirm);key(VK_RETURN);cue(menu_audio::Confirm);auto dirty=menu.draft();menu.synchronize(remote,4);check(menu.draft()==dirty&&menu.changed()&&menu.capacity()==4,"GET preserves dirty selection while refreshing capacity");
+  menu.notice(L"保存失敗");check(menu.displayed_notice()==L"保存失敗","server failure replaces stale waiting message");key(VK_ESCAPE);cue(menu_audio::Cancel);check(menu.draft()==remote,"cancel uses latest authoritative baseline");
+  menu.open(catalog,remote,8);menu.synchronize({},4,true);key(VK_F10);check(menu.visible()&&!menu.take_saved()&&menu.draft()==remote,"preserved draft over reduced capacity cannot be saved");key(VK_ESCAPE);cue(menu_audio::Cancel);
   menu.open(catalog,{});key(VK_NEXT);cue(menu_audio::Cursor);check(menu.focus()==8,"next-page navigation");
   HWND w=CreateWindowExW(0,L"STATIC",L"skill menu test",WS_POPUP,0,0,1280,720,nullptr,nullptr,nullptr,nullptr);check(w!=nullptr,"offscreen window");
   menu.message(w,WM_LBUTTONUP,0,MAKELPARAM(300,211));cue(menu_audio::Confirm);check(menu.draft().entries==std::vector<skills::Choice>{{8,1}},"mouse selects correct paged skill");

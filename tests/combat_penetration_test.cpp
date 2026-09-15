@@ -1,6 +1,7 @@
 #include "combat_ballistics.h"
 #include "combat_initial_profile.h"
 #include "combat_service.h"
+#include "combat_wire_budget.h"
 #include "combat_audio.h"
 #include "bullet_decals_overlay.h"
 #include <iostream>
@@ -47,7 +48,19 @@ int main(int argc,char** argv){try{
  // exercises Service's global delivery bound, separate from peer wire windows.
  {auto source=scene(0,64);auto v=source->vertices;for(size_t i=4;i<v.size();++i)v[i][0]*=10;auto wide=std::make_shared<const stage::Collision>(stage::Collision::make(v,source->triangles,source->materials));Service burst(10);burst.configure(wide,initial_profiles(20,1,0));burst.authority().active(true);
   for(uint8_t slot=0;slot<24;++slot){Identity who{slot,uint16_t(100+slot),uint32_t(1000+slot)};check(burst.admit(who)&&burst.receive(who,wire::encode(wire::Accept{10}),0),"burst accepted peer");auto p=pose(0);p.feet[0]=(int(slot)-12)*600.f;check(burst.authority().join(who,1,p,1000,1000,std::array<uint16_t,1>{25},0),"24 separated shooters");wire::Input shot;shot.epoch=10;shot.sequence=1;shot.pose=p;shot.weapon=25;shot.firePressed=true;check(burst.receive(who,wire::encode(shot),0),"24 simultaneous native shots");}
-  burst.deliveries();burst.poll(0);auto sent=burst.deliveries();check(sent.size()>9000&&sent.size()<16384,"global delivery bound supports24x24 penetration frames");size_t count=0;for(const auto& d:sent){check(d.payload.size()<=2000,"full24player frames keep2000byte ceiling");if(d.recipient.slot==0){auto frame=std::get<wire::Frame>(wire::decode(d.payload));count+=frame.events.size();}}check(count==24*65,"all65events per shot retained for one recipient");}
+  burst.deliveries();burst.poll(0);auto sent=burst.deliveries();
+  // Derive current capacity from the actual full roster and recipient footer,
+  // retaining every shot and event rather than relying on old schema byte counts.
+  std::array<size_t,24> counts{},burstFrames{};std::array<uint64_t,24> last{},revision{};std::array<SopView,24> footer{};std::array<std::vector<wire::Frame>,24> eventChunks;std::array<std::vector<Event>,24> received;size_t maximumBytes=0;
+  for(const auto& d:sent){check(d.payload.size()<=2000,"full24player frames keep2000byte ceiling");maximumBytes=std::max(maximumBytes,d.payload.size());auto frame=std::get<wire::Frame>(wire::decode(d.payload));const auto slot=d.recipient.slot;++burstFrames[slot];if(!frame.events.empty())eventChunks[slot].push_back(frame);received[slot].insert(received[slot].end(),frame.events.begin(),frame.events.end());check(frame.events.size()<=4&&frame.sop.recipient==d.recipient,"all recipients keep bounded chunks and correct footer");check(frame.snapshot.revision>=revision[slot],"recipient revisions ordered");if(frame.snapshot.revision==revision[slot])check(frame.sop==footer[slot],"same-revision split footer identical");revision[slot]=frame.snapshot.revision;footer[slot]=frame.sop;for(const auto&e:frame.events){check(e.id==last[slot]+1,"all recipient event IDs consecutive with no loss or duplicate");last[slot]=e.id;++counts[slot];}}
+  const auto measured=combat_test::check_batches(eventChunks[0],65,24);const size_t expectedPerPeer=measured.chunks+1;
+  check(sent.size()==24*expectedPerPeer&&sent.size()<65536,"exact actual-kind burst fits current global delivery cap");
+  for(size_t slot=0;slot<24;++slot){const auto peer=combat_test::check_batches(eventChunks[slot],65,24);
+   check(peer.chunks==measured.chunks&&peer.maximumBytes==measured.maximumBytes&&received[slot]==received[0],"all recipients receive identical events with exact measured splitting");
+   check(counts[slot]==24*65&&burstFrames[slot]==expectedPerPeer&&burstFrames[slot]<1024,"every recipient receives all shots within its existing mandatory FIFO");}
+  check(maximumBytes==measured.maximumBytes,"exact maximum encoded full roster packet for actual event kinds");
+  std::cout<<"penetration24shooters deliveries="<<sent.size()<<" per_peer="<<expectedPerPeer<<" max_bytes="<<maximumBytes<<" conservative_capacity="<<measured.conservativeCapacity<<" events_per_peer="<<counts[0]<<'\n';}
+
  // A mark requires a matching static surface and is occluded by later geometry.
  Event impact;impact.epoch=9;impact.id=1;impact.kind=EventKind::impact;impact.position={0,1552,1500};impact.normal={0,0,-1};
  auto mark=decals::static_impact(impact,{9,1},*wall);check(bool(mark),"static impact revalidated against GEOM");decals::Pool pool({1024,120000,10000,32,1});pool.synchronize({9,1},0,0);pool.synchronize({9,1},1,1);check(pool.emit(*mark,1),"new event creates mark");

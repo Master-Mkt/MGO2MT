@@ -1,7 +1,7 @@
 {
   "schema": "mgo2win.preset_radio.reference.v1",
   "source_elf_sha256": "1a55a41ee5afdebd89075bd205e412c8311f569ba9dc022f629bb63fb4bfd13a",
-  "source_gcx": "local-source/scenerio.gcx",
+  "source_gcx": "scenerio.gcx",
   "source_gcx_sha256": "a5601bf0c8020316a05c84c04a560228a392d0aee36c57433a721876fb0a3489",
   "text_variant": {
     "original_actor_type": 7,

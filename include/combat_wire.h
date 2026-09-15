@@ -8,14 +8,14 @@ namespace mgo2win::combat::wire {
 // adds those for host validation and exactly-once effects. It is not an original
 // MGO2 opcode. Unrecognized peers never receive inputs or state records.
 constexpr uint8_t opcode=0xef;
-constexpr uint8_t version=8;
+constexpr uint8_t version=19;
 constexpr uint32_t maximumRoundDurationMs=24u*60*60*1000;
 enum class Status:uint8_t {awaiting_world,awaiting_profile,awaiting_spawn,preparing,active,ended};
 struct Offer {uint64_t epoch=0;Identity self;bool operator==(const Offer&)const=default;};
 struct Accept {uint64_t epoch=0;bool operator==(const Accept&)const=default;};
 // fire is the newest held level; firePressed retains one short press while
 // congested. They cannot be collapsed to one bit without phantom auto fire.
-struct Input {uint64_t epoch=0;uint32_t sequence=0;Pose pose;uint16_t weapon=0;bool fire=false,reload=false,firePressed=false,suspended=false;uint32_t life=1;bool specialPressed=false,specialHeld=false;bool operator==(const Input&)const=default;};
+struct Input {uint64_t epoch=0;uint32_t sequence=0;Pose pose;uint16_t weapon=0;bool fire=false,reload=false,firePressed=false,suspended=false;uint32_t life=1;bool specialPressed=false,specialHeld=false;EvadeKind evadeKind=EvadeKind::none;uint32_t evadeRequest=0;cover::Intent cover;special_pc::Intent specialPc;ladder::Intent ladder;bool aiming=false;bool operator==(const Input&)const=default;};
 Input coalesce_input(const Input& older,const Input& newer);
 struct Frame {Snapshot snapshot;Status status=Status::awaiting_world;std::vector<Event> events;SopView sop;bool operator==(const Frame&)const=default;};
 enum class RoundPhase:uint8_t {waiting,selecting,active,ended};
@@ -43,6 +43,7 @@ struct Preparation {
  // Independent native host clock; zero duration policy means unknown.
  bool roundClock=false;uint32_t roundRemainingMs=0;
  bool freeForAll=false;
+ bool respawnWaiting=false;uint32_t respawnRemainingMs=0;
  bool operator==(const Preparation&)const=default;
 };
 using Record=std::variant<Offer,Accept,Input,Frame,Command,Preparation>;

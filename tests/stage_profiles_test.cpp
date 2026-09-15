@@ -7,7 +7,7 @@
 #include <thread>
 using namespace mgo2win;
 int main(int argc,char**argv){
- for(unsigned i=0;i<256;++i)assert(stage::runtime_stage_supported(uint8_t(i))==(i==1||i==4||i==20||i==21));
+ for(unsigned i=0;i<256;++i)assert(stage::runtime_stage_supported(uint8_t(i))==(i==1||i==4||i==7||i==20||i==21));
  assert(stage::asset_path("data/stages",1,".gwm")==std::filesystem::path("data/stages/n001a.gwm"));
  assert(stage::asset_path("data/stages",20,".objects.cfg")==std::filesystem::path("data/stages/n022a.objects.cfg"));
  for(auto suffix:{"", "../other", ".gwm/other", ".GWM"}){bool caught=false;try{stage::asset_path("x",20,suffix);}catch(const std::invalid_argument&){caught=true;}assert(caught);}

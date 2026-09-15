@@ -31,6 +31,9 @@ struct Collision {
  std::optional<CapsuleHit> sweep_segment(Vec3 a,Vec3 b,Vec3 displacement,float radius,float skin=1)const;
  std::vector<CollisionContact> contacts(Vec3 a,Vec3 b,float radius,float margin=1,size_t limit=32)const;
  bool clear(Vec3 feet,Capsule)const;
+ // Native finite-box broad phase. The caller validates finite ordered bounds
+ // and performs exact triangle contact; these are candidates, not solid hits.
+ std::vector<unsigned> bounds_candidates(Vec3 lo,Vec3 hi)const{return candidates(lo,hi);}
 private:
  struct Node {Vec3 lo{},hi{};unsigned first=0,count=0,left=0,right=0;};
  std::vector<Node> nodes_;std::vector<unsigned> order_;

@@ -8,12 +8,24 @@
 namespace mgo2win::items {
 enum class Domain : uint8_t {weapon,equipment,world_item};
 enum class DropOverride { original_default, deny, allow };
+enum class PolicyBasis { unresolved, original_fact, local_override };
+struct PolicyDecision {bool value=false;PolicyBasis basis=PolicyBasis::unresolved;};
 struct DropPolicy {
  std::optional<bool> originalDrop,originalEmptyDiscard;
  DropOverride drop=DropOverride::original_default;
  std::optional<bool> emptyDiscard;
- bool allows_drop() const noexcept {return drop==DropOverride::allow||(drop==DropOverride::original_default&&originalDrop.value_or(false));}
- bool discards_empty() const noexcept {return emptyDiscard.value_or(originalEmptyDiscard.value_or(false));}
+ // Unknown original facts fail closed at runtime, but must not be displayed as
+ // a verified original prohibition. Explicit native settings stay distinguishable.
+ PolicyDecision drop_decision() const noexcept {
+  if(drop!=DropOverride::original_default)return {drop==DropOverride::allow,PolicyBasis::local_override};
+  return {originalDrop.value_or(false),originalDrop?PolicyBasis::original_fact:PolicyBasis::unresolved};
+ }
+ PolicyDecision empty_decision() const noexcept {
+  if(emptyDiscard)return {*emptyDiscard,PolicyBasis::local_override};
+  return {originalEmptyDiscard.value_or(false),originalEmptyDiscard?PolicyBasis::original_fact:PolicyBasis::unresolved};
+ }
+ bool allows_drop() const noexcept {return drop_decision().value;}
+ bool discards_empty() const noexcept {return empty_decision().value;}
 };
 struct PolicyEntry {uint32_t id=0;Domain domain=Domain::weapon;std::string name,source,originalKind;DropPolicy policy;};
 class DropPolicies {

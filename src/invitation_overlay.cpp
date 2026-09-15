@@ -1,3 +1,4 @@
+#include "menu_font.h"
 #include "invitation_overlay.h"
 #include "menu_theme.h"
 #include <algorithm>
@@ -28,7 +29,7 @@ struct Overlay::Impl {
  HDC dc=nullptr;HBITMAP bitmap=nullptr;HFONT font=nullptr;HGDIOBJ oldBitmap=nullptr,oldFont=nullptr;uint32_t*pixels=nullptr;
  Impl(){dc=CreateCompatibleDC(nullptr);BITMAPINFO info{};info.bmiHeader.biSize=40;info.bmiHeader.biWidth=canvasW;info.bmiHeader.biHeight=-canvasH;info.bmiHeader.biPlanes=1;info.bmiHeader.biBitCount=32;
   if(dc)bitmap=CreateDIBSection(dc,&info,DIB_RGB_COLORS,reinterpret_cast<void**>(&pixels),nullptr,0);
-  font=CreateFontW(-23,0,0,0,FW_NORMAL,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,ANTIALIASED_QUALITY,FIXED_PITCH,L"MS Gothic");
+  font=create_menu_font(23,FW_NORMAL);
   if(!dc||!bitmap||!font||!pixels){release();throw std::runtime_error("Invitation GDI allocation");}
   oldBitmap=SelectObject(dc,bitmap);oldFont=SelectObject(dc,font);SetBkMode(dc,TRANSPARENT);
  }

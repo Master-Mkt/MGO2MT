@@ -4,6 +4,12 @@
 #include <stdexcept>
 namespace mgo2win::combat::material_effects {
 namespace {
+// Independently checked against the named callback option in all four GCX files.
+// 6690BC -> 85C00 -> 64F8C0 -> flash / two line emitters.
+constexpr uint32_t metalMaterials[]={0x45BCB4,0x48C4B8,0x48C4B9,0x48C4BA,0x48C4BB,
+ 0x48C4BC,0x65C426,0x7818B1,0x7818B2,0x7818B3,0x7ADCCA,0x7ADCCB,0xA1DCCB,0xB920C5,0xB920C6};
+// 885BE5 -> 868C0 -> 64EB30 -> wood_frag2_cm / particles 7,73,74.
+constexpr uint32_t woodMaterials[]={0x189CD4,0x189CD5,0x189CD6,0x189CD7,0x989CB2};
 bool finite(Vec3 v){return std::all_of(v.begin(),v.end(),[](float x){return std::isfinite(x)&&std::abs(x)<1000000.f;});}
 float dot(Vec3 a,Vec3 b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];}
 Vec3 cross(Vec3 a,Vec3 b){return {a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]};}
@@ -11,6 +17,12 @@ Vec3 scale(Vec3 a,float s){for(auto&x:a)x*=s;return a;}
 Vec3 at(Vec3 p,Vec3 v,float t,float gravity){for(size_t i=0;i<3;++i)p[i]+=v[i]*t;p[1]-=.5f*gravity*t*t;return p;}
 uint64_t mix(uint64_t x){x^=x>>30;x*=0xbf58476d1ce4e5b9ULL;x^=x>>27;x*=0x94d049bb133111ebULL;return x^(x>>31);}
 std::array<float,4> color(Kind k){switch(k){case Kind::metal:return {1.f,.78f,.3f,1.f};case Kind::wood:return {.57f,.36f,.16f,1.f};case Kind::stone:return {.65f,.61f,.54f,1.f};case Kind::glass:return {.72f,.9f,1.f,.8f};default:return {};}}
+}
+Kind verified_kind(uint8_t map,uint32_t material)noexcept{
+ if(map!=1&&map!=4&&map!=20&&map!=21)return Kind::unknown;
+ if(std::binary_search(std::begin(metalMaterials),std::end(metalMaterials),material))return Kind::metal;
+ if(std::binary_search(std::begin(woodMaterials),std::end(woodMaterials),material))return Kind::wood;
+ return Kind::unknown;
 }
 bool Pool::valid(const Policy&p)noexcept{return p.capacity<=maximumCapacity&&p.lifetimeMs>0&&p.lifetimeMs<=3000&&p.particlesPerHit>0&&p.particlesPerHit<=32&&std::isfinite(p.speed)&&p.speed>0&&p.speed<=10000&&std::isfinite(p.gravity)&&p.gravity>=0&&p.gravity<=20000&&std::isfinite(p.surfaceOffset)&&p.surfaceOffset>0&&p.surfaceOffset<=10&&std::isfinite(p.trailSeconds)&&p.trailSeconds>0&&p.trailSeconds<=.1f;}
 Pool::Pool(Policy p):policy_(p){if(!valid(p))throw std::invalid_argument("Invalid native impact particle policy");}

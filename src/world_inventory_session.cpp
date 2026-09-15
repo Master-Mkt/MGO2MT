@@ -7,11 +7,24 @@ void ClientSession::reset(){auto generation=state_.connection+1;state_={};state_
 void ClientSession::disconnect(){std::lock_guard lock(mutex_);reset();}
 ClientState ClientSession::state()const{std::lock_guard lock(mutex_);return state_;}
 bool ClientSession::submit(wire::Action action,uint8_t slot,uint64_t entity){
- std::lock_guard lock(mutex_);if(state_.status!=ClientStatus::ready||!state_.context.active||!state_.held||queued_||pending_||state_.delivery==Delivery::unconfirmed||unsigned(action)<1||unsigned(action)>5||!(state_.capabilities&(1u<<(unsigned(action)-1)))||next_==std::numeric_limits<uint64_t>::max())return false;
+ std::lock_guard lock(mutex_);return submit_locked(action,slot,entity);
+}
+bool ClientSession::submit_equip(uint64_t connection,Scope scope,Actor actor,uint8_t slot,uint32_t item,uint64_t revision){
+ std::lock_guard lock(mutex_);
+ if(state_.connection!=connection||state_.context.scope!=scope||state_.context.actor!=actor||!state_.held||slot>=held_slot_count||!item||state_.held->slots[slot].contents.item!=item||state_.held->slots[slot].revision!=revision)return false;
+ return submit_locked(wire::Action::equip,slot,0);
+}
+bool ClientSession::submit_drop(uint64_t connection,Scope scope,Actor actor,uint8_t slot,uint32_t item,uint64_t revision){
+ std::lock_guard lock(mutex_);
+ if(state_.connection!=connection||state_.context.scope!=scope||state_.context.actor!=actor||!state_.held||slot>=held_slot_count||!item||state_.held->slots[slot].contents.item!=item||state_.held->slots[slot].revision!=revision)return false;
+ return submit_locked(wire::Action::drop,slot,0);
+}
+bool ClientSession::submit_locked(wire::Action action,uint8_t slot,uint64_t entity){
+ if(state_.status!=ClientStatus::ready||!state_.context.active||!state_.held||queued_||pending_||state_.delivery==Delivery::unconfirmed||unsigned(action)<1||unsigned(action)>6||!(state_.capabilities&(1u<<(unsigned(action)-1)))||next_==std::numeric_limits<uint64_t>::max())return false;
  wire::Command command;command.header=header_;command.header.sequence=++next_;command.action=action;
  command.heldSlot=slot;command.amount=action==wire::Action::install?1:0;
  if(action==wire::Action::use){command.heldSlot=255;command.amount=1;command.resource=Consume::magazine;}
- else{if(slot>=3)return false;command.heldRevision=state_.held->slots[slot].revision;}
+ else{if(slot>=held_slot_count)return false;if(action==wire::Action::equip&&!state_.held->slots[slot].contents.item)return false;command.heldRevision=state_.held->slots[slot].revision;}
  if(action==wire::Action::pickup||action==wire::Action::recover||action==wire::Action::use){
   if(!state_.world)return false;auto it=std::find_if(state_.world->entities.begin(),state_.world->entities.end(),[&](const Entity&e){return e.key.id==entity;});if(it==state_.world->entities.end())return false;
   command.entity=entity;command.entityRevision=it->revision;
@@ -28,8 +41,8 @@ std::vector<std::vector<uint8_t>> ClientSession::pump(ClientContext context,uint
   if(auto offer=std::get_if<wire::Offer>(&*record)){if(state_.status!=ClientStatus::probing||h.sequence||offer->capacity.dropped>4096||offer->capacity.installed>4096)continue;state_.status=ClientStatus::ready;state_.capabilities=offer->capabilities;receiver_.bind(header_,offer->capacity);}
   else if(state_.status==ClientStatus::ready){
    if(auto held=std::get_if<wire::Held>(&*record)){
-    bool fresh=true,changed=false;for(size_t i=0;state_.held&&i<3;++i){const auto&a=held->slots[i];const auto&b=state_.held->slots[i];if(a.revision<b.revision||(a.revision==b.revision&&a.contents!=b.contents))fresh=false;changed|=a.revision!=b.revision;}
-    if(state_.held&&!changed&&held->selectedSlot!=state_.held->selectedSlot)fresh=false;
+    bool fresh=true,changed=false;for(size_t i=0;state_.held&&i<held_slot_count;++i){const auto&a=held->slots[i];const auto&b=state_.held->slots[i];if(a.revision<b.revision||(a.revision==b.revision&&a.contents!=b.contents))fresh=false;changed|=a.revision!=b.revision;}
+    if(state_.held&&!changed&&(held->selectedSlot!=state_.held->selectedSlot||held->selectedEquipment!=state_.held->selectedEquipment))fresh=false;
     if(fresh)state_.held=*held;
    }else if(std::holds_alternative<wire::Page>(*record)){receiver_.receive(body);state_.world=receiver_.state();}
    else if(auto reply=std::get_if<wire::Reply>(&*record);reply&&pending_&&reply->header.sequence==pending_->header.sequence&&reply->action==pending_->action&&reply->heldSlot==pending_->heldSlot){state_.delivery=reply->result==ResultCode::ok?Delivery::confirmed:Delivery::rejected;state_.result=reply->result;pending_.reset();}

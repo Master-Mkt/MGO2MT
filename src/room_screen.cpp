@@ -1,12 +1,35 @@
 #include "chat_view.h"
 #include "combat_standings.h"
 #include "menu_audio.h"
+#include "native_loadout.h"
 #include "character_screen.h"
 #include "menu_theme.h"
 #include "name_text_fit.h"
 #include <algorithm>
 namespace mgo2win {
 namespace {void fitted_name(HDC dc,HFONT font,std::wstring_view name,RECT rect,COLORREF color){NameTextFit fit(dc,font,name,rect.right-rect.left);SetTextColor(dc,color);SetBkMode(dc,TRANSPARENT);DrawTextW(dc,name.data(),int(name.size()),&rect,DT_LEFT|DT_SINGLELINE|DT_NOPREFIX);}}
+bool CharacterScreen::room_loading()const{
+ if(!detailVisible_)return false;
+ const auto status=detailReply_.join_status;
+ return (detailBusy_&&detailAction_.event==RoomEvent::join&&status!=RoomJoinStatus::joined)||
+  status==RoomJoinStatus::host_connecting||status==RoomJoinStatus::host_profile||status==RoomJoinStatus::host_sync||
+  (status==RoomJoinStatus::joined&&(stageStatus_==stage::Status::idle||stageStatus_==stage::Status::loading));
+}
+void CharacterScreen::draw_room_loading(){
+ // Near-black is opaque through the existing black color-key UI compositor.
+ menu_rect(dc_,0,0,1280,720,RGB(1,1,1));
+ SelectObject(dc_,fonts_[1]);SetTextColor(dc_,RGB(220,214,198));SetBkMode(dc_,TRANSPARENT);
+ RECT logo{730,635,1230,678};DrawTextW(dc_,L"METAL GEAR ONLINE",-1,&logo,DT_RIGHT|DT_SINGLELINE|DT_NOPREFIX);
+ SelectObject(dc_,fonts_[3]);RECT label{730,681,1230,707};
+ const auto dots=std::wstring(1+(clock_()/400)%3,L'.');const auto text=L"NOW LOADING"+dots;
+ DrawTextW(dc_,text.data(),int(text.size()),&label,DT_RIGHT|DT_SINGLELINE|DT_NOPREFIX);
+}
+void CharacterScreen::toggle_gameplay_briefing(){
+ if(detailBusy_||detailReply_.join_status!=RoomJoinStatus::joined||room_loading())return;
+ if(briefingPanel_!=briefing::Panel::none){briefingPanel_=briefing::Panel::none;briefingYes_=false;cues_.push_back(menu_audio::Cancel);return;}
+ if(matchVisible_){matchVisible_=false;briefingFocus_=0;cues_.push_back(menu_audio::Confirm);}
+ else if(combatEntered_){matchVisible_=true;cues_.push_back(menu_audio::Cancel);}
+}
 std::wstring CharacterScreen::player_display_name(uint32_t id,std::wstring_view fallback)const{
  const auto name=roomRequests_.nameDirectory->display(id,{});if(!name.empty())return hud::utf8(name);
  if(id&&id==selectionReply_.character.id)return selectionReply_.character.name;
@@ -24,14 +47,18 @@ void CharacterScreen::request_room_join(){
  if(detailReply_.join_status==RoomJoinStatus::permission_checked)return;
  if(detailReply_.detail->players>=detailReply_.detail->capacity){detailNotice_=L"満員のため参加できません。";return;}
  detailAction_.event=RoomEvent::join;detailAction_.subtype=detailReply_.detail->subtype;
- if(roomRequests_.submit(detailAction_)){detailBusy_=true;detailNotice_.clear();cues_.push_back(menu_audio::Confirm);}
+ if(roomRequests_.submit(detailAction_)){detailBusy_=true;stageStatus_=stage::Status::idle;detailNotice_.clear();cues_.push_back(menu_audio::Confirm);}
  SecureZeroMemory(detailAction_.password.data(),sizeof(detailAction_.password));
 }
 bool CharacterScreen::detail_message(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
  if(weaponsVisible_)return weapon_message(hwnd,msg,wp,lp);
+ if(msg==WM_KEYDOWN&&!(lp&(1LL<<30))&&detailReply_.join_status==RoomJoinStatus::joined&&matchVisible_&&(wp==VK_F9||wp==VK_ESCAPE)){toggle_gameplay_briefing();return true;}
+ if(room_loading()&&detailReply_.join_status==RoomJoinStatus::joined)return true;
+ // Gameplay actions are polled separately, never activate hidden room buttons.
+ if(matchVisible_&&detailReply_.join_status==RoomJoinStatus::joined)return true;
  const bool briefing=detailReply_.join_status==RoomJoinStatus::joined&&!matchVisible_&&!detailBusy_;
  if(briefing&&briefing_message(hwnd,msg,wp,lp))return true;
- if(msg==WM_KEYDOWN&&!(lp&(1LL<<30))&&detailReply_.join_status==RoomJoinStatus::joined){if(wp==VK_F9){round_ready();return true;}if(wp==VK_F7){round_team();return true;}}
+ if(msg==WM_KEYDOWN&&!(lp&(1LL<<30))&&detailReply_.join_status==RoomJoinStatus::joined){if(wp==VK_F9){if(combatEntered_)toggle_gameplay_briefing();else round_ready();return true;}if(wp==VK_F7){round_team();return true;}}
  if(msg==WM_LBUTTONUP&&detailReply_.preparation){RECT r{};GetClientRect(hwnd,&r);if(r.right&&r.bottom){int x=int(short(LOWORD(lp)))*1280/r.right,y=int(short(HIWORD(lp)))*720/r.bottom;if(x>=140&&x<760&&y>=475&&y<507){round_ready();return true;}}}
  if(msg==WM_KEYDOWN&&wp==VK_F4&&!(lp&(1LL<<30))&&detailReply_.join_status==RoomJoinStatus::joined){open_weapons();return true;}
  auto close=[&]{if(detailBusy_||detailReply_.join_status==RoomJoinStatus::joined){if(detailAction_.event==RoomEvent::join){if(!roomRequests_.cancel_join.exchange(true))cues_.push_back(menu_audio::Cancel);detailBusy_=true;detailNotice_=L"接続を中止し、参加解除を確認しています…";}return;}detailVisible_=false;SecureZeroMemory(detailAction_.password.data(),sizeof(detailAction_.password));cues_.push_back(menu_audio::Cancel);};
@@ -52,32 +79,38 @@ bool CharacterScreen::detail_message(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
  }return false;
 }
 void CharacterScreen::draw_room_detail(){
+ if(room_loading()){draw_room_loading();return;}
  if(weaponsVisible_){draw_room_weapons();return;}
  if(matchVisible_&&stageDebugNotice_.empty()&&!stageResetConfirm_&&detailReply_.combat_offer&&detailReply_.combat_state){
   const auto&offer=*detailReply_.combat_offer;const auto&state=*detailReply_.combat_state;
   const auto&self=state.players[offer.self.slot];
   if(state.epoch==offer.epoch&&self&&self->identity==offer.self){
-   hud::Model model;model.name=selectionReply_.character.name;model.hp=self->hp;model.maxHp=self->maxHp;model.ammo=self->ammo;model.reserve=self->reserve;model.alive=self->alive;model.reloading=self->reloadUntil!=0;
+   hud::Model model;model.name=selectionReply_.character.name;model.hp=self->hp;model.maxHp=self->maxHp;model.stamina=self->stamina;model.maxStamina=self->maxStamina;model.oxygen=self->oxygen;model.faceSubmerged=self->faceSubmerged;model.ammo=self->ammo;model.reserve=self->reserve;model.alive=self->alive;model.reloading=self->reloadUntil!=0;
    if(detailReply_.host_roster)for(const auto&p:detailReply_.host_roster->slots)if(p&&p->character==selectionReply_.character.id){model.name=player_display_name(p->character,hud::utf8(p->name));model.clan=hud::utf8(p->clan);break;}
    if(detailReply_.host_match&&detailReply_.host_match->request)model.rule=detailReply_.host_match->request->rotation.rule;
-   if(detailReply_.preparation){model.ended=detailReply_.preparation->phase==combat::wire::RoundPhase::ended;model.dpKnown=detailReply_.preparation->dpEnabled;model.dp=detailReply_.preparation->dpBalance;if(detailReply_.preparation->roundClock)model.remainingMs=detailReply_.preparation->roundRemainingMs;}
+   if(detailReply_.preparation){model.ended=detailReply_.preparation->phase==combat::wire::RoundPhase::ended;model.respawnWaiting=detailReply_.preparation->respawnWaiting;model.respawnRemainingMs=detailReply_.preparation->respawnRemainingMs;model.dpKnown=detailReply_.preparation->dpEnabled;model.dp=detailReply_.preparation->dpBalance;if(detailReply_.preparation->roundClock)model.remainingMs=detailReply_.preparation->roundRemainingMs;}
    if(detailReply_.preparation){auto rows=combat::standings(*detailReply_.preparation);for(const auto&r:rows)if(r.id==offer.self){model.kills=r.kills;model.deaths=r.deaths;model.rank=r.rank;model.tied=std::count_if(rows.begin(),rows.end(),[&](const auto&x){return x.rank==r.rank;})>1;}}
    model.weapon=self->weapon?L"WEAPON "+std::to_wstring(self->weapon):L"装備なし";if(weaponCatalog_)for(const auto&e:weaponCatalog_->entries())if(e.id==self->weapon){model.weapon=hud::utf8(e.display_name);break;}
    auto emblem=roomRequests_.clanEmblem->state();if(emblem.serial!=clanSerial_){clanBitmap_.reset();clanSerial_=emblem.serial;if(emblem.image)clanBitmap_=std::make_unique<clan::Bitmap>(*emblem.image);}drawClanImage_=bool(clanBitmap_);
-   if(self->verifiedSkills){
-    if(self->masteryLevel)model.skills.push_back(L"アサルトライフル Lv."+std::to_wstring(self->masteryLevel));
-    if(self->surveyorLevel)model.skills.push_back(L"サーベイヤー Lv."+std::to_wstring(self->surveyorLevel));
-   }
-   if(model.skills.empty())model.skills.push_back(L"このラウンドのスキル補正なし");
+   model.skills=skill_hud_labels();
+   if(model.skills.empty())model.skills.push_back(L"登録済みスキルなし");
+   else model.skills.insert(model.skills.begin(),L"登録済みスキル");
+   const auto delivery=roomRequests_.inventorySession->state().delivery;
+   if(delivery==items::Delivery::pending)model.actionNotice=L"装備の変更を確認しています…";
+   else if(delivery==items::Delivery::unconfirmed)model.actionNotice=L"変更結果を確認できません。部屋へ入り直してください。";
+   else if(weapons::native_loadout::held_only(self->weapon))model.actionNotice=L"この武器は所持・切替に対応しています。使用動作は準備中です。";
+   if(self->specialPc.kind==special_pc::Kind::gekko){model.infiniteAmmo=true;model.weapon=self->weapon==128?L"GEKKO VULCAN":self->weapon==129?L"GEKKO MISSILE":self->weapon==130?L"GEKKO KICK":L"GEKKO STOMP";model.actionNotice=L"特殊キャラクター：月光";model.skills.clear();}
    hud::draw(dc_,fonts_,model,roundIntro_.opacity(clock_()));chat::draw_history(dc_,fonts_[3],roomRequests_.chatSession->state(),{40,535,900,673},GetTickCount64(),12000);return;
   }
  }
- if(detailReply_.join_status==RoomJoinStatus::joined&&!matchVisible_){draw_briefing();if(briefingPanel_==briefing::Panel::none)chat::draw_history(dc_,fonts_[3],roomRequests_.chatSession->state(),{50,535,980,673},GetTickCount64(),12000);return;}
  auto fill=[&](int x,int y,int w,int h,COLORREF c){menu_fill(dc_,x,y,w,h,c);};
  auto text=[&](std::wstring_view s,int x,int y,int w,int h,int font,COLORREF c,UINT flags=DT_LEFT){RECT r{x,y,x+w,y+h};SelectObject(dc_,fonts_[font]);SetTextColor(dc_,menu_text_color(c));SetBkMode(dc_,TRANSPARENT);DrawTextW(dc_,s.data(),int(s.size()),&r,flags|DT_NOPREFIX);};
  bool briefing=detailReply_.join_status==RoomJoinStatus::joined&&!matchVisible_;
- menu_heading(dc_,fonts_[0],matchVisible_?L"STAGE INFO":briefing?L"BRIEFING":L"ROOM");
  auto light=RGB(237,231,218),orange=RGB(255,208,150);
+ const bool debug=matchVisible_&&!stageDebugNotice_.empty();
+ if(debug)draw_room_match();else{
+ if(briefing){draw_briefing();if(briefingPanel_==briefing::Panel::none)chat::draw_history(dc_,fonts_[3],roomRequests_.chatSession->state(),{50,535,980,673},GetTickCount64(),12000);return;}
+ menu_heading(dc_,fonts_[0],matchVisible_?L"STAGE INFO":briefing?L"BRIEFING":L"ROOM");
  if(briefing){
   const wchar_t* labels[]={L"参加者",L"ルール",L"出撃",L"スキル",L"装身具",L"操作設定",L"出撃OK",L"ステージ情報",L"退室"};
   for(unsigned i=0;i<6;++i){int x=128+74*i;menu_tab(dc_,x,145,66,54,briefingFocus_==i);}
@@ -134,6 +167,7 @@ void CharacterScreen::draw_room_detail(){
  text(message,140,542,1000,67,1,orange,DT_WORDBREAK);
  for(unsigned i=1;i<=2;++i){int x=390+int(i-1)*390;bool joined=detailReply_.join_status==RoomJoinStatus::joined;bool enabled=i==2?(!detailBusy_||detailAction_.event==RoomEvent::join):(!detailBusy_&&(joined||(detailReply_.detail&&roomReply_.status==RoomStatus::ready&&!*roomRequests_.uncertain&&detailReply_.join_status!=RoomJoinStatus::permission_checked&&detailReply_.detail->players<detailReply_.detail->capacity)));fill(x,619,360,44,detailFocus_==i&&enabled?RGB(151,168,126):RGB(50,66,52));text(i==1?(joined?(matchVisible_?L"参加者一覧":L"ステージ情報"):L"ルームに参加"):joined?L"退室する":detailBusy_?L"接続を中止":L"ルーム一覧へ戻る",x,629,360,30,1,enabled?(detailFocus_==i?RGB(30,20,12):light):RGB(175,167,158),DT_CENTER);}
  text(detailReply_.join_status==RoomJoinStatus::joined?L"↑ ↓ / Tab：項目    Enter：決定    F4：武器    F9 / START：出撃OK・取消    F7：チーム    Esc：退室":detailBusy_&&detailAction_.event==RoomEvent::join?L"Esc：接続を中止":L"↑ ↓ / Tab：項目    Enter：決定    Esc：一覧へ戻る",120,690,1040,25,3,light);
+ }
  if(stageResetConfirm_&&stage_request()){
   fill(300,278,680,200,RGB(135,156,113));fill(303,281,674,194,RGB(25,37,28));menu_section(dc_,fonts_[3],L"CONFIRM",303,281,674);
   text(L"ステージをリセットしますか？",320,322,640,40,0,light,DT_CENTER);
@@ -142,8 +176,8 @@ void CharacterScreen::draw_room_detail(){
  }
  if(briefing)menu_focus_guides(dc_,briefingFocus_<6?128+int(briefingFocus_)*74:briefingFocus_==6?140:briefingFocus_==7?390:780,briefingFocus_<6?145:briefingFocus_==6?475:619);
  else if(stageResetConfirm_&&stage_request())menu_focus_guides(dc_,stageResetYes_?385:675,397);
- else if(detailFocus_==0&&detailReply_.detail&&detailReply_.detail->password&&detailReply_.join_status!=RoomJoinStatus::joined)menu_focus_guides(dc_,340,478);
- else if(detailFocus_>=1&&detailFocus_<=2)menu_focus_guides(dc_,390+int(detailFocus_-1)*390,619);
+ else if(!debug&&detailFocus_==0&&detailReply_.detail&&detailReply_.detail->password&&detailReply_.join_status!=RoomJoinStatus::joined)menu_focus_guides(dc_,340,478);
+ else if(!debug&&detailFocus_>=1&&detailFocus_<=2)menu_focus_guides(dc_,390+int(detailFocus_-1)*390,619);
 }
 bool CharacterScreen::briefing_message(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
  using Panel=briefing::Panel;
@@ -151,7 +185,7 @@ bool CharacterScreen::briefing_message(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
  auto activate=[&]{
   briefingYes_=false;
   switch(briefingFocus_){
-   case 0:briefingPanel_=Panel::ready;break;
+   case 0:if(combatEntered_){toggle_gameplay_briefing();return;}briefingPanel_=Panel::ready;break;
    case 1:briefingPanel_=Panel::map;break;
    case 2:briefingPanel_=Panel::rules;break;
    case 3:open_skills();return;
@@ -180,7 +214,7 @@ bool CharacterScreen::briefing_message(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
    // No READY, team change, weapon shortcut, or room action leaks through a panel.
    return true;
   }
-  if(wp==VK_ESCAPE){briefingFocus_=6;briefingPanel_=Panel::quit;briefingYes_=false;cues_.push_back(menu_audio::Cancel);return true;}
+  if(wp==VK_ESCAPE){toggle_gameplay_briefing();return true;}
   if(wp==VK_LEFT||wp==VK_RIGHT||wp==VK_TAB||wp==VK_UP||wp==VK_DOWN){briefingFocus_=(briefingFocus_+(wp==VK_LEFT||wp==VK_UP?6:1))%7;cues_.push_back(menu_audio::Cursor);return true;}
   if(wp==VK_RETURN||wp==VK_SPACE){activate();return true;}
   if(wp==VK_F3){briefingFocus_=3;open_skills();return true;}
@@ -219,7 +253,7 @@ void CharacterScreen::draw_briefing(){
  }
  menu_rect(dc_,48,143,672,29,RGB(38,48,49));text(briefing::labels[briefingFocus_],59,144,650,28,2,briefingFocus_==0?cyan:amber);
  const auto request=stage_load_request();
- const std::wstring rule=request?hud::mode_label(request->rotation.rule):L"—",map=request?(request->rotation.map==20?L"Q.Q.":L"MAP "+std::to_wstring(request->rotation.map)):L"—";
+ const std::wstring rule=request?hud::mode_label(request->rotation.rule):L"—",map=request?(request->rotation.map==7?L"Blood Bath":request->rotation.map==20?L"Q.Q.":L"MAP "+std::to_wstring(request->rotation.map)):L"—";
  briefing::panel(dc_,760,49,470,103);text(L"RULE",772,55,430,19,3,dim);text(rule,783,72,423,30,2,gold);text(L"MAP",772,102,430,18,3,dim);text(map,783,120,423,29,2,gold);
  briefing::panel(dc_,40,181,1200,467);
  if(briefingPanel_==Panel::rules||(stageStatus_==stage::Status::loading&&briefingPanel_==Panel::none)){
@@ -257,11 +291,11 @@ void CharacterScreen::draw_briefing(){
  if(briefingPanel_==Panel::none){
   auto notice=detailBusy_?detailNotice_:round_notice();text(notice,56,653,1165,35,3,gold,DT_SINGLELINE|DT_END_ELLIPSIS);
  }
- text(briefingPanel_==Panel::none?L"← →：選択   Enter：決定   F4：武器   F9：出撃準備   F10：ステージ情報   Esc：退出":L"← → / ↑ ↓：選択   Enter：決定   Esc：戻る",48,690,1182,24,3,dim);
+ text(briefingPanel_==Panel::none?(combatEntered_?L"← →：選択   Enter：決定   START / Esc：ゲームへ戻る   退出：QUIT → YES":L"← →：選択   Enter：決定   F4：武器   F9：出撃準備   退出：QUIT → YES"):L"← → / ↑ ↓：選択   Enter：決定   Esc：戻る",48,690,1182,24,3,dim);
 }
 
 void CharacterScreen::draw_briefing_icons(){
- if(!detailVisible_||matchVisible_||weaponsVisible_||detailReply_.join_status!=RoomJoinStatus::joined)return;
+ if(!detailVisible_||matchVisible_||weaponsVisible_||room_loading()||detailReply_.join_status!=RoomJoinStatus::joined)return;
  for(unsigned i=0;i<7;++i)if(auto*icon=briefingIcons_.find(uint16_t((briefingFocus_==i?101:1)+i)))weapons::paint_icon(*icon,{static_cast<uint32_t*>(pixels_),1280*720},1280,720,briefing::toolbarX+6+int(i)*briefing::toolbarStep,briefing::toolbarY+6,36,36);
  if(briefingPanel_==briefing::Panel::map)if(auto request=stage_load_request())briefingMap_.paint({static_cast<uint32_t*>(pixels_),1280*720},1280,720,request->rotation.map,448,235,384);
 }
@@ -272,7 +306,30 @@ void CharacterScreen::draw_room_match(){
  const auto&m=detailReply_.host_match;
  if(!m||!m->request){text(L"ホストからステージ情報を取得しています…",155,320,940,46,1,light);text(L"情報がそろうと、ここにマップとルールが表示されます。",155,379,940,64,1,orange);return;}
  const auto&r=*m->request;
- if(!stageDebugNotice_.empty()){menu_section(dc_,fonts_[3],L"DEBUG  /  F12",140,206,stageInspection_?450:620);text(stageDebugNotice_,155,238,stageInspection_?430:600,269,3,orange);return;}
+ if(!stageDebugNotice_.empty()){
+  // Keep the walking viewport clear. Measure wrapped text in the same font
+  // and width used below; diagnostics may grow, but never beyond the canvas.
+  constexpr int x=120,y=110,maxHeight=590;
+  const int width=stageInspection_?490:680;
+  const int saved=SaveDC(dc_);if(!saved)return;
+  SelectObject(dc_,fonts_[3]);SetBkMode(dc_,TRANSPARENT);
+  constexpr UINT flags=DT_LEFT|DT_NOPREFIX|DT_WORDBREAK|DT_EDITCONTROL;
+  RECT body{x+16,y+45,x+width-16,y+45},measured=body;
+  DrawTextW(dc_,stageDebugNotice_.data(),int(stageDebugNotice_.size()),&measured,flags|DT_CALCRECT);
+  const int height=std::clamp(int(measured.bottom-measured.top)+59,140,maxHeight);
+  body.bottom=y+height-14;
+  const bool clipped=measured.bottom>body.bottom;
+  if(clipped)body.bottom-=25;
+  menu_rect(dc_,x,y,width,height,RGB(25,32,33));
+  menu_rect(dc_,x+3,y+3,width-6,height-6,RGB(48,59,61));
+  menu_section(dc_,fonts_[3],L"DEBUG MENU",x+10,y+10,width-20);
+  SelectObject(dc_,fonts_[3]);SetTextColor(dc_,orange);
+  IntersectClipRect(dc_,body.left,body.top,body.right,body.bottom);
+  DrawTextW(dc_,stageDebugNotice_.data(),int(stageDebugNotice_.size()),&body,flags);
+  RestoreDC(dc_,saved);
+  if(clipped)text(L"… 診断が長いため末尾を省略",x+16,y+height-36,width-32,22,3,orange);
+  return;
+ }
  if(detailReply_.combat_offer&&detailReply_.combat_state&&detailReply_.combat_state->epoch==detailReply_.combat_offer->epoch){
   const auto&p=detailReply_.combat_state->players[detailReply_.combat_offer->self.slot];
   if(p&&p->identity==detailReply_.combat_offer->self){

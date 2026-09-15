@@ -1,6 +1,10 @@
+#include "weapon_hand_preview.h"
+#include "combat_action_preview.h"
 #include "build_version.h"
 #include "local_playtest.h"
+#include "gekko_preview.h"
 #include "combat_audio_bundle.h"
+#include "stage_water.h"
 // Desktop entry point. No Python, IDA or asset conversion tool is used at runtime.
 #include <windows.h>
 #include "weapon_icons.h"
@@ -97,6 +101,7 @@ static fs::path executable_folder() {
 
 static size_t verify_assets(const fs::path& root) {
     std::set<std::string> required{"lobbies.cfg","character/appearance.gwc","network.gnk","login/frame.m2pv","motion/animated.m2an","agreement/frame.m2pv","audio/lobby.gwa","audio/92.gwa","audio/93.gwa","audio/94.gwa","launch.cfg", "title.gwp", "audio/title.gwa", "title/animated.m2an", "audio/start.gwa", "loading/loading.m2an", "loading/images/0.dds", "loading/images/1.dds"};
+    required.insert("movie_01.mp4");
     for(int i=0;i<6;++i)required.insert("login/images/"+std::to_string(i)+".dds");
     for(int g=0;g<2;++g)for(int v=0;v<8;++v)required.insert("voice/"+std::to_string(g)+"_"+std::to_string(v)+".gwa");
     for(int i=0;i<8;++i)required.insert("motion/images/"+std::to_string(i)+".dds");
@@ -107,7 +112,17 @@ static size_t verify_assets(const fs::path& root) {
     required.insert("character/selection1.gwmot");
     required.insert("audio/salute.gwa");
     required.insert("audio/sop_native.wav");
+    required.insert("audio/notification_native.wav");
     required.insert("character/special_male.gwmot");
+    required.insert("character/evade.gwmot");
+    required.insert("character/cover.gwmot");
+    required.insert("special/gekko.gwc");
+    required.insert("special/gekko.gwmot");
+    required.insert("special/gekko_salute.gwmot");
+    required.insert("special/gekko_traversal.gwmot");
+    required.insert("special/gekko_step.wav");
+    required.insert("special/gekko_salute.wav");
+    for(auto name:{"hands.gwh","ak102.gwm","operator.gwm","ak102_secondary.gwm","operator_secondary.gwm"})required.insert(std::string("weapons/")+name);
     required.insert("skills/index.tsv");
     required.insert("skills/briefing.tsv");
     for(auto name:{"skill_star.png","participants.png","rules.png","deploy.png","skills.png","equipment.png","options.png"})
@@ -120,6 +135,7 @@ static size_t verify_assets(const fs::path& root) {
     if(briefingIcons.size()!=14)throw std::runtime_error("Incomplete briefing icon index");
     for(bool selected:{false,true})for(size_t i=0;i<briefingNames.size();++i){const auto name=briefingNames[i]+(selected?"_selected.png":"_normal.png");auto it=briefingIcons.find(uint16_t((selected?101:1)+i));if(it==briefingIcons.end()||it->second!=name)throw std::runtime_error("Unexpected briefing icon mapping");required.insert("skills/"+name);}
     if(fs::exists(root/L"briefing-map/index.tsv")){required.insert("briefing-map/index.tsv");const auto maps=mgo2win::weapons::read_icon_index(root/L"briefing-map/index.tsv");if(maps!=std::map<uint16_t,std::string>{{1,"n022a-online-map-0.png"},{2,"n022a-online-map-1.png"}})throw std::runtime_error("Unexpected briefing map layers");for(const auto&[id,name]:maps)required.insert("briefing-map/"+name);}
+    if(fs::exists(root/L"stage/n022a.sky.gwm"))required.insert("stage/n022a.sky.gwm");
     if(fs::exists(root/L"stage/n022a.gwm"))required.insert("stage/n022a.gwm");
     for(auto name:{"weapon_catalog.tsv","stage/n022a.cbox.cfg","stage/n022a.tdm-spawns.cfg","character/player.gwmot"})if(fs::exists(root/name))required.insert(name);
     if(fs::exists(root/L"weapon-icons/index.tsv")){
@@ -141,7 +157,28 @@ static size_t verify_assets(const fs::path& root) {
             for(auto suffix:{".gwm",".bindings.cfg",".cbox.cfg",".collision.cfg",".lighting.cfg",".objects.cfg",".gww",".dm-spawns.cfg",".tdm-spawns-v2.cfg"})
                 required.insert(std::string("stage/")+stage+suffix);
     }
-    for(auto name:{"stage/items/113.gwm","stage/items/140.gwm"})if(fs::exists(root/name))required.insert(name);
+    if(fs::exists(root/L"stage/n007a.gwm")||fs::exists(root/L"stage/n007a.objects.cfg")||fs::exists(root/L"stage/n007a.bindings.cfg")){
+        for(auto suffix:{".gwm",".bindings.cfg",".cbox.cfg",".collision.cfg",".lighting.cfg",".objects.cfg",".gww",".dm-spawns.cfg",".tdm-spawns-v2.cfg"})required.insert(std::string("stage/n007a")+suffix);
+        for(auto name:{"n007a_light_a0.gwm","n007a_light_b0.gwm","n007a_light_a0.hit.cfg","n007a_light_b0.hit.cfg"})required.insert(std::string("stage/objects/")+name);
+    }
+    for(auto name:{"stage/items/113.gwm","stage/items/140.gwm","stage/items/ibox_item_mid.gwm"})if(fs::exists(root/name))required.insert(name);
+    if(fs::exists(root/L"hold-font/index.tsv")){
+        required.insert("hold-font/index.tsv");
+        for(const auto&[id,name]:mgo2win::weapons::read_icon_index(root/L"hold-font/index.tsv"))required.insert("hold-font/"+name);
+    }
+    for(auto name:{"n001a","n004a","n007a","n022a","n023a"}){
+        const auto script=std::string("stage/")+name+".gcx-items.cfg";
+        if(fs::exists(root/script))required.insert(script);
+    }
+    if(fs::exists(root/L"equipment-icons/index.tsv")){
+        required.insert("equipment-icons/index.tsv");required.insert("equipment-icons/display.tsv");
+        for(const auto&[id,name]:mgo2win::weapons::read_icon_index(root/L"equipment-icons/index.tsv"))required.insert("equipment-icons/"+name);
+    }
+    if(fs::exists(root/L"system-ui/index.tsv")){
+        required.insert("system-ui/index.tsv");
+        for(const auto&[id,name]:mgo2win::weapons::read_icon_index(root/L"system-ui/index.tsv"))required.insert("system-ui/"+name);
+        required.insert("fonts/SCE-PS3-NR-R-JPN.TTF");required.insert("fonts/SCE-PS3-NR-B-JPN.TTF");
+    }
     for(auto name:{"bgm/catalog.json","stage/n022a.placements.cfg","stage/props/0.gwm","stage/props/1.gwm","stage/props/2.gwm","stage/props/3.gwm","stage/props/4.gwm","stage/props/5.gwm"})if(fs::exists(root/name))required.insert(name);
     for(auto name:{"stage/n022a.lighting.cfg","stage/n022a.collision.cfg","stage/audio/env_s01a30l_01.gwa","stage/audio/env_s01a30l_04.gwa","stage/audio/env_s01a30l_05.gwa","stage/audio/env_s01a30l_07.gwa","stage/audio/env_s01a30l_08.gwa"})if(fs::exists(root/name))required.insert(name);
     if(fs::exists(root/L"stage/n022a.objects.cfg")||fs::exists(root/L"stage/n022a.bindings.cfg")){
@@ -151,6 +188,11 @@ static size_t verify_assets(const fs::path& root) {
         for(char c='a';c<='e';++c)required.insert(std::string("stage/objects/s01a_btle_")+c+"0_sk.hit.cfg");
         for(int i=0;i<6;++i)required.insert("stage/objects/blast_drum_"+std::to_string(i)+".hit.cfg");
     }
+    // Optional finite water contacts are a separate validated file, never GWW depth.
+    if(fs::exists(root/L"stage/n001a_surface.gws")){std::ifstream in(root/L"stage/n001a_surface.gws",std::ios::binary);mgo2win::stage::WaterSurface::read(in);required.insert("stage/n001a_surface.gws");}
+    for(auto stage:{"n001a","n004a","n022a","n023a"}){const auto name=std::string("stage/")+stage+"_render.gws";if(fs::exists(root/name)){std::ifstream in(root/name,std::ios::binary);mgo2win::stage::WaterSurface::read(in);required.insert(name);}}
+    if(fs::exists(root/L"sfx/native_water_step.wav"))required.insert("sfx/native_water_step.wav");
+    for(auto stage:{"n001a","n004a","n007a","n022a","n023a"}){auto name=std::string("stage/")+stage+".gwn";if(fs::exists(root/name))required.insert(name);}
     const auto expectedCount=required.size();
     std::ifstream manifest(root / L"assets.sha256");
     if (!manifest) throw std::runtime_error("Missing data/assets.sha256. Keep the data folder beside MGO2WIN.exe.");
@@ -173,6 +215,9 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR command, int) {
     const std::wstring mode = command ? command : L"";
     if(mode==L"--version"){std::cout<<"MGO2WIN "<<mgo2win::build_version<<std::endl;return 0;}
     const auto playtest=mgo2win::LocalPlaytest::parse(mode);
+    const bool shadowCapture=mode==L"--shadow-test-capture",hemisphereCapture=mode==L"--hemisphere-test-capture";
+    const bool weaponHandCapture=mode==L"--weapon-hand-test-capture"||mode==L"--combat-action-test-capture"||shadowCapture||hemisphereCapture;
+    const bool gekkoTest=mode==L"--gekko-test"||mode==L"--gekko-test-capture",gekkoCapture=mode==L"--gekko-test-capture";
     const bool smokeCreation=mode==L"--smoke-creation";
     const bool smokeSelection=mode==L"--smoke-selection";
     const bool smokeAppearance=mode==L"--smoke-appearance";
@@ -190,7 +235,7 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR command, int) {
     int result = 1;
     std::string error;
     try {
-        if (!mode.empty() && !smoke && !checkOnly && !probeAuth && !probeAccount && !probeStun && !safeGraphics && !probeGate && !playtest.enabled) throw std::runtime_error("Supported options: --check, --smoke-test, --smoke-no, --smoke-login, --smoke-ports, --smoke-stun, --probe-auth, --probe-account, --probe-stun");
+        if (!mode.empty() && !smoke && !checkOnly && !probeAuth && !probeAccount && !probeStun && !safeGraphics && !probeGate && !playtest.enabled && !gekkoTest && !weaponHandCapture) throw std::runtime_error("Supported options: --check, --smoke-test, --gekko-test, --gekko-test-capture, --probe-auth, --probe-account, --probe-stun");
         const auto root = executable_folder(), data = root/L"data";
         const auto verifiedFiles=verify_assets(data);
         std::ifstream config(data/L"launch.cfg");
@@ -215,6 +260,8 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR command, int) {
         std::cout.rdbuf(log.rdbuf()); std::cerr.rdbuf(log.rdbuf());
         std::cout << "{\"build_version\":\"" << mgo2win::build_version << "\"}" << std::endl;
         std::cout << "{\"desktop_package\":true,\"verified_files\":" << verifiedFiles << ",\"smoke_test\":" << (smoke?"true":"false") << "}" << std::endl;
+        if(weaponHandCapture){result=(mode==L"--combat-action-test-capture"||shadowCapture||hemisphereCapture)?mgo2win::run_combat_action_preview(data,run/L"combat-action",shadowCapture,hemisphereCapture):mgo2win::run_weapon_hand_preview(data,run/L"weapon-hand");std::cout.rdbuf(oldOut);std::cerr.rdbuf(oldError);return result;}
+        if(gekkoTest){result=mgo2win::run_gekko_preview(data,gekkoCapture,run/L"gekko");std::cout.rdbuf(oldOut);std::cerr.rdbuf(oldError);return result;}
         if(probeAccount){result=inspect_account(data/L"network.gnk");std::cout.rdbuf(oldOut);std::cerr.rdbuf(oldError);return result;}
         if(probeGate){std::atomic_bool cancel{false};auto r=mgo2win::probe_character_gate(data/L"network.gnk",cancel);result=r.status==mgo2win::CharacterStatus::success?0:1;std::cout<<"{\"gate_probe\":true,\"status\":"<<int(r.status)<<",\"stage\":"<<int(r.stage)<<",\"error\":"<<r.error<<",\"account_port\":"<<r.account_port<<"}"<<std::endl;std::cout.rdbuf(oldOut);std::cerr.rdbuf(oldError);return result;}
         if(probeAuth){
@@ -249,7 +296,7 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR command, int) {
         else std::cerr << error << std::endl;
     }
     std::cout.rdbuf(oldOut); std::cerr.rdbuf(oldError);
-    if (!error.empty() && !smoke && !checkOnly && !probeAccount) {
+    if (!error.empty() && !smoke && !checkOnly && !probeAccount && !gekkoCapture) {
         auto text = std::wstring(error.begin(), error.end());
         text += L"\n\n起動できませんでした。dataフォルダーを含めて再生成してください。\nPlease rebuild the complete local package, including its data folder.";
         MessageBoxW(nullptr, text.c_str(), L"MGO2WIN", MB_OK|MB_ICONERROR);

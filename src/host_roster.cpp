@@ -40,7 +40,7 @@ bool update_roster(Roster&r,std::span<const uint8_t>b){
  if(end==tail.end())throw Invalid(Error::extent);
  auto n=size_t(end-tail.begin());p.name=label(tail.first(n),true);p.clan=label(tail.subspan(n+1),false);
  for(size_t i=0;i<r.slots.size();++i)if(i!=p.slot&&r.slots[i]&&(r.slots[i]->instance==instance||r.slots[i]->character==p.character))throw Invalid(Error::identity);
- if(r.slots[p.slot]&&r.slots[p.slot]->instance==p.instance&&r.slots[p.slot]->character==p.character)p.appearance=r.slots[p.slot]->appearance;
+ if(r.slots[p.slot]&&r.slots[p.slot]->instance==p.instance&&r.slots[p.slot]->character==p.character){p.appearance=r.slots[p.slot]->appearance;p.level=r.slots[p.slot]->level;}
  if(!r.slots[p.slot]||*r.slots[p.slot]!=p){r.slots[p.slot]=std::move(p);++r.revision;}
  return true;
 }

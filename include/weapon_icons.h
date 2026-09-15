@@ -17,5 +17,5 @@ public:
  size_t size()const{return images_.size();}
 };
 // Source and destination are straight-alpha BGRA, as used by the menu overlay.
-void paint_icon(const Icon&,std::span<uint32_t>,int width,int height,int x,int y,int w,int h,bool muted=false);
+void paint_icon(const Icon&,std::span<uint32_t>,int width,int height,int x,int y,int w,int h,bool muted=false,double displayWidth=0,double displayHeight=0);
 }

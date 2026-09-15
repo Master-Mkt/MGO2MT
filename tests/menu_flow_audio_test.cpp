@@ -73,6 +73,8 @@ void flow_audio(const char* catalog,HWND window){
  key(screen,VK_ESCAPE);cue(screen,menu_audio::Cancel,"room detail back uses cancel");
  key(screen,VK_RETURN);settle(screen,[&]{return screen.room_detail_visible()&&!screen.room_detail_busy();});
  key(screen,VK_RETURN);settle(screen,[&]{return screen.room_join_status()==RoomJoinStatus::joined;});
+ check(screen.room_loading(),"joined fixture is still loading until local feedback");key(screen,VK_F9);quiet(screen,"loading blocks READY without a false confirm sound");check(!screen.combat_preparation()->players[1]->ready,"loading cannot implicitly ready the player");
+ screen.stage_feedback(stage::Status::preview_ready);check(!screen.room_loading(),"explicit preview status opens briefing");quiet(screen,"local loading completion is not a READY confirmation");
  key(screen,VK_F9);cue(screen,menu_audio::Confirm,"ready enable uses confirm");
  settle(screen,[&]{return screen.combat_preparation()->players[1]->ready;});
  key(screen,VK_F9);cue(screen,menu_audio::Cancel,"ready disable uses cancel");
@@ -88,8 +90,11 @@ void flow_audio(const char* catalog,HWND window){
  deploymentUpdate=1;settle(screen,[&]{return screen.combat_preparation()->players[1]->deployed;});
  check(!screen.weapon_music_available(),"ordinary BGM editing disarmed after deployment");key(screen,VK_F8);quiet(screen,"deployed BGM request is rejected silently");check(!screen.take_weapon_music_request(),"deployed player cannot open ordinary picker");
  deploymentUpdate=2;settle(screen,[&]{return !screen.combat_preparation()->players[1]->deployed;});check(screen.weapon_music_available(),"received predeployment state restores picker");
- key(screen,VK_ESCAPE);screen.cues();key(screen,VK_ESCAPE);cue(screen,menu_audio::Cancel,"joined room leave request uses cancel");
- check(screen.briefing_panel()==briefing::Panel::quit&&!screen.briefing_confirm_yes(),"leave defaults to NO");key(screen,VK_LEFT);screen.cues();key(screen,VK_RETURN);cue(screen,menu_audio::Cancel,"explicit leave YES requests cancellation");
+ key(screen,VK_ESCAPE);cue(screen,menu_audio::Cancel,"weapon Escape returns to briefing");key(screen,VK_ESCAPE);quiet(screen,"predeployment briefing Escape never requests leave");check(screen.briefing_panel()==briefing::Panel::none&&screen.room_join_status()==RoomJoinStatus::joined,"briefing root retains admission");
+ for(unsigned i=0;i<7&&screen.briefing_focus()!=6;++i){key(screen,VK_RIGHT);cue(screen,menu_audio::Cursor,"QUIT focus navigation uses cursor");}
+ key(screen,VK_RETURN);cue(screen,menu_audio::Confirm,"QUIT opens explicit leave confirmation");check(screen.briefing_panel()==briefing::Panel::quit&&!screen.briefing_confirm_yes(),"leave defaults to NO");
+ key(screen,VK_RETURN);cue(screen,menu_audio::Cancel,"default NO cancels leave confirmation");check(screen.room_join_status()==RoomJoinStatus::joined&&screen.briefing_panel()==briefing::Panel::none,"NO preserves joined room");
+ key(screen,VK_RETURN);cue(screen,menu_audio::Confirm,"QUIT reopens explicit confirmation");key(screen,VK_LEFT);cue(screen,menu_audio::Cursor,"explicit YES focus uses cursor");key(screen,VK_RETURN);cue(screen,menu_audio::Cancel,"explicit leave YES requests cancellation");
  settle(screen,[&]{return screen.room_join_status()==RoomJoinStatus::host_cancelled;});
  key(screen,VK_ESCAPE);cue(screen,menu_audio::Cancel,"cancelled room detail closes with cancel");
  key(screen,VK_ESCAPE);cue(screen,menu_audio::Cancel,"room list back uses cancel");

@@ -27,6 +27,6 @@ int main(){try{
  combat::Pose p;p.capsule={260,520,2};p.feet={0,0,5000};auto sphere=enemy_tag::capsule({0,260,0},{0,0,1},p);check(sphere&&std::abs(*sphere-4740)<1,"collapsed capsule sphere");p.capsule.height=1700;auto parallel=enemy_tag::capsule({0,3000,5000},{0,-1,0},p);check(parallel&&std::abs(*parallel-1300)<1,"vertical capsule parallel ray");
  auto center=enemy_tag::project({0,0,1000},{0,0,0},{0,0,1},620,120,616,392);check(center&&center->x==928&&center->y==316,"actual stage viewport center");
  check(!enemy_tag::project({0,0,-1000},{0,0,0},{0,0,1},620,120,616,392),"behind camera");check(!enemy_tag::project({99999,0,1000},{0,0,0},{0,0,1},620,120,616,392),"outside view");
- auto right=enemy_tag::project({100,100,1000},{0,0,0},{0,0,1},620,120,616,392);check(right&&right->x>928&&right->y<316,"projection axes");
+ auto right=enemy_tag::project({100,100,1000},{0,0,0},{0,0,1},620,120,616,392);check(right&&right->x<928&&right->y<316,"projection axes");
  std::cout<<"Enemy name target / occlusion / identity / projection passed\n";return 0;
 }catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}

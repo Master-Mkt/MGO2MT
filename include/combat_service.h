@@ -17,6 +17,8 @@ class Service {
   void stop(){input.reset();held=pressed=fireReady=false;}
  };
  std::map<uint32_t,Peer> peers_;std::vector<Delivery> deliveries_;
+ std::function<Decision(std::span<const Event>,uint64_t)> eventHandler_;
+ void dispatch(std::span<const Event>,uint64_t);
  wire::Status status()const;void frame(Identity,std::span<const Event> = {});void broadcast(std::span<const Event> = {});
 public:
  explicit Service(uint64_t epoch,Policy={});
@@ -34,5 +36,9 @@ public:
  void poll(uint64_t now,uint32_t subMsNs=0);
  std::vector<Delivery> deliveries();
  bool pending_deliveries()const{return !deliveries_.empty();}
+ void event_handler(std::function<Decision(std::span<const Event>,uint64_t)> handler){eventHandler_=std::move(handler);}
+ // Keep operator form transitions in the same reliable FIFO as other states;
+ // a rapid human -> special transition must not collapse into one timed frame.
+ void publish_operator_state(){broadcast();}
 };
 }

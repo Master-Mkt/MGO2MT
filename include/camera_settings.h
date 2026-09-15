@@ -8,8 +8,8 @@
 #include "original_camera_speed.h"
 namespace mgo2win::camera {
 // The reference OPTIONS screen has independent vertical/horizontal direction
-// choices for normal, shoulder and subjective cameras. Native normalized-input
-// rates preserve the existing default; original field-to-mode mapping is open.
+// choices for normal, shoulder and subjective cameras. Original setting curves
+// are mapped by the save converter; absolute rates/integration remain native.
 struct Settings {
  std::array<bool,6> reversed{}; // normal Y/X, shoulder Y/X, subjective Y/X
  std::array<unsigned,3> speed{5,5,5}; // independent display values 1..10
@@ -19,7 +19,9 @@ struct Settings {
  }
  std::array<float,2> rates(bool firstPerson,bool aiming)const{
   const auto value=speed[firstPerson?2u:aiming?1u:0u];
-  const float scale=float(original::camera_speed::valid_display(value)?value:5u)/5.f;
+  const auto mode=firstPerson?original::camera_speed::Mode::firstPerson:
+      aiming?original::camera_speed::Mode::shoulder:original::camera_speed::Mode::normal;
+  const float scale=original::camera_speed::relative_to_default(mode,value).value_or(1.f);
   return {2.f*scale,1.5f*scale}; // native radians/second; not original full camera dynamics
  }
  bool operator==(const Settings&)const=default;

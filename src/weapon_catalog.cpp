@@ -76,7 +76,7 @@ Access access(const Entry& e,const SelectionContext& context){
   if(e.restriction_bit){auto bit=*e.restriction_bit;if(bit==0||bit>=128)return Access::unverified;if(context.room_restrictions[bit/8]&(1u<<(bit%8)))return Access::restricted;}
   else if(e.id!=0)return Access::unverified;
  }
- if(!context.dp_enabled){if(!e.available_without_dp)return Access::unverified;return *e.available_without_dp?Access::allowed:Access::dp_disabled;}
+ if(!context.dp_enabled){if(context.native_operator_grant&&e.category==Category::secondary&&e.id==3)return Access::allowed;if(!e.available_without_dp)return Access::unverified;return *e.available_without_dp?Access::allowed:Access::dp_disabled;}
  if(!e.dp_cost)return Access::unverified;
  return *e.dp_cost<=context.dp_balance?Access::allowed:Access::insufficient_dp;
 }

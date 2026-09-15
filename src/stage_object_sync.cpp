@@ -11,7 +11,17 @@ ObjectRegistry load_object_registry(const std::filesystem::path&path){
  std::ifstream f(path);std::string magic,profile;unsigned version=0,map=0,rule=0,count=0;
  if(!(f>>magic>>version>>profile>>map>>rule>>count)||magic!="MGO2WIN.STAGE_OBJECTS"||version!=1||map>255)throw host::Invalid(host::Error::message);
  const auto* candidate=runtime_profile(uint8_t(map));
- if(candidate&&map!=20&&profile==std::string(candidate->stage)+"_native_static_v1"){
+ if(map==7&&profile=="n007a_native_lights_v1"){
+  if(rule!=255||count!=15)throw host::Invalid(host::Error::message);
+  ObjectRegistry out;out.map=7;out.nativeLights=true;
+  for(unsigned i=0;i<count;++i){unsigned index=0,width=0;uint32_t id=0;std::string policy;
+   if(!(f>>index>>id>>width>>policy)||index!=i||id!=0xb0070001u+i||width!=1||policy!="bits")throw host::Invalid(host::Error::message);
+   out.entries.push_back({id,1,host::ObjectStates::Update::bits});
+  }
+  std::string tail;if(f>>tail)throw host::Invalid(host::Error::extent);
+  out.complete=true;return out;
+ }
+ if(candidate&&map!=20&&map!=7&&profile==std::string(candidate->stage)+"_native_static_v1"){
   std::string tail;if(rule!=255||count!=0||(f>>tail))throw host::Invalid(host::Error::message);
   ObjectRegistry out;out.map=uint8_t(map);out.complete=true;out.nativeStatic=true;return out;
  }
@@ -34,7 +44,7 @@ SceneAuthority::SceneAuthority(ObjectRegistry registry):registry_(std::move(regi
 void SceneAuthority::begin(std::optional<host::LoadRequest> request){
  if(request_==request)return;
  request_.reset();values_.clear();
- if(!request||!registry_.complete||request->rotation.map!=registry_.map||(registry_.rule&&request->rotation.rule!=*registry_.rule)||((registry_.nativeStatic||registry_.combatRulesOnly)&&request->rotation.rule>1))return;
+ if(!request||!registry_.complete||request->rotation.map!=registry_.map||(registry_.rule&&request->rotation.rule!=*registry_.rule)||((registry_.nativeStatic||registry_.nativeLights||registry_.combatRulesOnly)&&request->rotation.rule>1))return;
  request_=std::move(request);values_.resize(registry_.entries.size()); // 739300 initializes current/initial to zero.
 }
 std::optional<std::vector<uint8_t>> SceneAuthority::snapshot(uint8_t slot)const{
@@ -64,7 +74,7 @@ SceneReceiver::SceneReceiver(ObjectRegistry registry,uint8_t localSlot):registry
 void SceneReceiver::begin(std::optional<host::LoadRequest> request){
  if(request_==request)return;
  request_=std::move(request);states_.reset();snapshot_.reset();++revision_;
- if(!request_||!registry_.complete||request_->rotation.map!=registry_.map||(registry_.rule&&request_->rotation.rule!=*registry_.rule)||((registry_.nativeStatic||registry_.combatRulesOnly)&&request_->rotation.rule>1))return;
+ if(!request_||!registry_.complete||request_->rotation.map!=registry_.map||(registry_.rule&&request_->rotation.rule!=*registry_.rule)||((registry_.nativeStatic||registry_.nativeLights||registry_.combatRulesOnly)&&request_->rotation.rule>1))return;
  std::vector<uint8_t> widths;std::vector<host::ObjectStates::Update> updates;
  for(const auto&e:registry_.entries){widths.push_back(e.width);updates.push_back(e.update);}
  states_.emplace(slot_,std::move(widths),std::move(updates));

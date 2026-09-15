@@ -1,3 +1,4 @@
+#include "menu_font.h"
 #include "enemy_name_tag.h"
 #include <algorithm>
 #include <string>
@@ -5,7 +6,7 @@
 
 namespace mgo2win::hud {
 namespace {
-constexpr int maxTextWidth=336,textHeight=24,panelHeight=40,iconSize=32;
+constexpr int maxTextWidth=416,textHeight=24,panelHeight=40,iconSize=32;
 constexpr uint32_t amber=0x00ffd183,brown=0x002b2014;
 std::wstring decode_name(std::string_view name){
     if(name.empty()||name.size()>256)return {};
@@ -60,8 +61,7 @@ struct EnemyNameTagRenderer::Impl {
         BITMAPINFO info{};info.bmiHeader.biSize=sizeof(BITMAPINFOHEADER);info.bmiHeader.biWidth=maxTextWidth;
         info.bmiHeader.biHeight=-textHeight;info.bmiHeader.biPlanes=1;info.bmiHeader.biBitCount=32;
         if(dc)mask=CreateDIBSection(dc,&info,DIB_RGB_COLORS,reinterpret_cast<void**>(&pixels),nullptr,0);
-        font=CreateFontW(-18,0,0,0,FW_NORMAL,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,
-                         CLIP_DEFAULT_PRECIS,ANTIALIASED_QUALITY,DEFAULT_PITCH,L"MS Gothic");
+        font=create_menu_font(18,FW_NORMAL);
         if(!dc||!mask||!pixels||!font){release();throw std::runtime_error("Enemy tag GDI allocation");}
         oldBitmap=SelectObject(dc,mask);oldFont=SelectObject(dc,font);SetBkMode(dc,TRANSPARENT);SetTextColor(dc,RGB(255,255,255));
     }
@@ -71,11 +71,11 @@ struct EnemyNameTagRenderer::Impl {
         dc=nullptr;mask=nullptr;font=nullptr;pixels=nullptr;
     }
     ~Impl(){release();}
-    bool prepare(const std::wstring& name){
+    bool prepare(const std::wstring& name,int limit){
         if(name==cached)return textWidth>0;
         cached.clear(); // Failed GDI preparation cannot reuse stale glyph pixels.
         SIZE extent{};if(!GetTextExtentPoint32W(dc,name.data(),int(name.size()),&extent))return false;
-        textWidth=std::clamp(int(extent.cx),1,maxTextWidth);
+        textWidth=std::clamp(int(extent.cx),1,limit);
         std::fill_n(pixels,maxTextWidth*textHeight,0u);
         RECT rect{0,0,textWidth,textHeight};
         if(!DrawTextW(dc,name.data(),int(name.size()),&rect,DT_LEFT|DT_SINGLELINE|DT_VCENTER|DT_NOPREFIX|DT_END_ELLIPSIS))return false;
@@ -85,19 +85,23 @@ struct EnemyNameTagRenderer::Impl {
 EnemyNameTagRenderer::EnemyNameTagRenderer()=default;
 EnemyNameTagRenderer::~EnemyNameTagRenderer()=default;
 bool EnemyNameTagRenderer::paint(std::span<uint32_t> destination,int width,int height,int anchorX,int anchorY,
-                                std::string_view utf8Name,HBITMAP clan){
+                                std::string_view utf8Name,HBITMAP clan,std::optional<EnemyVitals> vitals){
     if(width<=0||height<=0||destination.size()<size_t(width)*size_t(height))return false;
     try{
-        const auto name=decode_name(utf8Name);if(name.empty())return false;
-        if(!impl_)impl_=std::make_unique<Impl>();if(!impl_->prepare(name))return false;
+        auto name=decode_name(utf8Name);if(name.empty())return false;
+        if(vitals){if(!vitals->maxHp||vitals->hp>vitals->maxHp)return false;name+=vitals->level?L"  LV "+std::to_wstring(*vitals->level):L"  LV --";}
+        if(!impl_)impl_=std::make_unique<Impl>();if(!impl_->prepare(name,vitals?416:336))return false;
         const auto image=clan_pixels(clan);const int iconSpace=image.pixels?iconSize+6:0;
         const int panelWidth=16+iconSpace+impl_->textWidth;
-        const int64_t left=int64_t(anchorX)-panelWidth/2,top=int64_t(anchorY)-panelHeight;
-        if(left>=width||top>=height||left+panelWidth<=0||top+panelHeight<=0)return false;
+        const int actualHeight=panelHeight+(vitals?12:0);
+        const int64_t left=int64_t(anchorX)-panelWidth/2,top=int64_t(anchorY)-actualHeight;
+        if(left>=width||top>=height||left+panelWidth<=0||top+actualHeight<=0)return false;
         auto put=[&](int x,int y,uint32_t source){const auto px=left+x,py=top+y;
             if(px>=0&&py>=0&&px<width&&py<height)over(destination[size_t(py)*size_t(width)+size_t(px)],source);};
         const auto background=premultiply(brown,112);
-        for(int y=0;y<panelHeight;++y)for(int x=0;x<panelWidth;++x)put(x,y,background);
+        for(int y=0;y<actualHeight;++y)for(int x=0;x<panelWidth;++x)put(x,y,background);
+        if(vitals){const int barWidth=panelWidth-16;const int filled=int(uint64_t(barWidth)*vitals->hp/vitals->maxHp);
+            for(int y=40;y<47;++y)for(int x=0;x<barWidth;++x)put(8+x,y,premultiply(x<filled?amber:0x0014110d,240));}
         if(image.pixels)for(int y=0;y<iconSize;++y)for(int x=0;x<iconSize;++x)put(8+x,4+y,clan_sample(image,x,y));
         for(int y=0;y<textHeight;++y)for(int x=0;x<impl_->textWidth;++x){
             const auto p=impl_->pixels[y*maxTextWidth+x];const auto coverage=std::max({p&255,(p>>8)&255,(p>>16)&255});

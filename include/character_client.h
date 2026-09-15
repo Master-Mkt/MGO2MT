@@ -1,5 +1,7 @@
 #pragma once
 #include "chat_session.h"
+#include "lobby_keepalive.h"
+#include "notification_wire.h"
 #include "tournament_invitation.h"
 #include "radio_session.h"
 #include "native_name_directory.h"
@@ -75,7 +77,7 @@ struct RoomDetail {uint32_t id=0;std::wstring name,comment;uint8_t subtype=0,cap
 };
 enum class RoomEvent {list,detail,join};
 enum class RoomJoinStatus {none,rejected,permission_checked,outcome_unknown,invalid_input,host_connecting,host_profile,host_sync,joined,host_cancelled,host_timeout,host_rejected,host_disconnected,host_network_error,host_protocol_error,host_unavailable};
-struct RoomReply {RoomStatus status=RoomStatus::connecting;std::vector<RoomEntry> rooms;uint32_t error=0;RoomEvent event=RoomEvent::list;uint32_t requested_room=0;std::optional<RoomDetail> detail;RoomJoinStatus join_status=RoomJoinStatus::none;std::optional<host::Roster> host_roster;std::optional<host::MatchState> host_match;std::optional<host::Placements> host_placements;std::optional<stage::SceneSnapshot> host_scene;stage::SceneSyncStatus scene_status=stage::SceneSyncStatus::idle;std::optional<combat::wire::Offer> combat_offer;std::optional<combat::Snapshot> combat_state;combat::wire::Status combat_status=combat::wire::Status::awaiting_world;std::vector<combat::Event> combat_events;std::optional<combat::wire::Preparation> preparation;combat::SopView combat_sop;};
+struct RoomReply {RoomStatus status=RoomStatus::connecting;std::vector<RoomEntry> rooms;uint32_t error=0;RoomEvent event=RoomEvent::list;uint32_t requested_room=0;std::optional<RoomDetail> detail;RoomJoinStatus join_status=RoomJoinStatus::none;std::optional<host::Roster> host_roster;std::optional<host::MatchState> host_match;std::optional<host::Placements> host_placements;std::optional<stage::SceneSnapshot> host_scene;stage::SceneSyncStatus scene_status=stage::SceneSyncStatus::idle;std::optional<combat::wire::Offer> combat_offer;std::optional<combat::Snapshot> combat_state;combat::wire::Status combat_status=combat::wire::Status::awaiting_world;std::vector<combat::Event> combat_events;std::optional<combat::wire::Preparation> preparation;combat::SopView combat_sop;LobbyDisconnectReason lobby_disconnect=LobbyDisconnectReason::none;};
 struct RoomAction {
  RoomEvent event=RoomEvent::detail;uint32_t id=0;uint8_t subtype=0;std::array<wchar_t,17> password{};
  ~RoomAction(){volatile wchar_t*p=password.data();for(size_t i=0;i<password.size();++i)p[i]=0;}
@@ -84,6 +86,8 @@ class RoomRequests {
  std::mutex mutex_;std::optional<RoomAction> action_;std::optional<combat::wire::Input> combat_;
  std::vector<combat::wire::Command> commands_;
 public:
+ std::shared_ptr<LobbyMonitor> lobbyMonitor=std::make_shared<LobbyMonitor>();
+ std::shared_ptr<notices::Session> notifications=std::make_shared<notices::Session>();
  std::shared_ptr<chat::Session> chatSession=std::make_shared<chat::Session>();
  // Invitations belong to the authenticated lobby connection, including while
  // playing or leaving a room. Only connection teardown clears this session.
@@ -123,3 +127,5 @@ void run_game_lobby(const std::filesystem::path&,const AuthReply&,uint32_t,const
 CharacterCreateReply exchange_character_create(const CharacterCreateRequest&,const CharacterExchange&,const std::atomic_bool&,const std::function<bool()>& nativeReady={});
 CharacterCreateReply create_character(const std::filesystem::path&,const AuthReply&,const CharacterCreateRequest&,const std::atomic_bool&);
 }
+
+

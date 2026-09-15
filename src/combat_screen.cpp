@@ -36,6 +36,7 @@ void CharacterScreen::stage_feedback(const stage::Result& result){
  if(round_command(command))combatLoaded_=loaded;
 }
 void CharacterScreen::round_ready(){
+ if(combatEntered_){toggle_gameplay_briefing();return;}
  auto&p=detailReply_.preparation;if(!p){detailNotice_=L"このホストは出撃操作に対応していません。";return;}
  if(p->phase==combat::wire::RoundPhase::ended){detailNotice_=L"時間終了。次のラウンドを準備しています。";return;}
  if(p->phase!=combat::wire::RoundPhase::waiting){open_weapons();return;}
@@ -52,7 +53,7 @@ void CharacterScreen::update_round(){
  const auto&p=detailReply_.preparation;if(!p){loadoutPending_=0;return;}
  if(loadoutPending_&&uint32_t(p->lastCommand-loadoutPending_)<0x80000000u){loadoutPending_=0;weaponNotice_=round_error(p->error);}
  const auto&self=p->players[p->self.slot];const auto&state=detailReply_.combat_state;
- if(p->phase==combat::wire::RoundPhase::ended){loadoutPending_=0;weaponsVisible_=false;matchVisible_=combatEntered_;roomRequests_.clear_combat();return;}
+ if(p->phase==combat::wire::RoundPhase::ended){loadoutPending_=0;weaponsVisible_=false;roomRequests_.clear_combat();return;}
  if(self&&!self->deployed&&combatEntered_){combatEntered_=false;loadoutPending_=0;open_weapons();}
  if(!combatEntered_&&self&&self->deployed&&state&&state->epoch==p->epoch&&state->players[p->self.slot]&&state->players[p->self.slot]->identity==p->self&&state->players[p->self.slot]->life==self->life){weaponsVisible_=false;matchVisible_=true;combatEntered_=true;roundIntro_.deployed(p->epoch,clock_());}
 }
@@ -65,6 +66,7 @@ std::wstring CharacterScreen::round_notice()const{
  if(!self->loaded)return L"ステージと配置を読み込んでいます…";
  std::wstring team=p->freeForAll?L"DM":self->team==1?L"RED":self->team==2?L"BLUE":L"未選択";
  if(!p->autoAssign)team+=L" [F7で変更]";
+ if(p->respawnWaiting)return L"戦闘不能 / 再出撃まで "+std::to_wstring((p->respawnRemainingMs+999)/1000)+L" 秒";
  if(self->deployed)return L"ラウンド進行中 / "+team+L"。移動・射撃は操作設定に従います。";
  if(p->phase!=combat::wire::RoundPhase::waiting)return L"ラウンド開始 / "+team+L"。F4で武器を選び、出撃してください。";
  auto seconds=(p->remainingMs+999)/1000;

@@ -1,19 +1,20 @@
 # MGO2WIN / MGO2HOST
 
-OpenMGO2向けのWindowsネイティブ実験版です。このソースは **v0.01-20260914031351（2026年9月14日版）** に対応します。
+Windows client and dedicated HOST experiment, **v0.01-20260915142232**.
 
-実行する場合は[Releaseのフルセット](https://github.com/Master-Mkt/MGO2WIN/releases)を展開し、クライアントとHOSTを同じ版で使用してください。Gitのソースには実行用ゲーム資産を含みません。
+[Complete client and HOST downloads](https://github.com/Master-Mkt/MGO2WIN/releases/tag/v0.01-20260915142232-full) · [Release notes](docs/RELEASE_NOTES.md) · [導入方法](docs/FULL_README.ja.txt)
 
-- [更新内容・未完了事項](docs/RELEASE_NOTES.md)
-- [導入・起動・操作・復旧手順](docs/FULL_README.ja.txt)
-- [ビルドコマンドとソース単独試験](README.md)
+3Dの左右反転と5ステージの法線を修正。半球ライト、AKの手接続/リロード/発射、死亡/再出撃、原UI/日本語フォントを含みます。原作の材質・照明の完全一致は未完です。
 
-ビルドにはWindows x64、C++20対応のVisual Studio C++ツール、Windows SDK、CMake 3.24以降が必要です。新しいヘッダー、実装、生成済み骨行列 `.inc`、C++試験を収録しています。原ゲームファイルやIDAを使わずにEXEをコンパイルできますが、実行には対応するフルセットのデータが必要です。
+The source tree excludes runtime resources. Use the complete ZIPs to run the program, with the same build on every client and HOST.
 
-全CTestには別途ローカル原資産が必要な描画・照合試験もあります。Gitだけで全試験が成功するとは説明していません。READMEの対象を指定したソース単独試験を利用してください。全177件のローカルRelease試験と、その後の入力修正6件の結果は実LAN・実対戦・実招待の完了を意味しません。
+Build on Windows with Visual Studio C++ Build Tools, the Windows SDK and CMake:
 
-`Build-Title.cmd` は準備済みGWP等を使う旧来のタイトル用パッケージ手順です。今回の全クライアント／HOSTデータを原本から生成するツールではありません。元アーカイブ、変換済み実行資産、IDA・逆コンパイル全文、私的ログ、認証情報、個人設定、アップデータ試験鍵はGit対象外です。原MGO2パッチ機能は使用しません。
+```powershell
+cmake -S . -B build -A x64 -DMGO2WIN_STATIC_RUNTIME=ON -DMGO2WIN_BUILD_TIMESTAMP=20260915142232
+cmake --build build --config Release --target MGO2WIN MGO2HOST
+```
 
-原版から確認した動作、Windows側の近似、未実装の範囲は更新記録で区別しています。4stage・通常DM/TDM・AK102を中心とする限定実装であり、全ルール・全武器・全動作の再現ではありません。別PC間の接続安定性は実機での再確認が残っています。
+The local runtime build passed 284 Release tests. Tests that use original fixtures require separately prepared local resources. Hardware GPU performance, physical gamepads and live LAN play were not validated in this delivery.
 
-[ライセンス状況](LICENSE_STATUS.md)と[第三者表記](THIRD_PARTY_NOTICES.md)を参照してください。公開により新たなゲーム資産の権利やプロジェクト全体の利用許諾が生じるものではありません。
+See [license status](LICENSE_STATUS.md) and [third-party notices](THIRD_PARTY_NOTICES.md).

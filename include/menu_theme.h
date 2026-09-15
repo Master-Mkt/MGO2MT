@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <algorithm>
 #include <string_view>
+#include "menu_font.h"
 namespace mgo2win {
 // Native interpretation of the user's 2026-09-10 retail menu references.
 // Clipped upper-left selection corner, inset rim and translucent amber glass.
@@ -64,8 +65,8 @@ inline COLORREF menu_text_color(COLORREF c){
  return GetRValue(c)<45&&GetGValue(c)<45&&GetBValue(c)<45?RGB(249,245,230):c;
 }
 struct MenuFonts {
- HFONT heading=CreateFontW(-30,0,0,0,FW_BOLD,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,ANTIALIASED_QUALITY,VARIABLE_PITCH,L"Arial");
- HFONT section=CreateFontW(-17,0,0,0,FW_BOLD,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,ANTIALIASED_QUALITY,VARIABLE_PITCH,L"Arial");
+ HFONT heading=create_menu_font(30,FW_BOLD);
+ HFONT section=create_menu_font(17,FW_BOLD);
  ~MenuFonts(){DeleteObject(heading);DeleteObject(section);}
 };
 inline const MenuFonts& menu_fonts(){static const MenuFonts fonts;return fonts;}

@@ -74,6 +74,25 @@ int main(int argc,char**argv){try{
   const bool allEmojiGlyphs=glyphResult!=GDI_ERROR&&std::none_of(emojiGlyphs.begin(),emojiGlyphs.end(),[](WORD g){return g==0xffff;});
   {NameTextFit fit(dc,fonts[2],emoji,247);std::cout<<"HUD emoji16 measured width "<<fit.extent().cx<<", fits="<<fit.fits()<<", direct-font UTF16 glyph coverage="<<allEmojiGlyphs<<" (not a color emoji/shaping guarantee)\n";}
  }
+ {
+  // The lower bar switches presentation, but never overwrites stored stamina.
+  auto water=model;water.stamina=750;water.maxStamina=1000;water.oxygen=10000;water.faceSubmerged=false;
+  auto render=[&]{std::memset(pixels,0,1280*720*4);hud::draw(dc,fonts,water,0);GdiFlush();};
+  auto pixel=[&](int x,int y){return data[size_t(y)*1280+x]&0xffffff;};
+  auto lowerColor=[&](uint32_t color){size_t n=0;for(int y=88;y<96;++y)for(int x=96;x<342;++x)n+=pixel(x,y)==color;return n;};
+  constexpr uint32_t staminaColor=0xcdcf86,oxygenColor=0x489ce1,emptyColor=0x282c1e,oxygenEmptyColor=0x1e2c38;
+  auto captureWater=[&](const char* suffix){if(argc>1){BITMAPFILEHEADER file{};file.bfType=0x4d42;file.bfOffBits=sizeof(file)+sizeof(BITMAPINFOHEADER);file.bfSize=file.bfOffBits+1280*720*4;std::ofstream out(std::string(argv[1])+suffix,std::ios::binary);out.write(reinterpret_cast<char*>(&file),sizeof(file));out.write(reinterpret_cast<char*>(&bi.bmiHeader),sizeof(bi.bmiHeader));out.write(static_cast<const char*>(pixels),1280*720*4);check(bool(out),"oxygen HUD bitmap");}};
+  render();check(lowerColor(staminaColor)==184*8&&lowerColor(emptyColor)==62*8&&lowerColor(oxygenColor)==0,"dry full oxygen shows actual lower stamina fraction");check(count(350,80,440,103)==0,"dry full oxygen has no stale oxygen label");captureWater(".stamina.bmp");
+  std::vector<uint32_t> health;for(int y=74;y<84;++y)for(int x=96;x<342;++x)health.push_back(pixel(x,y));
+  auto healthUnchanged=[&]{size_t i=0;for(int y=74;y<84;++y)for(int x=96;x<342;++x)check(pixel(x,y)==health[i++],"oxygen presentation never changes upper health bar");};
+  water.faceSubmerged=true;water.oxygen=5000;render();check(lowerColor(oxygenColor)==123*8&&lowerColor(oxygenEmptyColor)==123*8&&lowerColor(staminaColor)==0,"submerged oxygen replaces full lower background, not a yellow remainder");check(count(350,80,440,103)>10,"oxygen label renders");healthUnchanged();captureWater(".oxygen.bmp");
+  water.oxygen=0;render();check(lowerColor(oxygenColor)==0&&lowerColor(staminaColor)==0&&lowerColor(oxygenEmptyColor)==246*8,"zero oxygen is an empty bar without remaining stamina color");size_t redWarning=0;for(int y=80;y<103;++y)for(int x=350;x<440;++x){auto c=pixel(x,y);if((c>>16)>200&&((c>>8)&255)>70&&((c>>8)&255)<180&&(c&255)<150)++redWarning;}check(redWarning>10,"zero oxygen warning uses visible red glyphs");healthUnchanged();captureWater(".oxygen-zero.bmp");
+  water.faceSubmerged=false;water.oxygen=7500;render();check(lowerColor(oxygenColor)==184*8&&lowerColor(staminaColor)==0,"surfaced but recovering oxygen remains blue");captureWater(".oxygen-recovering.bmp");
+  water.oxygen=10000;render();check(lowerColor(staminaColor)==184*8&&lowerColor(emptyColor)==62*8&&lowerColor(oxygenColor)==0&&count(350,80,440,103)==0,"full oxygen after surfacing restores stamina and clears warning");check(water.stamina==750&&water.maxStamina==1000,"oxygen overlay never mutates stamina model");healthUnchanged();captureWater(".oxygen-restored.bmp");
+  water.faceSubmerged=true;render();check(lowerColor(oxygenColor)==246*8&&lowerColor(staminaColor)==0,"full oxygen remains blue while submerged");
+  water.oxygen=65535;render();check(lowerColor(oxygenColor)==246*8,"oversized oxygen is clipped at full bar width");
+  water.faceSubmerged=false;water.oxygen=10000;water.stamina=2000;render();check(lowerColor(staminaColor)==246*8,"stamina is clipped at maximum");water.maxStamina=0;render();check(lowerColor(emptyColor)==246*8&&lowerColor(staminaColor)==0,"unknown stamina maximum never divides by zero or fabricates fill");
+ }
  model.skills.clear();std::memset(pixels,0,1280*720*4);hud::draw(dc,fonts,model,0);GdiFlush();check(count(24,491,424,583)==0,"empty skills do not retain prior-round labels");
  SelectObject(dc,oldFont);for(auto font:fonts)DeleteObject(font);SelectObject(dc,old);DeleteObject(bitmap);DeleteDC(dc);
  std::cout<<"HUD Japanese glyphs, selected skills, timer, intro and final clan alpha passed\n";return 0;

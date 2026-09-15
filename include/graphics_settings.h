@@ -1,5 +1,6 @@
 #pragma once
 #include <windows.h>
+#include "shadow_cascade.h"
 #include <vector>
 #include <filesystem>
 #include <functional>
@@ -7,6 +8,9 @@
 namespace mgo2win {
 struct GraphicsConfig {
  unsigned fullscreen=0,width=1280,height=720,refresh_num=0,refresh_den=1,shadow=2048,vsync=1;
+ unsigned renderScale=100,anisotropy=0,mipmaps=0,linearColor=0;
+ unsigned shadowEnabled=0,shadowCascades=4,shadowPcf=1,shadowBias=30,shadowNormal=20,shadowSlope=2,shadowDebug=0;
+ shadows::Settings shadows()const{return {bool(shadowEnabled),shadowCascades,(shadow<1024?1024:shadow),shadowPcf,float(shadowBias)*.00001f,float(shadowNormal),float(shadowSlope),60000,bool(shadowDebug)};}
  bool operator==(const GraphicsConfig&)const=default;
 };
 struct DisplayMode {unsigned width,height,num,den;};
@@ -16,7 +20,7 @@ void save_graphics(const std::filesystem::path&,const GraphicsConfig&);
 class GraphicsSettings {
  std::filesystem::path path_;GraphicsConfig previous_;
  bool request_=false,undo_=false;ULONGLONG until_=0;
- int focus_=0;bool back_=false;
+ int focus_=0;bool back_=false,shadowPage_=false;
  std::vector<unsigned> cues_;
  void cue(unsigned sound){if(cues_.size()<32)cues_.push_back(sound);}
  void change(int);void activate();

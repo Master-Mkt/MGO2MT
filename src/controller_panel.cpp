@@ -1,4 +1,5 @@
-﻿#include "menu_theme.h"
+#include "system_ui_icons.h"
+#include "menu_theme.h"
 #include "controller_panel.h"
 #include "menu_audio.h"
 #include <iostream>
@@ -88,7 +89,7 @@ POINT ControllerPanel::draw(HDC dc,const std::vector<HFONT>& fonts){
   float left=adjusted(left_magnitude_,draft_.left_deadzone),right=adjusted(right_magnitude_,draft_.right_deadzone);
   std::wstring preview=!connected_?L"未接続":left<=0?L"停止":preview_running_?L"走行":L"歩行";
   const std::wstring readouts[]={L"入力確認（設定中の値でプレビュー）",L"左："+std::to_wstring(int(left_magnitude_*100))+L" % → "+std::to_wstring(int(left*100))+L" %     "+preview,L"右："+std::to_wstring(int(right_magnitude_*100))+L" % → "+std::to_wstring(int(right*100))+L" %",L"走行開始 "+std::to_wstring(draft_.run_threshold)+L" % / 歩行へ戻る "+std::to_wstring(draft_.run_threshold-draft_.run_hysteresis)+L" % 未満"};
-  for(int i=0;i<4;++i){int y=426+i*32;menu_band(dc,120,y,1040,31,i);text(readouts[i],135,y+5,1000,28,2,RGB(209,226,225));}
+  for(int i=0;i<4;++i){int y=426+i*32;menu_band(dc,120,y,1040,31,i);text(readouts[i],135,y+5,system_ui_icons().find(0)?760:1000,28,2,RGB(209,226,225));}
  }
  text(notice_,120,565,1040,28,3,RGB(244,218,161));
  box(12,L"設定を保存・適用",120,599,320,43);box(13,page_==3?L"アナログを初期値へ":L"この機器を初期値へ",470,599,330,43);box(14,back_label_,830,599,330,43);
@@ -99,5 +100,6 @@ POINT ControllerPanel::draw(HDC dc,const std::vector<HFONT>& fonts){
  if(focus_<12)return {focus_==10?930:1050,263};
  return {focus_==12?120:focus_==13?470:830,599};
 }
+void ControllerPanel::paint_original(void* pixels)const{if(page_==3)if(const auto* icon=system_ui_icons().find(0))weapons::paint_icon(*icon,std::span(static_cast<uint32_t*>(pixels),1280*720),1280,720,910,426,225,128);}
 void ControllerPanel::report()const{std::osyncstream(std::cout)<<"{\"controller_panel\":true,\"device\":"<<input_->config.device<<",\"slot\":"<<input_->config.slot<<",\"unsaved\":"<<(dirty_?"true":"false")<<",\"capturing\":"<<(capturing()?"true":"false")<<"}"<<std::endl;}
 }

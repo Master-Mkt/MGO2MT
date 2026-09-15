@@ -1,3 +1,4 @@
+#include "menu_font.h"
 #include "music_menu.h"
 #include "menu_audio.h"
 #include "menu_theme.h"
@@ -12,7 +13,7 @@ MusicMenu::MusicMenu(){
  info.bmiHeader.biWidth=1280;info.bmiHeader.biHeight=-720;info.bmiHeader.biPlanes=1;info.bmiHeader.biBitCount=32;
  bitmap_=CreateDIBSection(dc_,&info,DIB_RGB_COLORS,&pixels_,nullptr,0);
  if(!dc_||!bitmap_){if(bitmap_)DeleteObject(bitmap_);if(dc_)DeleteDC(dc_);throw std::runtime_error("Music menu surface");}
- old_=SelectObject(dc_,bitmap_);font_=CreateFontW(-23,0,0,0,FW_NORMAL,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,ANTIALIASED_QUALITY,DEFAULT_PITCH,L"Yu Gothic UI");
+ old_=SelectObject(dc_,bitmap_);font_=create_menu_font(23,FW_NORMAL);
 }
 MusicMenu::~MusicMenu(){SelectObject(dc_,old_);DeleteObject(bitmap_);DeleteObject(font_);DeleteDC(dc_);}
 void MusicMenu::cue(unsigned s){if(cues_.size()<32)cues_.push_back(s);}

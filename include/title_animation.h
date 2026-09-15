@@ -20,15 +20,20 @@ class TitleAnimation {
  std::vector<Node> nodes_;std::vector<Quad> templates_;std::vector<Event> events_;std::vector<Active> active_;
  uint32_t ticks_=0,wait_=0,state_=0,accepted_=0,rejected_=0,callbacks_=0,accepted_tick_=0,callback_tick_=0;
  uint32_t remaining_=18000,result_=0; // nttitle proc18, option 0x468ED at GCX 0x15263B.
+ bool wait_for_start_=false;
  std::function<void(uint32_t)> selected_,completed_;
  const Event& event(uint32_t id)const;
  void start(uint32_t id);void advance(uint32_t delta);
 public:
  explicit TitleAnimation(const std::vector<char>& bytes,uint32_t timeout=18000,bool foreground=false);
  void tick(uint32_t delta,uint32_t pressed);
+ // Native disconnect presentation: keep the original animation and START gate,
+ // but suspend its attract timeout until the user explicitly resumes.
+ void wait_for_start(bool enabled){wait_for_start_=enabled;}
  void set_callbacks(std::function<void(uint32_t)> selected,std::function<void(uint32_t)> completed){selected_=std::move(selected);completed_=std::move(completed);}
  std::vector<Quad> geometry()const;
  uint32_t ticks()const{return ticks_;}uint32_t state()const{return state_;}
+ bool ready_for_start()const{return !loading_&&!background_&&state_==1&&wait_>620;}
  uint32_t accepted()const{return accepted_;}uint32_t rejected()const{return rejected_;}
  uint32_t callbacks()const{return callbacks_;}uint32_t accepted_tick()const{return accepted_tick_;}uint32_t callback_tick()const{return callback_tick_;}
  uint32_t result()const{return result_;}

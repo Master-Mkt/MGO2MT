@@ -110,10 +110,23 @@ bool Collision::clear(Vec3 feet,Capsule shape)const{
 std::optional<CapsuleHit> Collision::sweep(Vec3 feet,Vec3 delta,Capsule shape)const{
  if(!finite(feet)||!valid(shape))return {};auto a=feet,b=feet;a[1]+=shape.radius;b[1]+=shape.height-shape.radius;return sweep_segment(a,b,delta,shape.radius,shape.skin);
 }
+// A triangle cannot intersect a swept capsule wholly outside its supporting
+// plane. Test all four translated segment endpoints on the same side. This
+// strict, double-precision guard removes conservative-advancement false hits
+// at coplanar internal edges without weakening wall/ground contact tolerances.
+static bool outside_swept_plane(Vec3 startA,Vec3 startB,Vec3 delta,float radius,float skin,Vec3 a,Vec3 b,Vec3 c){
+ double u[3],v[3],n[3];for(unsigned k=0;k<3;++k){u[k]=double(b[k])-a[k];v[k]=double(c[k])-a[k];}
+ n[0]=u[1]*v[2]-u[2]*v[1];n[1]=u[2]*v[0]-u[0]*v[2];n[2]=u[0]*v[1]-u[1]*v[0];
+ const double length=std::sqrt(n[0]*n[0]+n[1]*n[1]+n[2]*n[2]);if(length<=1e-12)return false;
+ const auto distance=[&](Vec3 p,bool end){double d=0;for(unsigned k=0;k<3;++k)d+=(double(p[k])+(end?double(delta[k]):0)-a[k])*n[k];return d/length;};
+ const double limit=double(radius)+skin,da=distance(startA,false),db=distance(startB,false),ea=distance(startA,true),eb=distance(startB,true);
+ return (da>=limit&&db>=limit&&ea>=limit&&eb>=limit)||(da<=-limit&&db<=-limit&&ea<=-limit&&eb<=-limit);
+}
 std::optional<CapsuleHit> Collision::sweep_segment(Vec3 startA,Vec3 startB,Vec3 delta,float radius,float skin)const{
  if(!finite(startA)||!finite(startB)||!finite(delta)||!finite(add(startA,delta))||!finite(add(startB,delta))||!std::isfinite(radius)||!std::isfinite(skin)||radius<=0||radius>10000||skin<0||skin>=radius*.25f)return {};float speed=std::sqrt(dot(delta,delta));if(speed<1e-8f)return {};
  Vec3 lo,hi;for(int j=0;j<3;++j){lo[j]=std::min({startA[j],startB[j],startA[j]+delta[j],startB[j]+delta[j]})-radius-skin;hi[j]=std::max({startA[j],startB[j],startA[j]+delta[j],startB[j]+delta[j]})+radius+skin;}std::optional<CapsuleHit> result;
  for(auto i:candidates(lo,hi)){auto&t=triangles[i];auto a=vertices[t.vertices[0]],b=vertices[t.vertices[1]],c=vertices[t.vertices[2]];float time=0;
+  if(outside_swept_plane(startA,startB,delta,radius,skin,a,b,c))continue;
   for(unsigned step=0;step<32;++step){auto p=add(startA,mul(delta,time)),q=add(startB,mul(delta,time));auto h=closest(p,q,a,b,c);float distance=std::sqrt(h.squared);auto n=distance>1e-5f?mul(sub(h.segment,h.triangle),1/distance):unit(cross(sub(b,a),sub(c,a)));
    if(distance<=1e-5f&&dot(delta,n)>0)n=mul(n,-1);float closing=-dot(delta,n);if(closing<=1e-6f)break;
    float separation=distance-radius-skin;

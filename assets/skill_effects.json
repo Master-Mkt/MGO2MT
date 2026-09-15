@@ -21,7 +21,7 @@
   },
   "sources": {
     "elf": {
-      "path": "local-source/MGO2.ELF",
+      "path": "MGO2.ELF",
       "size_bytes": 19615992,
       "sha256": "1a55a41ee5afdebd89075bd205e412c8311f569ba9dc022f629bb63fb4bfd13a"
     },

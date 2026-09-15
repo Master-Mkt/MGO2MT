@@ -1,4 +1,4 @@
-﻿#include "character_screen.h"
+#include "character_screen.h"
 #include <algorithm>
 #include <iostream>
 #include <fstream>

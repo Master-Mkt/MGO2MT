@@ -1,3 +1,4 @@
+#include "combat_wire_budget.h"
 #include "combat_service.h"
 #include "dedicated_peer.h"
 #include "host_session.h"
@@ -56,7 +57,7 @@ struct Network {
      synced[i]=true;queue(i,host::room_snapshot(std::array<host::Rotation,1>{{{20,1,0}}},7));check(service.admit(ids[i],now),"session admission precedes native offer");
     }else if(cw::recognized(e)){
      auto record=cw::decode(e);bool accepted=service.receive(ids[i],e,now);
-     if(std::holds_alternative<cw::Accept>(record)){check(accepted,"v5 offer is explicitly accepted");++accepts;}
+     if(std::holds_alternative<cw::Accept>(record)){check(accepted,"current native offer is explicitly accepted");++accepts;}
      if(std::holds_alternative<cw::Command>(record))(accepted?acceptedCommands[i]:rejectedCommands[i])++;
     }
    }
@@ -64,7 +65,7 @@ struct Network {
   service.poll(now);if(service.take_round_start())++starts;
   for(auto&d:service.deliveries()){
    auto it=std::find(ids.begin(),ids.end(),d.recipient);check(it!=ids.end(),"delivery tied to admitted full identity");
-   if(std::holds_alternative<cw::Offer>(cw::decode(d.payload))){check(d.payload[5]==cw::version,"wire offer version is GWCBv6");++offers;}
+   if(std::holds_alternative<cw::Offer>(cw::decode(d.payload))){check(d.payload[5]==cw::version,"wire offer uses the current GWCB version");++offers;}
    queue(unsigned(it-ids.begin()),std::move(d.payload));
   }
   for(unsigned i=0;i<2;++i){
@@ -88,6 +89,7 @@ void lifecycle(std::shared_ptr<const weapons::Catalog> catalog){
  check(f.input(1,101,1,110,false,true),"victim starts reload");f.tick(110);
  check(f.host.authority().snapshot().players[2]->ammo==6&&f.host.authority().snapshot().players[2]->reloadUntil==1010,"partially used inventory and pending reload");
  check(f.input(0,100,1,120,true),"host receives lethal shot");f.tick(120);f.tick(121);
+ auto wait=f.prep(1,121);check(wait.respawnWaiting&&wait.respawnRemainingMs==3000,"self countdown begins on host observed death");check(std::get<cw::Preparation>(cw::decode(cw::encode(wait)))==wait,"death countdown wire roundtrip");
  auto dead=f.host.authority().snapshot();check(!dead.players[2]->alive&&dead.players[2]->hp==0&&dead.players[2]->life==1,"host alone observes death");
  auto premature=command(19,4,cw::CommandKind::loadout);premature.weapons={25,0,0};check(f.send(1,premature,130)&&f.prep(1,130).error==cw::CommandError::already_deployed,"no grant during native wait");
  f.tick(100);check(f.prep(1,100).players[2]->life==1,"clock regression never expires wait");
@@ -112,7 +114,7 @@ void lifecycle(std::shared_ptr<const weapons::Catalog> catalog){
  auto replacement=victim;replacement.instance++;f.host.remove(victim);check(f.host.admit(replacement,8200)&&f.host.receive(replacement,cw::encode(cw::Accept{19}),8200),"reconnect admitted with distinct slot incarnation");auto loaded=command(19,1,cw::CommandKind::loaded);loaded.enabled=true;loaded.generation=7;loaded.sceneRevision=1;check(f.host.receive(replacement,cw::encode(loaded),8200),"reconnect loads scene");choose=command(19,2,cw::CommandKind::loadout);choose.weapons={25,0,0};check(f.host.receive(replacement,cw::encode(choose),8201)&&f.host.preparation(replacement,8201)->error==cw::CommandError::already_deployed&&!a.snapshot().players[2]&&f.grants==3,"disconnect cannot turn dead-life entitlement into fresh reconnect inventory");
  // DP and stamina-only behavior remain closed until their original allowance/
  // recovery paths are reviewed; native health death is the only trigger.
- Fixture dp(catalog,true);dp.initial();check(dp.input(0,1,1,100,true),"DP fixture lethal input");dp.tick(100);dp.tick(101);dp.tick(10000);check(dp.prep(1,10000).players[2]->deployed&&dp.prep(1,10000).players[2]->life==1,"unreviewed DP respawn does not reset wallet or invent allowance");
+ Fixture dp(catalog,true);dp.initial();check(dp.input(0,1,1,100,true),"DP fixture lethal input");dp.tick(100);dp.tick(101);const auto wallet=dp.prep(1,101).dpBalance;check(dp.prep(1,101).respawnWaiting&&dp.prep(1,101).respawnRemainingMs==3000,"HOST starts recipient death countdown");dp.tick(10000);check(!dp.prep(1,10000).players[2]->deployed&&dp.prep(1,10000).players[2]->life==2&&dp.prep(1,10000).dpBalance==wallet&&!dp.prep(1,10000).respawnWaiting,"DP respawn opens selection and preserves wallet without allowance");
  Fixture alive(catalog);alive.initial();alive.tick(100000);check(alive.prep(1,100000).players[2]->life==1,"elapsed room time never grants alive player a new life");
  auto stunProfiles=profiles();stunProfiles[0].damage=0;stunProfiles[0].staminaDamage=1000;combat::Authority stun;stun.begin(1,floor(),stunProfiles);for(unsigned i=0;i<2;++i)check(stun.join(f.ids[i],uint8_t(i+1),spawn_pose(f.ids[i]),1000,1000,std::array<uint16_t,1>{25},0),"stun fixture");stun.active(true);check(bool(stun.fire(f.ids[0],{1,1,25,{0,0,1}},1)),"stun attack");check(stun.snapshot().players[2]->alive&&stun.snapshot().players[2]->stunned&&!stun.respawn(f.ids[1],2,[]{return true;}),"stamina collapse is not health death");
 }
@@ -129,8 +131,29 @@ void wire_and_replica(){
  auto rollback=fresh;rollback.revision++;rollback.players[2]->life=1;check(!replicas[0].snapshot(rollback),"higher snapshot revision cannot roll back a life");
  cw::Input input{1,99,p.pose,25,true,false,true,false,2};auto bytes=cw::encode(input);check(std::get<cw::Input>(cw::decode(bytes))==input,"input life roundtrip");for(size_t i=0;i<bytes.size();++i){bool bad=false;try{cw::decode(std::span(bytes).first(i));}catch(const cw::Invalid&){bad=true;}check(bad,"truncated life-stamped input rejected");}auto v3=bytes;v3[5]=3;check(!cw::recognized(v3),"v3 deliberately not guessed as v4");input.life=0;bool rejected=false;try{cw::encode(input);}catch(const cw::Invalid&){rejected=true;}check(rejected,"zero life rejected");
  auto older=cw::Input{1,100,p.pose,25,false,true,false,false,1};auto newer=cw::Input{1,1,p.pose,25,false,false,false,false,2};check(cw::coalesce_input(older,newer)==newer,"old reload not coalesced into new life sequence1");older.reload=false;older.firePressed=true;check(cw::coalesce_input(older,newer)==newer,"old pulse not coalesced into new life");
- auto full=initial;full.eventWatermark=4;for(unsigned i=0;i<24;++i){p.identity={uint8_t(i),uint16_t(i+1),100+i};full.players[i]=p;}std::vector<combat::Event> events;for(unsigned i=1;i<=4;++i){e.id=i;e.source=full.players[0]->identity;e.target=full.players[1]->identity;events.push_back(e);}auto wire=cw::encode(cw::Frame{full,cw::Status::active,events});check(wire.size()<=2000&&std::get<cw::Frame>(cw::decode(wire)).snapshot==full,"maximum24-player4-event frame preserves life and remains bounded");host::Message message;message.channel=1;message.serial=1;message.payload=wire;auto packet=host::encode({1,{message}},host::Keys{1,2});check(packet.size()<=host::max_datagram,"maximumlife-stamped frame fits encrypted host datagram");
- std::cout<<"max_record_bytes="<<wire.size()<<" max_datagram_bytes="<<packet.size()<<'\n';
+ auto full=initial;full.eventWatermark=4;
+ for(unsigned i=0;i<24;++i){p.identity={uint8_t(i),uint16_t(i+1),100+i};p.oxygen=uint16_t(i*400);p.faceSubmerged=(i%2)!=0;full.players[i]=p;}
+ std::vector<combat::Event> events;
+ for(unsigned i=1;i<=4;++i){e.id=i;e.source=full.players[0]->identity;e.target=full.players[1]->identity;events.push_back(e);}
+ const auto budget=combat_test::budget(cw::Frame{full,cw::Status::active,events});
+ std::vector<uint8_t> wire;
+ for(size_t count=0;count<=budget.capacity;++count){
+  const std::vector<combat::Event> prefix(events.begin(),events.begin()+count);
+  wire=cw::encode(cw::Frame{full,cw::Status::active,prefix});
+  auto decoded=std::get<cw::Frame>(cw::decode(wire));
+  check(wire.size()==budget.baseBytes+budget.eventBytes*count&&wire.size()<=2000,"every exact full-roster prefix fits calculated record bound");
+  check(decoded.snapshot==full&&decoded.events==prefix,"full roster preserves life, oxygen, submersion and all included events");
+ }
+ auto smaller=full;smaller.players[23].reset();const auto smallerBudget=combat_test::budget(cw::Frame{smaller,cw::Status::active,events});
+ const std::vector<combat::Event> subset(events.begin(),events.begin()+smallerBudget.capacity);
+ auto four=cw::encode(cw::Frame{smaller,cw::Status::active,subset});auto fourDecoded=std::get<cw::Frame>(cw::decode(four));
+ check(smallerBudget.capacity>=budget.capacity&&four.size()==smallerBudget.fullBytes&&fourDecoded.snapshot==smaller&&fourDecoded.events==subset,"smaller full roster preserves maximal complete event chunk");
+ host::Message message;message.channel=1;message.serial=1;message.payload=wire;
+ auto packet=host::encode({1,{message}},host::Keys{1,2});
+ check(packet.size()<=host::max_datagram,"largest fitting full-roster fixture fits encrypted host datagram");
+ auto decrypted=host::decode(packet,host::Keys{1,2},1);
+ check(decrypted.messages.size()==1&&decrypted.messages[0].channel==1&&decrypted.messages[0].serial==1&&decrypted.messages[0].payload==wire,"encrypted full-roster frame roundtrips without payload loss");
+ std::cout<<"full_roster_events=3 record_bytes="<<wire.size()<<" datagram_bytes="<<packet.size()<<" four_event_players=23 record_bytes="<<four.size()<<'\n';
 }
 void encrypted_network(std::shared_ptr<const weapons::Catalog> catalog){
  Fixture f(catalog);Network net(f.host);net.until([&]{return net.client[0].result().preparation&&net.client[1].result().preparation;},"two encrypted sessions receive initial preparation");

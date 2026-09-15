@@ -30,6 +30,77 @@ DESTINATIONS['combat_ak102_shot']='sfx/ak102_10002_v0.wav'
 DESTINATIONS.update({role:'stage/'+name for role,name in STAGE_OBJECT_ASSETS.items()})
 SKILL_ICON_FILES = ('skill_star.png', 'participants.png', 'rules.png', 'deploy.png',
                     'skills.png', 'equipment.png', 'options.png')
+TITLE_MOVIE_BYTES = 116061027
+TITLE_MOVIE_SHA256 = '499bbf7c678dd25918fc6fe33dc58e65f75a08c7fdbdbe49bdd171877e8272c5'
+
+
+def title_movie_package_sources():
+    """User-supplied local movie; preserve its original bytes and fixed name.
+
+    Recorded source: outputs/title_movie_20260915/resource.json. Import never
+    changes the Desktop original. Future full client packages include this
+    resource in assets.sha256 and package.json without a new GWP asset role.
+    """
+    source = ROOT/'work/title/movie_01.mp4'
+    if not source.is_file() or source.is_symlink() or source.stat().st_size != TITLE_MOVIE_BYTES:
+        raise ValueError('Missing or changed reviewed title movie resource')
+    if record(source)['sha256'] != TITLE_MOVIE_SHA256:
+        raise ValueError('Reviewed title movie SHA-256 changed')
+    with source.open('rb') as stream:
+        header = stream.read(12)
+    if header[4:8] != b'ftyp':
+        raise ValueError('Reviewed title movie MP4 container header')
+    return [(source, 'movie_01.mp4')]
+
+
+def stage_pickup_package_sources():
+    folder=ROOT/'outputs/stage_pickups_20260915/candidate'
+    proof=json.loads((folder/'evidence.json').read_text(encoding='utf-8'))
+    expected={name+'.gcx-items.cfg' for name in ('n001a','n004a','n007a','n022a','n023a')}
+    if set(proof['files'])!=expected:
+        raise ValueError('Stage pickup script coverage')
+    result=[]
+    for name,sha in proof['files'].items():
+        source=folder/name
+        if source.is_symlink() or record(source)['sha256']!=sha:
+            raise ValueError('Stage pickup script changed: '+name)
+        result.append((source,'stage/'+name))
+    return result
+
+
+def original_ui_package_sources():
+    proof=json.loads((ROOT/'outputs/original_ui_integration_20260915/resources.json').read_text(encoding='utf-8'))
+    result=[]
+    for row in proof['files']:
+        source=ROOT/'work/original-ui-runtime'/row['path']
+        if source.is_symlink() or record(source)['sha256']!=row['sha256']:
+            raise ValueError('Original UI resource missing or changed: '+row['path'])
+        result.append((source,row['path']))
+    if len(result)!=24 or proof['shared_bank_candidates_used']:
+        raise ValueError('Original UI runtime resource coverage')
+    return result
+
+
+def original_hold_box_package_sources():
+    """Exact original MDN conversion and shared LA2 glyph inputs."""
+    medium = ROOT/'work/stages/native/items/ibox_item_mid.gwm'
+    if not medium.is_file() or medium.is_symlink() or record(medium)['sha256'] != '9307043f548645bb8b745c9cab86930203656290cd8d27e89d094266daad16c4':
+        raise ValueError('Missing or changed original medium item box')
+    folder = ROOT/'work/hold-font'
+    proof = json.loads((ROOT/'outputs/original_hold_ui_20260915/font_manifest.json').read_text(encoding='utf-8'))
+    index = folder/'index.tsv'
+    expected = ['MGO2WIN_WEAPON_ICONS\t1'] + [f'ICON\t{i}\tglyph_{i}.png' for i in range(32,127)]
+    if index.is_symlink() or index.read_text(encoding='utf-8').splitlines() != expected:
+        raise ValueError('Original hold font index mismatch')
+    result = [(medium,'stage/items/ibox_item_mid.gwm'), (index,'hold-font/index.tsv')]
+    for row in proof['glyphs']:
+        source = folder/f"glyph_{row['code']}.png"
+        if source.is_symlink() or record(source)['sha256'] != row['output']['sha256']:
+            raise ValueError('Original hold glyph changed')
+        result.append((source,'hold-font/'+source.name))
+    if len(result) != 97 or {r['code'] for r in proof['glyphs']} != set(range(32,127)):
+        raise ValueError('Original hold font extent mismatch')
+    return result
 
 
 def skill_package_sources():
@@ -121,6 +192,15 @@ def package(gwp_path, exe, output, seconds=None):
         if not path.is_file():
             raise ValueError('Missing distribution document: '+path.name)
     skill_sources = skill_package_sources()
+    skill_sources.extend(title_movie_package_sources())
+    skill_sources.extend(original_hold_box_package_sources())
+    skill_sources.extend(original_ui_package_sources())
+    skill_sources.extend(stage_pickup_package_sources())
+    skill_sources.append((ROOT/"work/special/gekko_salute.wav", "special/gekko_salute.wav"))
+    for cue in range(17000,17008):
+        skill_sources.append((ROOT/"work/ak102-reload-audio"/f"ak102_reload_{cue}.wav", f"sfx/ak102_reload_{cue}.wav"))
+    for name in ("hands.gwh", "ak102.gwm", "operator.gwm", "ak102_secondary.gwm", "operator_secondary.gwm"):
+        skill_sources.append((ROOT/"work/weapon_hand"/name, "weapons/"+name))
     for name, target in (('selection0.gwmot', 'character/selection0.gwmot'),
                          ('selection1.gwmot', 'character/selection1.gwmot'),
                          ('salute.gwa', 'audio/salute.gwa')):
@@ -186,6 +266,12 @@ def package(gwp_path, exe, output, seconds=None):
         shutil.copyfile(source, target)
         hashes[name] = record(target)['sha256']
     runtime = document['runtime']
+    index=data/'sfx/combat.txt'
+    if index.exists():
+        rows={int(line.split()[0]):line.split()[1] for line in index.read_text().splitlines()[1:] if line.strip()}
+        rows.update({cue:f'ak102_reload_{cue}.wav' for cue in range(17000,17008)})
+        index.write_text(f'MGO2WIN.COMBAT_AUDIO 1 {len(rows)}\n'+''.join(f'{cue} {name}\n' for cue,name in sorted(rows.items())),encoding='ascii')
+        hashes['sfx/combat.txt']=record(index)['sha256']
     duration = runtime['preview_seconds'] if seconds is None else seconds
     (data/'launch.cfg').write_text(f"MGO2WIN.TITLE 7\n{duration} {runtime['entry_procedure']} {int(runtime['audio_enabled'])}\n{document['network']['policy_url']}\n", encoding='ascii')
     hashes['launch.cfg'] = record(data/'launch.cfg')['sha256']

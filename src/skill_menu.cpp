@@ -1,3 +1,4 @@
+#include "menu_font.h"
 #include "skill_menu.h"
 #include "menu_audio.h"
 #include "menu_theme.h"
@@ -20,19 +21,24 @@ SkillMenu::SkillMenu(){
  dc_=CreateCompatibleDC(nullptr);BITMAPINFO info{};info.bmiHeader.biSize=sizeof(BITMAPINFOHEADER);info.bmiHeader.biWidth=1280;info.bmiHeader.biHeight=-720;info.bmiHeader.biPlanes=1;info.bmiHeader.biBitCount=32;
  bitmap_=CreateDIBSection(dc_,&info,DIB_RGB_COLORS,&pixels_,nullptr,0);
  if(!dc_||!bitmap_){if(bitmap_)DeleteObject(bitmap_);if(dc_)DeleteDC(dc_);throw std::runtime_error("Skill menu surface");}
- old_=SelectObject(dc_,bitmap_);font_=CreateFontW(-22,0,0,0,FW_NORMAL,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,ANTIALIASED_QUALITY,DEFAULT_PITCH,L"Yu Gothic UI");
+ old_=SelectObject(dc_,bitmap_);font_=create_menu_font(22,FW_NORMAL);
 }
 SkillMenu::~SkillMenu(){SelectObject(dc_,old_);DeleteObject(bitmap_);DeleteObject(font_);DeleteDC(dc_);}
 void SkillMenu::icons(const std::filesystem::path&path){std::string error;icons_.load(path,error);}
 void SkillMenu::cue(unsigned value){if(cues_.size()<32)cues_.push_back(value);}
 void SkillMenu::open(std::shared_ptr<const skills::Catalog>catalog,const skills::Loadout&state,unsigned capacity,bool editable){
  catalog_=std::move(catalog);ids_=catalog_?catalog_->ids():std::vector<uint16_t>{};editor_=catalog_?std::make_unique<skills::Editor>(catalog_,state,capacity):nullptr;
- focus_=0;visible_=true;editable_=editable;saved_.reset();notice_.clear();contextNotice_.clear();
+ focus_=0;visible_=true;editable_=editable;applyAllowed_=true;saved_.reset();notice_.clear();contextNotice_.clear();
  if(!editor_||ids_.empty())notice_=L"スキル一覧を読み込めませんでした。";
  else if(!editor_->status())notice_=problem(editor_->status().result);
  // The entry that opens this menu supplies its confirmation cue.
 }
 void SkillMenu::close(bool feedback){if(!visible_)return;visible_=false;if(editor_)editor_->reset();if(feedback)cue(menu_audio::Cancel);}
+void SkillMenu::synchronize(const skills::Loadout& value,unsigned capacity,bool preserveDraft){
+ if(!editor_||!visible_)return;
+ editor_->synchronize(value,capacity,preserveDraft||editor_->changed());notice_.clear();
+ if(!editor_->status())notice_=problem(editor_->status().result);
+}
 const skills::Loadout& SkillMenu::draft()const{static const skills::Loadout empty;return editor_?editor_->draft():empty;}
 void SkillMenu::move(int delta){auto next=size_t(std::clamp(int(focus_)+delta,0,int(ids_.size()+1)));if(next!=focus_){focus_=next;notice_.clear();cue(menu_audio::Cursor);}}
 void SkillMenu::change(int direction,bool toggle){
@@ -48,6 +54,7 @@ void SkillMenu::change(int direction,bool toggle){
 }
 void SkillMenu::apply(){
  if(!editor_||ids_.empty())return;
+ if(!applyAllowed_){notice_=contextNotice_.empty()?L"サーバーのスキル設定を確認してから適用してください。":contextNotice_;return;}
  if(!editable_){close(true);return;}
  auto result=editor_->status();if(!result){notice_=problem(result.result);return;}
  saved_=editor_->draft();visible_=false;cue(menu_audio::Confirm);
@@ -103,7 +110,7 @@ const void* SkillMenu::draw(){
  if(focus_<ids_.size()&&catalog_){auto id=ids_[focus_];auto levels=catalog_->levels(id);std::wstring cost=L"消費枠：";for(size_t i=0;i<levels.size();++i){if(i)cost+=L"   ";cost+=L"Lv."+std::to_wstring(levels[i]->level)+L" = "+std::to_wstring(levels[i]->cost);}text(left,548,1000,30,cost,orange);}
  const auto& notice=notice_.empty()?contextNotice_:notice_;
  text(left,580,1004,28,notice.empty()?editable_?L"スキルの消費枠の合計が上限以内になるように設定します。":L"ラウンド中は確認のみです。変更は出撃前に行ってください。":notice,notice.empty()?muted:orange);
- menu_row(dc_,138,620,492,45,0,focus_==ids_.size());text(138,620,492,45,editable_?L"設定を保存 / F10":L"戻る",RGB(235,242,240),DT_CENTER);
+ menu_row(dc_,138,620,492,45,0,focus_==ids_.size());text(138,620,492,45,!applyAllowed_?L"保存待機 / 設定を確認中":editable_?L"設定を保存 / F10":L"戻る",RGB(235,242,240),DT_CENTER);
  menu_row(dc_,674,620,468,45,1,focus_==ids_.size()+1);text(674,620,468,45,L"取消 / A・Esc",RGB(235,242,240),DT_CENTER);
  text(138,686,1004,28,L"↑↓：スキル　←→：レベル　B：設定・解除　Tab：保存　F6：すべて解除",muted);
  if(focus_<ids_.size())menu_focus_guides(dc_,left,top+int(focus_%rows)*rowHeight);else menu_focus_guides(dc_,focus_==ids_.size()?138:674,620);

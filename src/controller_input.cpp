@@ -16,11 +16,12 @@ bool load_input(const std::filesystem::path& p,InputConfig& c){
  for(auto& k:draft.keyboard)if(!(f>>k))throw std::runtime_error("Missing key");
  for(auto& k:draft.gamepad)if(!(f>>k))throw std::runtime_error("Missing pad binding");
  if(version==2){if(!(f>>draft.left_deadzone>>draft.right_deadzone>>draft.run_threshold>>draft.run_hysteresis))throw std::runtime_error("Missing analog settings");}
- else{
-  auto legacy=InputConfig{}.gamepad;std::swap(legacy[4],legacy[5]);
-  // Only migrate the entire untouched old preset; preserve every custom mapping.
-  if(draft.gamepad==legacy)draft.gamepad=InputConfig{}.gamepad;
- }
+ // These are complete historical presets, not a guess from individual buttons.
+ // Even one customized pad binding prevents migration; keyboard/tuning stay intact.
+ constexpr std::array<unsigned,input_actions> oldPreset={0,1,2,3,5,4,6,7,8,9,14,15,10,11,12,13,16,17,18,19,20,21,22,23};
+ auto firstPreset=oldPreset;std::swap(firstPreset[4],firstPreset[5]);
+ if(draft.gamepad==oldPreset||(version==1&&draft.gamepad==firstPreset))draft.gamepad=InputConfig{}.gamepad;
+
  if(f>>extra||!f.eof()||!valid_input_config(draft))throw std::runtime_error("Invalid input mapping");c=draft;return true;
 }
 void save_input(const std::filesystem::path& p,const InputConfig& c){
@@ -33,7 +34,7 @@ void assign_input(InputConfig& c,unsigned action,unsigned code){
  if(action>=input_actions||(c.device?code>=24:!valid_input_key(code)))throw std::runtime_error("Invalid binding");auto& a=c.device?c.gamepad:c.keyboard;
  auto old=a[action];for(unsigned i=0;i<input_actions;++i)if(i!=action&&a[i]==code)a[i]=old;a[action]=code;
 }
-const wchar_t* action_name(unsigned n){static const wchar_t* names[]={L"選択肢 上",L"選択肢 下",L"選択肢 左",L"選択肢 右",L"決定 / リロード",L"キャンセル / しゃがむ・長押しで匍匐",L"AUTO AIM 切替",L"主観・姿勢方向 / 長押しで死んだふり",L"主観切替（補助） / 前のタブ",L"視線を戻す / 次のタブ",L"武器を発射",L"武器を構える",L"設定メニュー",L"チャットメニュー",L"武器選択",L"装備選択",L"移動 前",L"移動 後",L"移動 左",L"移動 右",L"視線 上",L"視線 下",L"視線 左",L"視線 右"};return n<24?names[n]:L"?";}
+const wchar_t* action_name(unsigned n){static const wchar_t* names[]={L"選択肢 上",L"選択肢 下",L"選択肢 左 / 主観リーン左",L"選択肢 右 / 主観リーン右",L"決定 / リロード",L"キャンセル / 姿勢・回避",L"AUTO AIM 切替",L"壁アクション / 敬礼 / 伏せ姿勢方向",L"主観切替（補助） / 前のタブ",L"視線を戻す / 次のタブ",L"武器を発射",L"武器を構える",L"設定メニュー",L"チャットメニュー",L"武器一覧（長押し・離して決定）",L"装備一覧（長押し・離して決定）",L"移動 前",L"移動 後",L"移動 左",L"移動 右",L"視線 上",L"視線 下",L"視線 左",L"視線 右"};return n<24?names[n]:L"?";}
 std::wstring input_name(unsigned k,bool pad){
  if(pad){static const wchar_t* names[]={L"D-pad ↑",L"D-pad ↓",L"D-pad ←",L"D-pad →",L"A",L"B",L"X",L"Y",L"LB",L"RB",L"START",L"BACK",L"LS 押込",L"RS 押込",L"LT",L"RT",L"LS ↑",L"LS ↓",L"LS ←",L"LS →",L"RS ↑",L"RS ↓",L"RS ←",L"RS →"};return k<24?names[k]:L"?";}
  wchar_t name[80]{};LONG scan=LONG(MapVirtualKeyW(k,MAPVK_VK_TO_VSC)<<16);if((k>=VK_PRIOR&&k<=VK_DOWN)||k==VK_INSERT||k==VK_DELETE)scan|=1<<24;

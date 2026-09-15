@@ -110,6 +110,9 @@ int main(int argc,char** argv){try{
  wait([&]{return currentCounts().commands==beforeLoading.commands+1;},"loading status publishes unloaded state");
  check(lastCommand().kind==combat::wire::CommandKind::loaded&&!lastCommand().enabled,"loading reports only unloaded state");
  capture("22-loading-rules.bmp");
+ check(ui.room_loading(),"joined stage load uses opaque loading overlay");
+ {auto pixels=static_cast<const uint32_t*>(ui.draw());check(pixels[100*1280+100]==0xff010101,"loading covers the old scene with opaque near-black");}
+ key(VK_ESCAPE);noEffects(currentCounts(),"loading Esc never leaves an admitted room");
  check(readyCount()==readyBeforeLoading&&!ui.combat_preparation()->players[1]->ready&&!ui.room_match_visible(),"data wait does not imply READY or deployment");
  // A ready-looking status alone is still not an applied scene acknowledgement.
  const auto afterLoading=currentCounts();ui.stage_feedback(stage::Status::preview_ready);
@@ -148,7 +151,7 @@ int main(int argc,char** argv){try{
   // Reset the independent fixture; this is not a HOST transition request.
   state.preparation->phase=combat::wire::RoundPhase::waiting;publishState();
  }
- key(VK_ESCAPE);key(VK_LEFT);check(ui.briefing_panel()==briefing::Panel::quit&&ui.briefing_confirm_yes(),"pending QUIT YES before phase update");
+ for(unsigned i=0;i<7&&ui.briefing_focus()!=6;++i)key(VK_RIGHT);key(VK_RETURN);key(VK_LEFT);check(ui.briefing_panel()==briefing::Panel::quit&&ui.briefing_confirm_yes(),"pending QUIT YES before phase update");
  state.preparation->phase=combat::wire::RoundPhase::selecting;publishState();
  check(ui.briefing_panel()==briefing::Panel::none&&!ui.briefing_confirm_yes(),"same-epoch phase change discards old QUIT confirmation");
  key(VK_ESCAPE);check(!ui.weapon_visible()&&ui.room_join_status()==RoomJoinStatus::joined,"weapon back after old QUIT remains joined");
@@ -173,7 +176,7 @@ int main(int argc,char** argv){try{
  noEffects(before,"MAP RULES SKILLS HOST OPTIONS produce no game commands");
  key(VK_RIGHT);key(VK_RETURN);check(ui.briefing_panel()!=briefing::Panel::none&&!ui.briefing_confirm_yes(),"QUIT opens default-NO confirmation");capture("18-quit-confirm-no.bmp");
  key(VK_RETURN);check(ui.briefing_panel()==briefing::Panel::none,"QUIT NO returns to briefing");noEffects(before,"QUIT NO cannot disconnect");
- key(VK_ESCAPE);check(ui.briefing_panel()!=briefing::Panel::none&&!ui.briefing_confirm_yes(),"root Esc opens default-NO quit confirmation");key(VK_ESCAPE);
+ key(VK_ESCAPE);check(ui.briefing_panel()==briefing::Panel::none&&ui.room_join_status()==RoomJoinStatus::joined,"root Esc cannot open a quit confirmation or leave");key(VK_ESCAPE);
  noEffects(before,"Esc cancels a nested quit confirmation");
 
  // Either a changed stage request or a changed offer invalidates local drafts.
@@ -187,7 +190,26 @@ int main(int argc,char** argv){try{
  state.combat_offer=combat::wire::Offer{2,self};state.preparation->epoch=2;state.preparation->generation=2;publishState();
  check(ui.briefing_panel()==briefing::Panel::none,"new epoch clears stale HOST draft");check(ui.stage_load_request()==request,"new stage remains admitted");capture("19-new-round-briefing.bmp");
  noEffects(before,"new round UI reset does not submit a vote or READY");
- key(VK_ESCAPE);key(VK_LEFT);check(ui.briefing_confirm_yes(),"explicit QUIT YES focus");capture("20-quit-confirm-yes.bmp");
+ // START during actual deployment changes presentation only. The admitted
+ // request, life and continuously received combat state survive every overlay.
+ state.preparation->phase=combat::wire::RoundPhase::active;
+ state.preparation->players[1]->loaded=true;state.preparation->players[1]->deployed=true;state.preparation->players[1]->life=7;
+ state.combat_state=combat::Snapshot{};state.combat_state->epoch=2;state.combat_state->revision=1;
+ combat::Player actor;actor.identity=self;actor.life=7;actor.alive=true;actor.hp=actor.maxHp=1000;
+ state.combat_state->players[1]=actor;publishState();
+ check(ui.room_match_visible()&&ui.stage_request()==request,"deployed fixture enters gameplay");
+ const auto deployedCounts=currentCounts();key(VK_RETURN);key(VK_LEFT);ui.message(window.handle,WM_LBUTTONUP,0,MAKELPARAM(900,640));
+ noEffects(deployedCounts,"gameplay controls cannot activate hidden room buttons");
+ key(VK_F9);check(!ui.room_match_visible()&&ui.stage_request()==request&&ui.stage_load_request()==request,"START opens briefing without releasing stage");
+ key(VK_F9,1LL<<30);check(!ui.room_match_visible(),"held START does not toggle repeatedly");
+ state.preparation->roundClock=true;state.preparation->roundRemainingMs=42000;state.combat_state->players[1]->hp=875;++state.combat_state->revision;publishState();
+ check(!ui.room_match_visible()&&ui.combat_state()->players[1]->hp==875&&ui.combat_preparation()->roundRemainingMs==42000,"combat damage and timer update while briefing remains open");
+ capture("23-live-briefing.bmp");
+ for(unsigned i=0;i<5;++i)key(VK_RIGHT);key(VK_RETURN);check(ui.take_gameplay_options_request(),"live briefing options available");
+ key(VK_F9);check(ui.room_match_visible()&&ui.stage_request()==request,"START resumes same deployed life");
+ key(VK_ESCAPE);check(!ui.room_match_visible(),"gameplay Esc opens briefing only");key(VK_ESCAPE);check(ui.room_match_visible(),"briefing Esc resumes game");
+ key(VK_F9);noEffects(deployedCounts,"START/options/return send no READY, leave, reload or room command");
+ for(unsigned i=0;i<7&&ui.briefing_focus()!=6;++i)key(VK_RIGHT);key(VK_RETURN);key(VK_LEFT);check(ui.briefing_confirm_yes(),"explicit QUIT YES focus");capture("20-quit-confirm-yes.bmp");
  key(VK_RETURN,1LL<<30);noEffects(before,"held Enter cannot confirm QUIT");key(VK_RETURN);
  wait([&]{return ui.room_join_status()==RoomJoinStatus::host_cancelled;},"explicit QUIT cancellation reaches fake transport");
  const auto after=currentCounts();check(after.cancels==before.cancels+1&&after.actions==before.actions&&after.commands==before.commands&&after.inputs==before.inputs,"QUIT sends only one local cancellation");

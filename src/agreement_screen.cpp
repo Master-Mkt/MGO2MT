@@ -1,3 +1,4 @@
+#include "menu_font.h"
 #include "menu_audio.h"
 #include "menu_theme.h"
 #include "agreement_screen.h"
@@ -14,7 +15,7 @@ AgreementScreen::AgreementScreen(std::wstring url):url_(std::move(url)){
  info.bmiHeader.biPlanes=1;info.bmiHeader.biBitCount=32;info.bmiHeader.biCompression=BI_RGB;
  bitmap_=CreateDIBSection(dc_,&info,DIB_RGB_COLORS,&pixels_,nullptr,0);
  if(!bitmap_){DeleteDC(dc_);dc_=nullptr;throw std::runtime_error("Text surface failure");}old_=SelectObject(dc_,bitmap_);
- for(int size:{30,24,26,17})fonts_.push_back(CreateFontW(-size,0,0,0,FW_NORMAL,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,ANTIALIASED_QUALITY,FIXED_PITCH,L"MS Gothic"));
+ for(int size:{30,24,26,17})fonts_.push_back(create_menu_font(size,FW_NORMAL));
 }
 AgreementScreen::~AgreementScreen(){cancel_=true;if(worker_.joinable())worker_.join();if(dc_){SelectObject(dc_,old_);DeleteObject(bitmap_);DeleteDC(dc_);}for(auto f:fonts_)DeleteObject(f);}
 void AgreementScreen::start(){

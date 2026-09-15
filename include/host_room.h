@@ -1,5 +1,6 @@
 #pragma once
 #include "host_match.h"
+#include "host_special_pc.h"
 #include <atomic>
 #include <functional>
 #include <string>
@@ -27,6 +28,7 @@ struct Settings {
  uint32_t level_limit_base=22;
  uint8_t unique_red=0,unique_blue=2;
  std::array<uint8_t,16> weapon_restrictions{};
+ std::shared_ptr<special_pc::Control> nativeSpecial=std::make_shared<special_pc::Control>();
 };
 constexpr size_t room_settings_size=345,room_environment_size=204;
 std::vector<uint8_t> settings_payload(const Settings&);

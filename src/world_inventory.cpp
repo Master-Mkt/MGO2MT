@@ -2,6 +2,7 @@
 #include <cmath>
 #include <limits>
 #include <new>
+#include <set>
 namespace mgo2win::items {
 namespace {
 bool valid(Actor a){return a.slot<24&&a.instance&&a.character&&a.life;}
@@ -15,10 +16,16 @@ bool valid(const Contents& c){
  default:return false;}
 }
 bool empty(const HeldSlot& h){return h.contents==Contents{};}
-size_t count(const std::map<uint64_t,Entity>& es,PlacementKind k){size_t n=0;for(const auto&[id,e]:es)if(e.kind==k)++n;return n;}
+size_t count(const std::map<uint64_t,Entity>& es,PlacementKind k){size_t n=0;for(const auto&[id,e]:es)if(e.kind==k||(k==PlacementKind::dropped&&e.kind==PlacementKind::round))++n;return n;}
 }
-bool WorldInventory::reset(Scope scope){std::lock_guard lock(mutex_);if(!scope.epoch||!scope.generation)return false;if(scope==scope_)return true;if(scope_.epoch&&(scope.epoch<scope_.epoch||(scope.epoch==scope_.epoch&&scope.generation<scope_.generation)))return false;scope_=scope;revision_=1;entities_.clear();peers_.clear();nextId_=1;return true;}
-bool WorldInventory::configure(Capacity c){std::lock_guard lock(mutex_);if(count(entities_,PlacementKind::dropped)>c.dropped||count(entities_,PlacementKind::installed)>c.installed)return false;if(capacity_.dropped!=c.dropped||capacity_.installed!=c.installed){if(revision_==UINT64_MAX)return false;capacity_=c;++revision_;}return true;}
+bool WorldInventory::reset(Scope scope){std::lock_guard lock(mutex_);if(!scope.epoch||!scope.generation)return false;if(scope==scope_)return true;if(scope_.epoch&&(scope.epoch<scope_.epoch||(scope.epoch==scope_.epoch&&scope.generation<scope_.generation)))return false;scope_=scope;revision_=1;entities_.clear();peers_.clear();nextId_=1;seeded_=false;return true;}
+bool WorldInventory::seed(Scope scope,std::span<const Seed> seeds){
+ std::lock_guard lock(mutex_);if(scope!=scope_||!scope.epoch||!scope.generation||seeded_||!entities_.empty()||!peers_.empty()||seeds.size()>capacity_.dropped||seeds.size()>4096||revision_==UINT64_MAX)return false;
+ std::map<uint64_t,Entity> candidate;uint64_t id=1;
+ try{for(const auto&s:seeds){if(!valid(s.contents)||s.contents.empty_resource()||!valid(s.position)||std::abs(s.position.x)>=1000000||std::abs(s.position.y)>=1000000||std::abs(s.position.z)>=1000000)return false;candidate.emplace(id,Entity{{scope,id},1,PlacementKind::round,{},s.contents,s.position});++id;}}catch(const std::bad_alloc&){return false;}
+ entities_.swap(candidate);nextId_=id;seeded_=true;++revision_;return true;
+}
+bool WorldInventory::configure(Capacity c){std::lock_guard lock(mutex_);if(c.dropped>4096||c.installed>4096||count(entities_,PlacementKind::dropped)>c.dropped||count(entities_,PlacementKind::installed)>c.installed)return false;if(capacity_.dropped!=c.dropped||capacity_.installed!=c.installed){if(revision_==UINT64_MAX)return false;capacity_=c;++revision_;}return true;}
 bool WorldInventory::admit(Actor a){std::lock_guard lock(mutex_);if(!valid(a)||!scope_.epoch)return false;auto it=peers_.find(a.character);if(it!=peers_.end()){if(!same_identity(a,it->second.actor)||a.life<it->second.actor.life)return false;if(a.life>it->second.actor.life)it->second.sequence=0;it->second.actor=a;return true;}for(const auto&[id,p]:peers_)if(p.actor.slot==a.slot)return false;peers_.emplace(a.character,Peer{a});return true;}
 void WorldInventory::remove(Actor a){std::lock_guard lock(mutex_);auto i=peers_.find(a.character);if(i!=peers_.end()&&i->second.actor==a)peers_.erase(i);}
 ResultCode WorldInventory::begin(const Request& r){
@@ -60,6 +67,22 @@ Result WorldInventory::pickup(const Request& r,EntityKey key,uint64_t revision,H
  std::lock_guard lock(mutex_);auto code=begin(r);if(code!=ResultCode::ok)return {code};
  if(key.scope!=scope_)return {ResultCode::scope};
  auto found=entities_.find(key.id);if(found==entities_.end())return {ResultCode::not_found};
+ if(found->second.revision!=revision||!destination.revision||destination.revision!=heldRevision)return {ResultCode::stale};
+ if(!empty(destination))return {ResultCode::occupied};
+ if(revision_==UINT64_MAX||destination.revision==UINT64_MAX)return {ResultCode::exhausted};
+ const auto e=found->second;destination.contents=e.contents;++destination.revision;entities_.erase(found);++revision_;return {ResultCode::ok,e};
+}
+bool WorldInventory::move(Scope scope,std::span<const Movement> moves){
+ std::lock_guard lock(mutex_);if(scope!=scope_||!scope.epoch||moves.size()>4096||revision_==UINT64_MAX)return false;
+ std::set<uint64_t> seen;
+ for(const auto&m:moves){auto it=entities_.find(m.key.id);if(m.key.scope!=scope||!seen.insert(m.key.id).second||it==entities_.end()||it->second.kind==PlacementKind::installed||it->second.revision!=m.revision||m.revision==UINT64_MAX||!valid(m.position)||std::abs(m.position.x)>=1000000||std::abs(m.position.y)>=1000000||std::abs(m.position.z)>=1000000)return false;}
+ bool changed=false;for(const auto&m:moves){auto&e=entities_.at(m.key.id);if(e.position!=m.position){e.position=m.position;++e.revision;changed=true;}}if(changed)++revision_;return true;
+}
+Result WorldInventory::contact_pickup(Actor actor,EntityKey key,uint64_t revision,HeldSlot& destination,uint64_t heldRevision){
+ std::lock_guard lock(mutex_);if(key.scope!=scope_||!scope_.epoch)return {ResultCode::scope};
+ auto peer=peers_.find(actor.character);if(!valid(actor)||peer==peers_.end()||peer->second.actor!=actor)return {ResultCode::identity};
+ auto found=entities_.find(key.id);if(found==entities_.end())return {ResultCode::not_found};
+ if(found->second.kind==PlacementKind::installed)return {ResultCode::policy};
  if(found->second.revision!=revision||!destination.revision||destination.revision!=heldRevision)return {ResultCode::stale};
  if(!empty(destination))return {ResultCode::occupied};
  if(revision_==UINT64_MAX||destination.revision==UINT64_MAX)return {ResultCode::exhausted};

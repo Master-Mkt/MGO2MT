@@ -1,3 +1,4 @@
+#include "menu_font.h"
 #include "menu_theme.h"
 #include "port_screen.h"
 #include "menu_audio.h"
@@ -16,7 +17,7 @@ PortScreen::PortScreen(std::filesystem::path path,bool external,std::function<St
  dc_=CreateCompatibleDC(nullptr);if(!dc_)throw std::runtime_error("Port screen DC failure");
  BITMAPINFO info{};info.bmiHeader.biSize=sizeof(BITMAPINFOHEADER);info.bmiHeader.biWidth=1280;info.bmiHeader.biHeight=-720;info.bmiHeader.biPlanes=1;info.bmiHeader.biBitCount=32;info.bmiHeader.biCompression=BI_RGB;
  bitmap_=CreateDIBSection(dc_,&info,DIB_RGB_COLORS,&pixels_,nullptr,0);if(!bitmap_){DeleteDC(dc_);throw std::runtime_error("Port screen surface failure");}old_=SelectObject(dc_,bitmap_);
- for(int size:{30,23,20,17})fonts_.push_back(CreateFontW(-size,0,0,0,FW_NORMAL,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,ANTIALIASED_QUALITY,FIXED_PITCH,L"MS Gothic"));
+ for(int size:{30,23,20,17})fonts_.push_back(create_menu_font(size,FW_NORMAL));
  cue(menu_audio::Confirm);
  std::osyncstream(std::cout)<<"{\"port_settings_visible\":true,\"settings_restored\":"<<(restored_?"true":"false")<<"}"<<std::endl;
 }
@@ -82,7 +83,8 @@ void PortScreen::activate(){
  }
 }
 bool PortScreen::message(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
- update_probe();
+ const auto previousContext=input_context();update_probe();
+ if(previousContext!=input_context()&&(msg==WM_KEYDOWN||msg==WM_LBUTTONUP||msg==WM_MOUSEWHEEL))return true;
  if(msg==WM_KILLFOCUS)controls_->cancel_capture();
  if(graphics_->pending())return graphics_->message(hwnd,msg,wp,lp);
  if(!controls_->capturing()&&!pending_&&msg==WM_KEYDOWN&&!(lp&(1LL<<25))&&wp!=VK_ESCAPE&&wp!=VK_RETURN&&wp!=VK_TAB&&wp!=VK_F3&&!(wp>=VK_LEFT&&wp<=VK_DOWN)&&(controls_tab_||focus_!=1)){unsigned mapped=input_->keyboard_menu(unsigned(wp));if(mapped)wp=mapped;}
@@ -196,7 +198,7 @@ const void* PortScreen::draw(){
  }
  for(int i=0;i<3;++i){bool selected=i==2?graphics_tab_:i==1?controls_tab_:!graphics_tab_&&!controls_tab_;int x=120+i*355,w=330;menu_tab(dc_,x,153,w,44,selected);const wchar_t* labels[]={L"ネットワーク [F1]",L"コントローラー [F2]",L"画質 [F3]"};text(labels[i],x+12,162,w-24,34,1,RGB(233,239,222));}
  menu_focus_guides(dc_,guide.x,guide.y);
- finish_menu_surface(pixels_);return pixels_;
+ finish_menu_surface(pixels_);if(controls_tab_)controls_->paint_original(pixels_);return pixels_;
 }
 std::vector<unsigned> PortScreen::cues(){for(auto c:controls_->cues())cue(c);for(auto c:graphics_->cues())cue(c);auto out=std::move(cues_);cues_.clear();return out;}
 void PortScreen::report()const{controls_->report();std::osyncstream(std::cout)<<"{\"port_settings_report\":true,\"checks\":"<<checks_<<",\"saved\":"<<(saved_?"true":"false")<<",\"restored\":"<<(restored_?"true":"false")<<",\"returned\":"<<(back_?"true":"false")<<",\"automatic\":"<<(settings_.automatic?"true":"false")<<",\"port_number\":\""<<std::string(number_.begin(),number_.end())<<"\",\"bandwidth_kbps\":"<<settings_.bandwidth_kbps<<",\"external_reachability_tested\":false}"<<std::endl;}

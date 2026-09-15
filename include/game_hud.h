@@ -14,7 +14,9 @@ struct Model {
  uint8_t rule=0; std::optional<uint32_t> remainingMs;
  std::vector<std::wstring> skills;
  uint32_t kills=0,deaths=0;unsigned rank=0;bool tied=false;
- bool alive=true,reloading=false; uint32_t dp=0; bool dpKnown=false,ended=false;
+ bool alive=true,reloading=false,infiniteAmmo=false; uint32_t dp=0; bool dpKnown=false,ended=false;
+ std::wstring actionNotice;bool respawnWaiting=false;uint32_t respawnRemainingMs=0;
+ uint32_t stamina=0,maxStamina=0;uint16_t oxygen=10000;bool faceSubmerged=false;
 };
 class Intro {
  uint64_t epoch_=0,start_=0;

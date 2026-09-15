@@ -14,15 +14,18 @@ struct ObjectRegistry {
  uint8_t map=0;
  // Literal actor registration order, including actors without scene geometry.
  std::vector<RegistryEntry> entries;
- // Only set after all executing constructors, order and widths are reviewed.
+ // Original profiles require reviewed constructors/order/widths; explicitly
+ // native profiles describe a complete, deliberately bounded native schema.
  bool complete=false;
  // Narrow reviewed rule scope; nullopt is reserved for independently verified fixtures.
  std::optional<uint8_t> rule;
  // Explicit local static-only schema; no original OLObjMan registration claim.
  bool nativeStatic=false;
  bool combatRulesOnly=false;
+ // Explicit BB lamp-only schema, distinct from the original full OLObj order.
+ bool nativeLights=false;
 };
-// Strict loader for the compiler-produced n022a / TDM successful-construction profile.
+// Strict loader for reviewed original or explicitly named native stage profiles.
 ObjectRegistry load_object_registry(const std::filesystem::path&);
 // Normal DM/TDM share n022a main -> proc87 registration; other rules rejected.
 ObjectRegistry load_combat_object_registry(const std::filesystem::path&);

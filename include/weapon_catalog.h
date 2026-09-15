@@ -24,6 +24,9 @@ struct SelectionContext {
  bool dp_enabled=false;
  uint32_t dp_balance=0;
  std::array<uint8_t,16> room_restrictions{};
+ // Explicit native initial-loadout exception requested by the user. Original
+ // catalog rows and room restriction bits remain authoritative and unchanged.
+ bool native_operator_grant=false;
 };
 class Catalog {
  std::vector<Entry> entries_;

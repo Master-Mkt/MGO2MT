@@ -12,13 +12,16 @@ host::Player appearance(unsigned slot,unsigned gender=0){host::Player p{uint8_t(
 void profile_and_wire(){
  std::vector<uint8_t>info(579),personal(245),skills(4);info[3]=100;info[4]='P';auto a=*appearance(1,1).appearance;
  for(unsigned i=0;i<28;++i)if(i<9||(i>=13&&i<27))a[i]=uint8_t(i+1);a[0]=1;
- std::copy_n(a.begin(),27,personal.begin()+49);auto profile=host::profile_payload(100,info,personal,skills);auto decoded=host::profile_names(profile);check(decoded.appearance==a,"authenticated personal -> profile reverse mapping, all appearance bytes");
- host::Roster r;r.complete=true;auto p=appearance(1),q=appearance(2,1);r.slots[1]=p;r.slots[2]=q;r.slots[1]->appearance.reset();r.slots[2]->appearance.reset();
- auto b=host::appearance_record(std::array{p,q});host::update_appearance(r,b);check(r.slots[1]->appearance==p.appearance&&r.slots[2]->appearance==q.appearance,"two distinct appearances");auto revision=r.revision;host::update_appearance(r,b);check(r.revision==revision,"duplicate is idempotent");
+ personal[239]=22;std::copy_n(a.begin(),27,personal.begin()+49);auto profile=host::profile_payload(100,info,personal,skills);auto decoded=host::profile_names(profile);check(decoded.level==22&&decoded.appearance==a,"authenticated personal -> profile reverse mapping, all appearance bytes");
+ host::Roster r;r.complete=true;auto p=appearance(1),q=appearance(2,1);p.level=22;q.level=0;r.slots[1]=p;r.slots[2]=q;r.slots[1]->appearance.reset();r.slots[2]->appearance.reset();
+ auto b=host::appearance_record(std::array{p,q});host::update_appearance(r,b);check(r.slots[1]->appearance==p.appearance&&r.slots[2]->appearance==q.appearance&&r.slots[1]->level==22&&r.slots[2]->level==0,"two distinct appearances");auto revision=r.revision;host::update_appearance(r,b);check(r.revision==revision,"duplicate is idempotent");
  auto rejected=[&](auto bytes){auto previous=r;bool caught=false;try{host::update_appearance(r,bytes);}catch(const host::Invalid&){caught=true;}check(caught&&r==previous,"invalid appearance is atomic");};
- for(size_t size=0;size<b.size();++size){auto cut=b;cut.resize(size);rejected(cut);}auto bad=b;bad.push_back(0);rejected(bad);bad=b;bad[5]=2;rejected(bad);bad=b;bad[7+35]=1;rejected(bad);bad=b;bad[7+35+1]++;rejected(bad);bad=b;bad[7+7]=2;rejected(bad);bad=b;bad[7+7+9]=1;rejected(bad);
- host::Hello h{p.character,123,2,2,{}};host::update_roster(r,host::roster_record(p,h));check(r.slots[1]->appearance==p.appearance,"same identity roster refresh keeps appearance");host::update_roster(r,host::roster_remove(p.instance));auto replacement=p;replacement.instance+=1000;replacement.character+=1000;host::update_roster(r,host::roster_record(replacement,{replacement.character,321,2,2,{}}));check(!r.slots[1]->appearance,"slot reuse cannot inherit appearance");rejected(b);
- std::vector<host::Player> all;for(unsigned i=0;i<24;++i)all.push_back(appearance(i,i%2));check(host::appearance_record(all).size()==847,"24 entries bounded under datagram limit");
+ for(size_t size=0;size<b.size();++size){auto cut=b;cut.resize(size);rejected(cut);}auto bad=b;bad.push_back(0);rejected(bad);bad=b;bad[5]=3;rejected(bad);bad=b;bad[7+37]=1;rejected(bad);bad=b;bad[7+37+1]++;rejected(bad);bad=b;bad[7+7]=2;rejected(bad);bad=b;bad[7+7+9]=1;rejected(bad);
+ auto legacy=b;legacy[5]=1;legacy.resize(7);for(size_t at=7;at<b.size();at+=37)legacy.insert(legacy.end(),b.begin()+at,b.begin()+at+35);
+ host::update_appearance(r,legacy);check(!r.slots[1]->level&&!r.slots[2]->level,"GWAV1 gives unknown level without inventing one");host::update_appearance(r,b);
+ auto invalidLevel=b;invalidLevel[42]=1;invalidLevel[43]=1;rejected(invalidLevel);
+ host::Hello h{p.character,123,2,2,{}};host::update_roster(r,host::roster_record(p,h));check(r.slots[1]->level==22&&r.slots[1]->appearance==p.appearance,"same identity roster refresh keeps appearance");host::update_roster(r,host::roster_remove(p.instance));auto replacement=p;replacement.instance+=1000;replacement.character+=1000;host::update_roster(r,host::roster_record(replacement,{replacement.character,321,2,2,{}}));check(!r.slots[1]->level&&!r.slots[1]->appearance,"slot reuse cannot inherit appearance");rejected(b);
+ std::vector<host::Player> all;for(unsigned i=0;i<24;++i)all.push_back(appearance(i,i%2));check(host::appearance_record(all).size()==895,"24 entries bounded under datagram limit");
 }
 void scene(){
  remote::Scene scene;combat::Snapshot s{1,1};host::Roster r;r.complete=true;
@@ -51,4 +54,14 @@ void reliable_transport(){
  auto result=client.result();check(result.stage==host::Stage::joined&&!server.closed()&&result.roster.slots[1]->appearance==p.appearance,"encrypted reliable appearance survives loss/reorder/duplicate");
  server.queue(host::roster_remove(p.instance),3000);for(auto&b:server.poll(3000))client.receive(b,3000);check(!client.result().roster.slots[1],"local removal disconnect clears appearance");
 }
-int main(){try{profile_and_wire();scene();reliable_transport();std::cout<<"remote avatar profile/GWAV/identity/life/pose and encrypted reliable loss-reorder-duplicate passed\n";return 0;}catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}
+void sideways_evasion(){
+ remote::Scene scene;combat::Snapshot s{7,1};host::Roster r;r.complete=true;s.players[0]=body(0);s.players[1]=body(1);r.slots[0]=appearance(0);r.slots[1]=appearance(1);auto self=s.players[0]->identity;auto&p=*s.players[1];p.pose.yaw=.4f;
+ check(scene.update(s,r,self,0),"Side roll fixture initial snapshot");
+ auto sample=[&](uint64_t now){auto a=scene.sample(now);check(a.size()==1,"Exactly one scoped remote");return a.front();};
+ for(auto kind:{combat::EvadeKind::rollLeft,combat::EvadeKind::rollRight}){p.pose.yaw=.4f+(kind==combat::EvadeKind::rollLeft?-1.57079633f:1.57079633f);p.evadeKind=kind;p.evadeSerial=unsigned(kind)-2;p.evadeElapsedMs=0;++s.revision;uint64_t now=1000*p.evadeSerial;check(scene.update(s,r,self,now),"Left/right kind is accepted through Replica");const float expected=.4f+(kind==combat::EvadeKind::rollLeft?-1.57079633f:1.57079633f);check(std::abs(sample(now).yaw-expected)<1e-5,"Remote body faces approved left/right direction at action start");
+  auto before=sample(now+710);check(before.evadeSeconds>.7,"Remote action advances into recovery");p.evadeElapsedMs=660;++s.revision;check(scene.update(s,r,self,now+720),"Delayed side snapshot accepted");auto after=sample(now+720);check(after.evadeSeconds>=before.evadeSeconds&&std::abs(after.yaw-expected)<1e-5,"Delayed snapshot cannot rewind side recovery or heading");
+  p.pose.yaw=.4f;p.evadeKind=combat::EvadeKind::none;p.evadeSerial=0;p.evadeElapsedMs=0;++s.revision;check(scene.update(s,r,self,now+800),"HOST ends side action");check(std::abs(sample(now+900).yaw-.4f)<1e-5,"HOST ended action returns ordinary heading");
+ }
+ p=body(1);p.life=2;++s.revision;check(scene.update(s,r,self,4000)&&sample(4000).evadeKind==combat::EvadeKind::none&&sample(4000).yaw==0,"New life clears side presentation");
+}
+int main(){try{profile_and_wire();scene();reliable_transport();sideways_evasion();std::cout<<"remote avatar profile/GWAV/identity/life/pose and encrypted reliable loss-reorder-duplicate passed\n";return 0;}catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}

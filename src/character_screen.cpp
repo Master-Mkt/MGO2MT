@@ -1,3 +1,4 @@
+#include "menu_font.h"
 #include "menu_audio.h"
 #include "menu_theme.h"
 #include "character_screen.h"
@@ -10,10 +11,14 @@ namespace mgo2win {
 CharacterScreen::CharacterScreen(std::function<CharacterReply(const std::atomic_bool&)>transport,std::function<uint64_t()> clock):transport_(std::move(transport)),clock_(std::move(clock)){
  dc_=CreateCompatibleDC(nullptr);if(!dc_)throw std::runtime_error("Character DC failure");BITMAPINFO i{};i.bmiHeader.biSize=sizeof(BITMAPINFOHEADER);i.bmiHeader.biWidth=1280;i.bmiHeader.biHeight=-720;i.bmiHeader.biPlanes=1;i.bmiHeader.biBitCount=32;
  bitmap_=CreateDIBSection(dc_,&i,DIB_RGB_COLORS,&pixels_,nullptr,0);if(!bitmap_){DeleteDC(dc_);throw std::runtime_error("Character surface failure");}old_=SelectObject(dc_,bitmap_);
- for(int size:{30,23,20,17})fonts_.push_back(CreateFontW(-size,0,0,0,FW_NORMAL,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,ANTIALIASED_QUALITY,FIXED_PITCH,L"MS Gothic"));start();
+ for(int size:{30,23,20,17})fonts_.push_back(create_menu_font(size,FW_NORMAL));start();
 }
 namespace {
 std::wstring skill_text(std::string_view value){int n=MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,value.data(),int(value.size()),nullptr,0);if(!n)return {};std::wstring result(n,L' ');MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,value.data(),int(value.size()),result.data(),n);return result;}
+bool skill_profile_valid(const skills::RemoteState& state,const skills::Catalog* catalog,uint32_t id){
+ if(!catalog||!id||state.character!=id||!state.profile||state.profile->character!=id||state.profile->status)return false;
+ const auto check=skills::validate(*catalog,state.profile->loadout,state.profile->capacity);return check&&check.used==state.profile->used;
+}
 }
 void CharacterScreen::skill_catalog(const std::filesystem::path& path){
  auto catalog=std::make_shared<skills::Catalog>();std::string error;
@@ -53,33 +58,46 @@ void CharacterScreen::open_skills(){
   else if(state.status==skills::RemoteStatus::rejected||state.status==skills::RemoteStatus::conflict||state.status==skills::RemoteStatus::outcome_unknown){skillNotice_=L"前回の変更の保存結果を確認できていません。最新の設定を取得しています。";roomRequests_.skills->fetch();}
   else skillNotice_=L"変更は下書きです。ロビーへ接続して設定を取得後、サーバーへ保存します。";
  }
- const bool editable=creation_||roomRequests_.skills->state().status!=skills::RemoteStatus::saving;
- skillMenu_->open(skillCatalog_,selected,capacity,editable);skillMenu_->notice(skillNotice_);if(cues_.size()<32)cues_.push_back(menu_audio::Confirm);
+ skillMenu_->open(skillCatalog_,selected,capacity);skillMenu_->notice(skillNotice_);
+ skillSerial_=~uint64_t(0);if(!creation_)update_skills();if(cues_.size()<32)cues_.push_back(menu_audio::Confirm);
 }
 void CharacterScreen::update_skills(){
  if(!roomRequests_.skills)return;
  if(skill_visible()&&!creation_&&!skills_editable()){skillMenu_->close(true);for(auto cue:skillMenu_->cues())if(cues_.size()<32)cues_.push_back(cue);skillNotice_=L"ラウンドが開始されたためスキル編集を終了しました。";}
  auto state=roomRequests_.skills->state();if(state.serial==skillSerial_){auto pending=skillDrafts_.find(selected_character_id());if(pending==skillDrafts_.end()||!pending->second.queued||state.status!=skills::RemoteStatus::ready||!skills_editable())return;}skillSerial_=state.serial;
  const auto id=selected_character_id();if(!id||state.character!=id)return;
+ if(skill_visible()&&!creation_)skillMenu_->apply_allowed(state.status==skills::RemoteStatus::offline||(state.status==skills::RemoteStatus::ready&&skill_profile_valid(state,skillCatalog_.get(),id)));
  auto pending=skillDrafts_.find(id);
  if(state.status==skills::RemoteStatus::ready&&state.profile&&state.profile->character==id&&skillCatalog_){
   auto verified=skills::validate(*skillCatalog_,state.profile->loadout,state.profile->capacity);if(!verified||verified.used!=state.profile->used){skillNotice_=lobbyNotice_=detailNotice_=L"サーバーのスキル設定を確認できません。保存を停止しました。";if(skill_visible())skillMenu_->notice(skillNotice_);return;}
+  if(skill_visible()&&!creation_)skillMenu_->synchronize(state.profile->loadout,state.profile->capacity,pending!=skillDrafts_.end());
+  skillNotice_=L"適用するとサーバーへ保存します。利用できるレベルはサーバーが確認します。";
   if(pending!=skillDrafts_.end()&&pending->second.sending){if(state.profile->loadout==pending->second.value){skillDrafts_.erase(pending);pending=skillDrafts_.end();skillNotice_=L"選択したスキルがサーバーの設定に反映されています。";}else{pending->second.sending=pending->second.queued=false;skillNotice_=L"サーバーの設定が下書きと異なります。確認してから再度適用してください。";}}
   if(pending!=skillDrafts_.end()&&pending->second.queued&&skillCatalog_){
    // Only an explicitly applied draft may replace the newly read server profile.
    if(!skills::validate(*skillCatalog_,pending->second.value,state.profile->capacity)){pending->second.queued=false;skillNotice_=L"現在のスキル枠では下書きを保存できません。選び直してください。";}
    else if(skills_editable()&&roomRequests_.skills->save(pending->second.value)){pending->second.queued=false;pending->second.sending=true;skillNotice_=L"スキルをサーバーへ保存しています…";}
   }
+ }else if(state.status==skills::RemoteStatus::reading){skillNotice_=L"サーバーの設定を取得しています。取得が完了するまで適用できません。";
+ }else if(state.status==skills::RemoteStatus::saving){skillNotice_=L"スキルを保存しています。結果を待ってください。";
+ }else if(state.status==skills::RemoteStatus::unsupported){skillNotice_=L"サーバーのスキル設定対応を確認できません。保存できませんでした。";
  }else if(state.status==skills::RemoteStatus::rejected||state.status==skills::RemoteStatus::conflict||state.status==skills::RemoteStatus::outcome_unknown||state.status==skills::RemoteStatus::offline){
   if(pending!=skillDrafts_.end()&&pending->second.sending){pending->second.sending=false;pending->second.queued=false;}
-  if(state.status==skills::RemoteStatus::rejected)skillNotice_=L"スキルを保存できませんでした。レベル・使用枠を確認し、選び直してください。";
+  if(state.status==skills::RemoteStatus::rejected){
+   if(state.error==6)skillNotice_=L"選択したレベルはサーバーで利用可能と確認されていません。レベルを下げて再度適用してください。";
+   else if(state.error==5)skillNotice_=L"サーバーのスキル保存機能を利用できません。登録は完了していません。";
+   else if(state.error==2)skillNotice_=L"スキルの保存に必要なPC接続を確認できません。ロビーへ接続し直してください。";
+   else skillNotice_=L"スキルを保存できませんでした。レベル・使用枠を確認し、選び直してください。";
+  }
   else if(state.status==skills::RemoteStatus::conflict)skillNotice_=L"サーバーの設定が変更されています。スキル画面を開き直して確認してください。";
   else if(state.status==skills::RemoteStatus::outcome_unknown)skillNotice_=L"保存結果を確認できません。再送せず、スキル画面を開き直して確認してください。";
   else if(pending!=skillDrafts_.end())skillNotice_=L"スキルの下書きがあります。ロビー接続後に保存状態を確認してください。";
  }
+ if(skill_visible()&&!creation_&&roomRequests_.skills->state().status==skills::RemoteStatus::saving)skillMenu_->apply_allowed(false);
  if(!skillNotice_.empty()){lobbyNotice_=skillNotice_;if(detailVisible_)detailNotice_=skillNotice_;if(skill_visible())skillMenu_->notice(skillNotice_);}
 }
 bool CharacterScreen::skill_message(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
+ update_skills();if(!skill_visible())return true;
  bool handled=skillMenu_->message(hwnd,msg,wp,lp);
  if(auto chosen=skillMenu_->take_saved()){
   if(creation_){creationSkills_=std::move(*chosen);creation_->skills_complete(creationSkillContinue_);creationSkillContinue_=false;for(auto cue:creation_->cues())if(cues_.size()<32)cues_.push_back(cue);}
@@ -342,7 +360,11 @@ void CharacterScreen::tick_hold(){if(!pending_&&!lobbyVisible_&&slots_.tick(cloc
 void CharacterScreen::confirm_delete(){const bool accepted=slots_.confirm();if(accepted){++deleteYes_;notice_=L"PC削除の通信は準備中です。キャラクターは削除していません。";}cues_.push_back(accepted?menu_audio::Confirm:menu_audio::Cancel);}
 void CharacterScreen::focus(int i,bool audible){if(i!=focus_){slots_.reset_hold();focus_=i;if(i<int(slots_.count())){slots_.select(unsigned(i));notice_.clear();}if(audible&&cues_.size()<32)cues_.push_back(menu_audio::Cursor);}}
 void CharacterScreen::activate(){int n=int(slots_.count());if(focus_<n||focus_==n){if(n){if(slots_.occupied()){begin_selection();if(pending_)cues_.push_back(menu_audio::Confirm);}else if(slots_.purchase_required())notice_=L"追加のPCスロット購入は準備中です。購入方法・価格は後日ご案内します。";else if(slots_.can_create()){slots_.reset_hold();creation_=std::make_unique<CharacterCreation>(catalog_,bool(createTransport_)&&!registrationState_->unresolved);creation_->unicode_names(reply_.list.unicode_names);creation_->require_skills(bool(skillCatalog_));creationSkills_={};creationSkillContinue_=false;notice_.clear();cues_.push_back(menu_audio::Confirm);}}}else if(focus_==n+1)start();else if(focus_==n+2){stop();back_=true;cues_.push_back(menu_audio::Cancel);}}
-bool CharacterScreen::message(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){update();
+bool CharacterScreen::message(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
+ const auto previousContext=input_context();update();
+ // A worker can complete after the outer menu gate sampled this screen.
+ // The old screen's decision must not activate the newly arrived screen.
+ if(previousContext!=input_context()&&(msg==WM_KEYDOWN||msg==WM_LBUTTONUP||msg==WM_MOUSEWHEEL))return true;
  if(!lobbyVisible_&&!creation_&&!skill_visible()&&(msg==WM_KEYDOWN||msg==WM_LBUTTONDOWN||msg==WM_MOUSEWHEEL))selectionPresentation_.activity(clock_());
  if(selecting_&&selectionPresentation_.selecting(clock_()))return true;
  if(skill_visible())return skill_message(hwnd,msg,wp,lp);

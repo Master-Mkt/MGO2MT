@@ -45,6 +45,15 @@ int main(int argc,char**argv){try{
  keys.key(0x74,false,true);keys.click(400,420);check(keys.reset&&!keys.confirmReset,"mouse YES confirms");keys.clear_actions();keys.key(0x74,false,true);keys.key(27,false,true);check(!keys.confirmReset&&!keys.reset,"Escape cancels");
  keys.key(0x74,false,true);keys.focus_lost();check(!keys.confirmReset&&!keys.reset,"focus loss cancels");keys.key(0x74,false,true);keys.key(13,false,false);check(!keys.confirmReset&&!keys.reset,"leaving the stage cancels");
  keys.key(0x74,false,true);keys.key(0x7b,false,true);check(!keys.enabled&&!keys.confirmReset&&!keys.reset,"closing debug cancels modal");
+ check(!keys.key(0x73,false,false)&&!keys.openMotionBlend,"F4 remains untouched outside debug");
+ keys.key(0x7b,false,false);check(keys.key(0x73,false,false)&&keys.openMotionBlend,"F4 opens blend settings without a stage in debug");
+ keys.clear_actions();keys.key(0x73,true,false);check(!keys.openMotionBlend,"held F4 cannot reopen blend settings");
+ keys.key(0x73,false,true);check(keys.openMotionBlend,"F4 stage action");keys.focus_lost();check(!keys.openMotionBlend,"focus loss clears pending blend action");
+ keys.key(0x73,false,true);keys.cancel_reset();check(!keys.openMotionBlend,"cancel clears pending blend action");
+ keys.key(0x73,false,true);keys.key(0x74,false,true);check(keys.confirmReset&&!keys.openMotionBlend,"F5 reset confirmation cancels unconsumed F4 action");
+ check(keys.key(0x73,false,true)&&!keys.openMotionBlend&&keys.confirmReset,"F5 confirmation blocks F4 modal overlap");
+ keys.key(27,false,true);keys.key(0x73,false,true);check(keys.openMotionBlend,"F4 available after reset confirmation closes");
+ keys.key(0x7b,false,true);check(!keys.enabled&&!keys.openMotionBlend,"closing debug clears pending blend action");
  // Every deletion target was created under this fresh test-only directory.
  for(auto it=std::filesystem::directory_iterator(dir/"additional");it!=std::filesystem::directory_iterator();++it)std::filesystem::remove(it->path());std::filesystem::remove(dir/"additional");std::filesystem::remove(dir/"bgm_mgo_action01.wav");std::filesystem::remove(dir);
  std::cout<<"PCM loop bounds, 32 custom songs, stable IDs, forced fallback, respawn and debug keys passed\n";return 0;

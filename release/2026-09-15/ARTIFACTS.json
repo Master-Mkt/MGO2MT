@@ -1,0 +1,24 @@
+{
+  "version": "v0.01-20260915142232",
+  "complete_packages": true,
+  "archives": [
+    {
+      "product": "MGO2WIN",
+      "file": "MGO2WIN-v0.01-20260915142232-win64-full.zip",
+      "size": 1697089451,
+      "sha256": "4ec4d499caf5276bc48f84f7a4f0b750ea300a6961d1b197a3e9fd870298cc3e",
+      "members": 1028,
+      "runtime_data_byte_identical": true,
+      "zip_crc_and_all_member_sha256": "pass"
+    },
+    {
+      "product": "MGO2HOST",
+      "file": "MGO2HOST-v0.01-20260915142232-win64-full.zip",
+      "size": 32162530,
+      "sha256": "2ab863f45915c65736f4a1478164d3732d7f9b3b4b9dbcac17401f40d28c0039",
+      "members": 84,
+      "runtime_data_byte_identical": true,
+      "zip_crc_and_all_member_sha256": "pass"
+    }
+  ]
+}

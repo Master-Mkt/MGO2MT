@@ -8,7 +8,7 @@ namespace mgo2win::stage {
 // Fixed local candidates, from updated lobby GCX procedure 11. A supported
 // route does not certify that all assets/object contracts have been compiled.
 struct Profile {uint8_t map;std::string_view stage;};
-inline constexpr std::array<Profile,4> runtime_profiles{{{1,"n001a"},{4,"n004a"},{20,"n022a"},{21,"n023a"}}};
+inline constexpr std::array<Profile,5> runtime_profiles{{{1,"n001a"},{4,"n004a"},{7,"n007a"},{20,"n022a"},{21,"n023a"}}};
 constexpr const Profile* runtime_profile(uint8_t map) noexcept {for(const auto&p:runtime_profiles)if(p.map==map)return &p;return nullptr;}
 constexpr bool runtime_stage_supported(uint8_t map) noexcept {return runtime_profile(map)!=nullptr;}
 inline std::filesystem::path asset_path(const std::filesystem::path&root,uint8_t map,std::string_view suffix){

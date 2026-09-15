@@ -36,10 +36,10 @@ public:
   for(const auto&e:events){
    if(e.epoch!=epoch_||!e.id||e.id<=played_||e.id>state.eventWatermark)continue;
    played_=e.id;
-   if(e.kind!=EventKind::shot||e.weapon!=25||e.source.slot>=24||!finite(e.position))continue;
+   if(e.kind!=EventKind::shot||(e.weapon!=25&&e.weapon!=2&&e.weapon!=128&&e.weapon!=129)||e.source.slot>=24||!finite(e.position))continue;
    const auto&p=state.players[e.source.slot];
    if(!p||p->identity!=e.source||!e.sourceLife||p->life!=e.sourceLife)continue;
-   // The accepted AK102 shot origin is known; an exact muzzle attachment is not.
+   // Runtime resolves the original AK CNP muzzle after skinning, before dispatch.
    add({e.position,{1.f,.64f,.25f},2600.f,2.f},now,80);
   }
  }

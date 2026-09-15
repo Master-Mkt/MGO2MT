@@ -30,6 +30,9 @@ public:
  explicit PortScreen(std::filesystem::path,bool external=true,
    std::function<StunResult(uintptr_t,const std::atomic_bool&)> probe=check_stun,std::shared_ptr<ControllerInput> input={},std::shared_ptr<GraphicsSettings> graphics={},uint16_t fixedPort=0);~PortScreen();
  bool controller_sample(const PadSample& s){return controls_tab_&&controls_->sample(s);}
+ bool capturing()const{return controls_tab_&&controls_->capturing();}
+ bool text_entry()const{return !controls_tab_&&!graphics_tab_&&!speed_open_&&focus_==1;}
+ uint64_t input_context()const{return uint64_t(controls_tab_)|(uint64_t(graphics_tab_)<<1)|(uint64_t(speed_open_)<<2)|(uint64_t(pending_)<<3)|(uint64_t(graphics_->pending())<<4);}
  unsigned input_slot()const{return controls_tab_?controls_->slot():input_->config.slot;}
  bool message(HWND,UINT,WPARAM,LPARAM);const void* draw();
  bool back()const{return back_;}std::vector<unsigned> cues();

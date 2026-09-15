@@ -44,6 +44,17 @@ int main(int argc,char**argv){try{
   a.reset();check(a.result().objectSnapshot==after.objectSnapshot&&a.result().collision==after.collision,"F5 preserves authoritative object state");
   a.select(request(20,2));auto next=wait(a);check(!next.objectSnapshot&&!next.objectModel&&next.collision->triangles.size()==1,"new round clears old actors atomically");
  }
+ // Overlapping lamps must remain dark regardless of binding order or arrival.
+ {stage::Assets a(folder),late(folder);a.select(request(20));late.select(request(20));wait(a);wait(late);
+  stage::ObjectBinding one;one.bindingId=1;one.width=1;one.lights.push_back({1,0,{0,~0u,true,{0,0,2},3}});
+  auto two=one;two.bindingId=2;two.lights[0].light.center[0]=1;
+  std::vector<stage::ObjectBinding> bindings{one,two};stage::SceneSnapshot s{request(20),1,{{1,0,0},{2,0,0}}};
+  check(a.object_states(s,bindings)&&a.result().objectModel->vertices[0].lr==.5f,"overlapping intact lights");
+  s.objects[0].current=1;++s.revision;check(a.object_states(s,bindings)&&a.result().objectModel->vertices[0].lr==0,"later intact binding cannot re-enable an overlapping broken light");
+  std::swap(bindings[0],bindings[1]);auto joined=s;joined.revision=1;joined.objects[0].initial=1;
+  check(late.object_states(joined,bindings)&&late.result().objectModel->vertices[0].lr==0,"late-join lamp result independent of binding order");
+  a.select(request(20,2));wait(a);s={request(20,2),1,{{1,0,0},{2,0,0}}};check(a.object_states(s,bindings)&&a.result().objectModel->vertices[0].lr==.5f,"new round restores overlapping lamps from authored lighting");
+ }
  std::filesystem::remove(folder/"n022a.collision.cfg");
  std::filesystem::remove(folder/"n022a.lighting.cfg");
  {std::ofstream out(folder/"n022a.cbox.cfg");out<<"MGO2WIN.STAGE_CBOX 1 2 3\n100 5 0 0 0\n132 5 100 0 0\n164 5 200 0 0\n";}
@@ -53,6 +64,6 @@ int main(int argc,char**argv){try{
  std::filesystem::remove(folder/"n022a.cbox.cfg");
  std::filesystem::remove(folder/"items/113.gwm");std::filesystem::remove(folder/"items");
  std::filesystem::remove(file);std::filesystem::remove(folder);
- if(argc>1){stage::Assets a(argv[1]);a.select(request(20));auto loaded=wait(a);const bool restored=argc>2;check(loaded.status==stage::Status::preview_ready&&loaded.model&&loaded.model->vertices.size()==(restored?334183:100060)&&loaded.model->indices.size()==(restored?646803:192558),"original architecture conversion loads without original MDN runtime");if(restored){check(loaded.model->hasOverviewBounds&&loaded.model->vertices[0].lit==1&&loaded.collision&&loaded.collision->triangles.size()==145875,"restored lighting and collision are loaded with the textured model");a.select(request(20,2));check(a.result().collision==loaded.collision,"round transition reuses collision");a.select(std::nullopt);check(!a.result().collision,"exit clears collision");}}
+ if(argc>1){stage::Assets a(argv[1]);a.select(request(20));auto loaded=wait(a);const bool restored=argc>2;check(loaded.status==stage::Status::preview_ready&&loaded.model&&loaded.model->vertices.size()==(restored?334183u:100060u)+3*loaded.surfaceLayers.shiftedTriangles&&loaded.model->indices.size()==(restored?646803:192558),"original architecture conversion loads without original MDN runtime");if(restored){check(loaded.model->hasOverviewBounds&&loaded.model->vertices[0].lit==1&&loaded.collision&&loaded.collision->triangles.size()==145875,"restored lighting and collision are loaded with the textured model");a.select(request(20,2));check(a.result().collision==loaded.collision,"round transition reuses collision");a.select(std::nullopt);check(!a.result().collision,"exit clears collision");}}
  std::cout<<"stage routes, async geometry, missing/invalid data and cancellation passed\n";return 0;
 }catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}

@@ -30,10 +30,14 @@ int main(int argc,char** argv){
   c.left_deadzone=20;c.right_deadzone=30;c.run_threshold=70;c.run_hysteresis=12;
   save_input(p,c);require(load_input(p,loaded)&&loaded.keyboard==c.keyboard&&loaded.gamepad==c.gamepad&&loaded.device==1&&loaded.slot==3&&loaded.left_deadzone==20&&loaded.right_deadzone==30&&loaded.run_threshold==70&&loaded.run_hysteresis==12);
   {std::ifstream f(p);std::string tag;unsigned version=0;f>>tag>>version;require(tag=="MGO2WIN.INPUT"&&version==2);}
-  auto legacy=InputConfig{};std::swap(legacy.gamepad[4],legacy.gamepad[5]);
+  constexpr std::array<unsigned,input_actions> oldPreset={0,1,2,3,5,4,6,7,8,9,14,15,10,11,12,13,16,17,18,19,20,21,22,23};
+  auto legacy=InputConfig{};legacy.gamepad=oldPreset;std::swap(legacy.gamepad[4],legacy.gamepad[5]);
   auto write_legacy=[&](const InputConfig& value){std::ofstream f(p);f<<"MGO2WIN.INPUT 1\n"<<value.device<<' '<<value.slot<<'\n';for(auto key:value.keyboard)f<<key<<' ';f<<'\n';for(auto code:value.gamepad)f<<code<<' ';f<<'\n';};
   legacy.keyboard=c.keyboard;write_legacy(legacy);require(load_input(p,loaded)&&loaded.gamepad==InputConfig{}.gamepad&&loaded.keyboard==c.keyboard&&loaded.run_threshold==65);
   legacy.device=1;assign_input(legacy,8,9);write_legacy(legacy);require(load_input(p,loaded)&&loaded.gamepad==legacy.gamepad&&loaded.gamepad[4]==4&&loaded.gamepad[5]==5); // A custom legacy preset is preserved intact.
+  auto previous=c;previous.gamepad=oldPreset;save_input(p,previous);require(load_input(p,loaded)&&loaded.gamepad==InputConfig{}.gamepad&&loaded.keyboard==c.keyboard&&loaded.left_deadzone==20&&loaded.run_threshold==70);
+  assign_input(previous,8,9);save_input(p,previous);require(load_input(p,loaded)&&loaded.gamepad==previous.gamepad); // v2 custom remains byte-for-byte.
+  previous.gamepad=oldPreset;write_legacy(previous);require(load_input(p,loaded)&&loaded.gamepad==InputConfig{}.gamepad);
   {std::ofstream f(p);f<<"MGO2WIN.INPUT 1 2 0";}bool bad=false;try{load_input(p,loaded);}catch(...){bad=true;}require(bad&&loaded.device==1);
   auto invalid=c;invalid.keyboard[4]=VK_ESCAPE;require(!valid_input_config(invalid));invalid=c;invalid.gamepad[0]=invalid.gamepad[1];require(!valid_input_config(invalid));invalid=c;invalid.slot=4;require(!valid_input_config(invalid));
   invalid=c;invalid.left_deadzone=91;require(!valid_input_config(invalid));invalid=c;invalid.right_deadzone=91;require(!valid_input_config(invalid));invalid=c;invalid.run_threshold=9;require(!valid_input_config(invalid));invalid=c;invalid.run_threshold=101;require(!valid_input_config(invalid));invalid=c;invalid.run_hysteresis=31;require(!valid_input_config(invalid));invalid=c;invalid.run_threshold=10;invalid.run_hysteresis=10;require(!valid_input_config(invalid));
@@ -46,14 +50,20 @@ int main(int argc,char** argv){
   runtime->config=c;runtime->reset();state={};runtime->poll(true);auto neutral=runtime->poll(true);require(neutral.armed&&!neutral.held);
   state.Gamepad.sThumbLX=4096;state.Gamepad.sThumbRY=8192;auto dead=runtime->poll(true);require(dead.armed&&dead.left_x==0&&dead.right_y==0&&!dead.held&&dead.raw_left_magnitude>0);
   state.Gamepad.sThumbLX=16384;state.Gamepad.sThumbRY=32767;state.Gamepad.bLeftTrigger=255;auto analog=runtime->poll(true);require(analog.armed&&analog.left_x>.374f&&analog.left_x<.376f&&analog.right_y==1&&analog.left_trigger==1);
-  auto values=runtime->action_values(analog);require(values[19]>.374f&&values[19]<.376f&&values[18]==0&&values[20]==1&&values[10]==1);
-  assign_input(runtime->config,16,14);values=runtime->action_values(analog);require(values[16]==1&&values[10]==0);runtime->config=c;
+  auto values=runtime->action_values(analog);require(values[19]>.374f&&values[19]<.376f&&values[18]==0&&values[20]==1&&values[15]==1&&values[10]==0);
+  assign_input(runtime->config,16,14);values=runtime->action_values(analog);require(values[16]==1&&values[15]==0);runtime->config=c;
   state.Gamepad.sThumbLX=-32768;state.Gamepad.sThumbLY=32767;state.Gamepad.sThumbRY=0;state.Gamepad.bLeftTrigger=0;auto diagonal=runtime->poll(true);require(std::abs(std::hypot(diagonal.left_x,diagonal.left_y)-1.f)<.00001f&&diagonal.left_x<-.707f&&diagonal.left_y>.707f);
   auto inactive=runtime->poll(false);require(!inactive.armed&&!inactive.held&&!inactive.pressed&&inactive.left_x==0&&runtime->action_values(inactive)[18]==0&&inactive.raw_held);
   auto retained=runtime->poll(true);require(!retained.armed&&!retained.held&&retained.left_x==0);state={};runtime->poll(true);state.Gamepad.wButtons=XINPUT_GAMEPAD_A;auto held=runtime->poll(true);require(held.armed&&(held.pressed&(1u<<4))&&runtime->action_values(held)[5]==1);
   state={};auto release=runtime->poll(true);require((release.released&(1u<<4))&&!release.held&&!release.pressed);require(!runtime->poll(true).released);
   state.Gamepad.sThumbLX=32767;runtime->poll(true);connected=false;auto lost=runtime->poll(true);require(!lost.connected&&!lost.armed&&!lost.held&&lost.left_x==0);connected=true;require(!runtime->poll(true).armed);state={};runtime->poll(true);state.Gamepad.sThumbLX=32767;auto changed_slot=runtime->poll(true,2);require(!changed_slot.armed&&!changed_slot.held&&changed_slot.left_x==0);
   state={};runtime->poll(true,2);state.Gamepad.bLeftTrigger=XINPUT_GAMEPAD_TRIGGER_THRESHOLD;require(runtime->poll(true,2).left_trigger==0);state.Gamepad.bLeftTrigger=31;require(runtime->poll(true,2).left_trigger>0&&runtime->poll(true,2).left_trigger<.005f);
+  runtime->config=c;runtime->reset();state={};runtime->poll(true);state.Gamepad.bRightTrigger=255;auto trigger=runtime->poll(true);values=runtime->action_values(trigger);require(values[14]==1&&values[10]==0&&values[11]==0&&values[15]==0);
+  state={};trigger=runtime->poll(true);values=runtime->action_values(trigger);require((trigger.released&(1u<<15))&&values[10]==0&&values[14]==0);
+  state.Gamepad.bLeftTrigger=255;values=runtime->action_values(runtime->poll(true));require(values[15]==1&&values[10]==0&&values[11]==0);
+  state={};state.Gamepad.wButtons=XINPUT_GAMEPAD_RIGHT_SHOULDER;values=runtime->action_values(runtime->poll(true));require(values[10]==1&&values[11]==0&&values[14]==0&&values[15]==0);
+  state.Gamepad.wButtons=XINPUT_GAMEPAD_LEFT_SHOULDER;values=runtime->action_values(runtime->poll(true));require(values[11]==1&&values[10]==0);
+  state.Gamepad.wButtons=XINPUT_GAMEPAD_LEFT_THUMB|XINPUT_GAMEPAD_RIGHT_THUMB;values=runtime->action_values(runtime->poll(true));require(values[8]==1&&values[9]==1&&values[14]==0&&values[15]==0);
   InputConfig tune;require(!input_running(.64f,false,tune)&&input_running(.65f,false,tune)&&input_running(.60f,true,tune)&&!input_running(.56f,true,tune)&&!input_running(0,true,tune)&&!input_running(std::numeric_limits<float>::quiet_NaN(),true,tune));
   runtime->config={};ControllerPanel panel(p,runtime);auto key=[&](WPARAM k){panel.message(nullptr,WM_KEYDOWN,k,0);};
   for(int i=0;i<6;++i)key(VK_DOWN);key(VK_RETURN);require(panel.capturing());key('F');require(!panel.capturing());for(int i=0;i<6;++i)key(VK_DOWN);key(VK_RETURN);require(runtime->config.keyboard[4]=='F'&&runtime->keyboard_menu('F')==VK_RETURN);require(load_input(p,loaded)&&loaded.keyboard[4]=='F');

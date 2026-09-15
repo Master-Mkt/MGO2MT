@@ -1,4 +1,5 @@
 #include "combat_round.h"
+#include "native_loadout.h"
 #include <algorithm>
 #include <limits>
 #include <set>
@@ -11,6 +12,8 @@ RoundCoordinator::RoundCoordinator(uint64_t epoch,Policy policy,std::shared_ptr<
  :epoch_(epoch),policy_(policy),rules_({policy.countdownMs,1,policy.dpEnabled}),catalog_(std::move(catalog)),spawn_(std::move(spawn)){
  if(!epoch||!policy.generation||policy.respawnDelayMs>60000||policy.roundDurationMs>wire::maximumRoundDurationMs)throw std::invalid_argument("Round identity/respawn policy");
  if(catalog_)for(const auto&w:profiles){
+  // Knife is a fixed HOST grant, outside the three catalog selection rows/DP.
+  if(w.id==1||special_pc::weapon(w.id))continue;
   auto found=std::find_if(catalog_->entries().begin(),catalog_->entries().end(),[&](auto&e){return e.id==w.id;});
   if(found==catalog_->entries().end())throw std::invalid_argument("Weapon profile missing catalog identity");
   supported_.push_back(w.id);required_|=uint8_t(1u<<unsigned(found->category));
@@ -27,7 +30,7 @@ bool RoundCoordinator::join(Identity id,uint64_t now,std::optional<uint8_t> reta
  else if(retainedTeam)p.state.team=*retainedTeam;
  else if(policy_.autoAssign){unsigned red=0,blue=0;for(auto&q:players_)if(q){red+=q->state.team==1;blue+=q->state.team==2;}p.state.team=red<=blue?1:2;}
  // Fresh room ledger; subsequent commands never reset this balance to the
- // catalog floor. DP respawn stays disabled until its allowance is reviewed.
+ // catalog floor. Respawn preserves this wallet; no new DP allowance is minted.
  if(policy_.dpEnabled&&catalog_&&catalog_->initial_dp())p.balance=*catalog_->initial_dp();
  if(!rules_.join(token(id),host::ParticipantRole::player,now))return false;
  players_[id.slot]=p;++revision_;return true;
@@ -39,11 +42,14 @@ bool RoundCoordinator::grant(Participant&p,Authority&authority,uint64_t now){
  const auto prior=grantedCharacters_.find(p.state.id.character);bool respawn=prior!=grantedCharacters_.end();
  if(respawn&&(!p.respawnEligible||prior->second==std::numeric_limits<uint32_t>::max()||p.state.life!=prior->second+1)){p.error=wire::CommandError::already_deployed;return false;}
  std::vector<const weapons::Entry*> entries;std::vector<uint16_t> inventory;
+ // Earlier clients selected only a primary. Supply the explicit native
+ // secondary/support defaults on first grant and the same death entitlement.
+ for(unsigned c=1;c<3;++c)if(!p.selected[c]&&std::find(supported_.begin(),supported_.end(),weapons::native_loadout::initial[c])!=supported_.end())p.selected[c]=weapons::native_loadout::initial[c];
  for(unsigned c=0;c<3;++c){auto id=p.selected[c];if(!id){if(required_&(1u<<c)){p.error=wire::CommandError::weapon;return false;}continue;}
   auto e=catalog_->find(weapons::Category(c),id);if(!e||std::find(supported_.begin(),supported_.end(),id)==supported_.end()){p.error=wire::CommandError::weapon;return false;}
   entries.push_back(e);inventory.push_back(id);
  }
- weapons::SelectionContext context{policy_.dpEnabled,p.balance,policy_.restrictions};auto quote=weapons::quote(entries,context);
+ weapons::SelectionContext context{policy_.dpEnabled,p.balance,policy_.restrictions};context.native_operator_grant=std::find(supported_.begin(),supported_.end(),uint16_t(3))!=supported_.end();auto quote=weapons::quote(entries,context);
  if(quote.access!=weapons::Access::allowed){p.error=quote.access==weapons::Access::insufficient_dp?wire::CommandError::insufficient_dp:wire::CommandError::restricted;return false;}
  auto spawn=[&]{return spawn_(authority,p.state.id,p.state.team,inventory,now);};
  if(!(respawn?authority.respawn(p.state.id,p.state.life,spawn):spawn())){p.error=wire::CommandError::spawn;return false;}
@@ -93,10 +99,11 @@ void RoundCoordinator::poll(Authority&authority,uint64_t now){
  }
  if(expire(authority,now))return;
  // Three seconds is a bounded native policy, not an original respawn timer.
- // Do not reset DP wallets until the original respawn allowance is reviewed.
- if(available_&&!policy_.dpEnabled){const auto snapshot=authority.snapshot();if(snapshot.epoch==epoch_)for(auto&participant:players_)if(participant&&participant->state.deployed){auto&p=*participant;const auto&body=snapshot.players[p.state.id.slot];
+ // Native respawn preserves the wallet and requotes the selected loadout.
+ // It does not invent an original DP respawn allowance.
+ if(available_){const auto snapshot=authority.snapshot();if(snapshot.epoch==epoch_)for(auto&participant:players_)if(participant&&participant->state.deployed){auto&p=*participant;const auto&body=snapshot.players[p.state.id.slot];
    if(!body||body->identity!=p.state.id||body->life!=p.state.life||body->alive||body->hp)continue;
-   if(!p.diedAt)p.diedAt=now;
+   if(!p.diedAt){p.diedAt=now;++revision_;}
    if(now<*p.diedAt||now-*p.diedAt<policy_.respawnDelayMs||p.state.life==std::numeric_limits<uint32_t>::max())continue;
    ++p.state.life;p.state.deployed=false;p.state.ready=false;p.respawnEligible=true;p.error=wire::CommandError::none;++revision_;
   }}
@@ -111,12 +118,13 @@ void RoundCoordinator::poll(Authority&authority,uint64_t now){
   const auto remaining=uint32_t((left+999)/1000*1000);
   if(remaining<roundRemainingMs_){roundRemainingMs_=remaining;++revision_;}
  }
- if(rules_.deadline()&&now>=nextClock_){nextClock_=now+1000;++revision_;}
+ if((rules_.deadline()||std::any_of(players_.begin(),players_.end(),[](const auto&p){return p&&p->diedAt&&p->state.deployed;}))&&now>=nextClock_){nextClock_=now+1000;++revision_;}
 }
 wire::Preparation RoundCoordinator::state(Identity id,uint64_t now)const{
  if(id.slot>=24||!players_[id.slot]||players_[id.slot]->state.id!=id)throw std::invalid_argument("Round recipient");
  const auto&p=*players_[id.slot];wire::Preparation out;out.epoch=epoch_;out.revision=revision_;out.self=id;out.generation=policy_.generation;
  out.runtimeReady=available_;out.freeForAll=policy_.freeForAll;out.autoAssign=policy_.freeForAll||policy_.autoAssign;out.dpEnabled=policy_.dpEnabled;out.dpBalance=p.balance;out.restrictions=policy_.restrictions;
+ if(!ended_&&p.diedAt&&p.state.deployed){out.respawnWaiting=true;out.respawnRemainingMs=uint32_t(now>=*p.diedAt?policy_.respawnDelayMs-std::min<uint64_t>(policy_.respawnDelayMs,now-*p.diedAt):policy_.respawnDelayMs);}
  out.roundClock=roundStarted_.has_value();out.roundRemainingMs=roundRemainingMs_;
  out.lastCommand=p.lastCommand;out.error=p.error;out.supported=supported_;out.requiredCategories=required_;out.selected=p.selected;
  if(auto deadline=rules_.deadline()){out.countdown=true;out.remainingMs=uint32_t(std::min<uint64_t>(*deadline>now?*deadline-now:0,std::numeric_limits<uint32_t>::max()));}
