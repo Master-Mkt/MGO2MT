@@ -4,11 +4,11 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 static void check(bool v,const char*s){if(!v)throw std::runtime_error(s);}
 static void capture(const void*p,const std::filesystem::path&path){BITMAPFILEHEADER h{};BITMAPINFOHEADER i{};h.bfType=0x4d42;h.bfOffBits=sizeof(h)+sizeof(i);h.bfSize=h.bfOffBits+1280*720*4;i.biSize=sizeof(i);i.biWidth=1280;i.biHeight=-720;i.biPlanes=1;i.biBitCount=32;std::ofstream f(path,std::ios::binary);f.write(reinterpret_cast<char*>(&h),sizeof(h));f.write(reinterpret_cast<char*>(&i),sizeof(i));f.write(static_cast<const char*>(p),1280*720*4);check(bool(f),"capture");}
 int main(int argc,char**argv){try{
- const auto path=std::filesystem::temp_directory_path()/("MGO2WIN-chat-menu-"+std::to_string(GetCurrentProcessId())+"-"+std::to_string(GetTickCount64()));
+ const auto path=std::filesystem::temp_directory_path()/("MGO2MT-chat-menu-"+std::to_string(GetCurrentProcessId())+"-"+std::to_string(GetTickCount64()));
  std::filesystem::create_directories(path);auto input=std::make_shared<ControllerInput>(path/"input.cfg");auto graphics=std::make_shared<GraphicsSettings>(path/"graphics.cfg");PlayerMenu menu(path/"input.cfg",input,graphics);
  auto session=std::make_shared<chat::Session>();session->connect(7);session->enter(17);session->roster({{7,"DOLL-01",1},{8,"DOLL-02",2}},true);session->capabilities(chat::Encoding::utf8,false);menu.chat_session(session);
  menu.open(player::Menu::chat);check(menu.text_entry()&&menu.visible(),"chat opens as text entry rather than mapped gameplay input");

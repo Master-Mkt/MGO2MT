@@ -1,7 +1,7 @@
 #include "native_radio.h"
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win::radio;
+using namespace mgo2mt::radio;
 namespace {
 void check(bool v,const char* message){if(!v)throw std::runtime_error(message);}
 const Identity a{0,11,101},b{1,12,102},enemy{2,13,103},old{3,14,104};

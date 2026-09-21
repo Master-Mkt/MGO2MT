@@ -2,7 +2,7 @@
 #include <iostream>
 #include <limits>
 
-using namespace mgo2win;
+using namespace mgo2mt;
 static void require(bool ok){if(!ok)throw std::runtime_error("audio layers test failed");}
 static void near(float a,float b){require(std::abs(a-b)<.0001f+std::abs(b)*.000001f);}
 template<class F> static void reject(F f){bool rejected=false;try{f();}catch(const std::exception&){rejected=true;}require(rejected);}

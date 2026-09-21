@@ -10,7 +10,7 @@
 #include <utility>
 #include <vector>
 
-namespace mgo2win::names {
+namespace mgo2mt::names {
 inline constexpr uint16_t account_request_opcode=0x30e0,account_reply_opcode=0x30e1;
 inline constexpr uint16_t game_request_opcode=0x40e0,game_reply_opcode=0x40e1;
 inline constexpr uint16_t create_request_opcode=0x30e2,create_reply_opcode=0x30e3;

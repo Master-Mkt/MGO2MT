@@ -7,7 +7,7 @@
 #include <iostream>
 #include <syncstream>
 #include <algorithm>
-namespace mgo2win {
+namespace mgo2mt {
 CharacterScreen::CharacterScreen(std::function<CharacterReply(const std::atomic_bool&)>transport,std::function<uint64_t()> clock):transport_(std::move(transport)),clock_(std::move(clock)){
  dc_=CreateCompatibleDC(nullptr);if(!dc_)throw std::runtime_error("Character DC failure");BITMAPINFO i{};i.bmiHeader.biSize=sizeof(BITMAPINFOHEADER);i.bmiHeader.biWidth=1280;i.bmiHeader.biHeight=-720;i.bmiHeader.biPlanes=1;i.bmiHeader.biBitCount=32;
  bitmap_=CreateDIBSection(dc_,&i,DIB_RGB_COLORS,&pixels_,nullptr,0);if(!bitmap_){DeleteDC(dc_);throw std::runtime_error("Character surface failure");}old_=SelectObject(dc_,bitmap_);

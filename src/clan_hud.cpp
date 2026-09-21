@@ -4,7 +4,7 @@
 #include <cstring>
 #include <stdexcept>
 
-namespace mgo2win::clan {
+namespace mgo2mt::clan {
 namespace {
 constexpr uint32_t magic=0x454d3634,extent=64*64*4,chunk=896;
 uint32_t read(std::span<const uint8_t> p,size_t at,size_t length=4) {

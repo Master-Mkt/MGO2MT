@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include <cmath>
 #include <limits>
-using namespace mgo2win;
+using namespace mgo2mt;
 void require(bool b){if(!b)throw std::runtime_error("Controller contract failed");}
 void render_panel(const std::filesystem::path& output,const std::shared_ptr<ControllerInput>& input,const std::filesystem::path& config){
  std::filesystem::create_directories(output);auto dc=CreateCompatibleDC(nullptr);require(dc!=nullptr);
@@ -29,19 +29,19 @@ int main(int argc,char** argv){
   require(c.gamepad[4]==5&&c.gamepad[5]==4);c.device=1;assign_input(c,4,4);require(c.gamepad[4]==4&&c.gamepad[5]==5);assign_input(c,4,5);c.slot=3;
   c.left_deadzone=20;c.right_deadzone=30;c.run_threshold=70;c.run_hysteresis=12;
   save_input(p,c);require(load_input(p,loaded)&&loaded.keyboard==c.keyboard&&loaded.gamepad==c.gamepad&&loaded.device==1&&loaded.slot==3&&loaded.left_deadzone==20&&loaded.right_deadzone==30&&loaded.run_threshold==70&&loaded.run_hysteresis==12);
-  {std::ifstream f(p);std::string tag;unsigned version=0;f>>tag>>version;require(tag=="MGO2WIN.INPUT"&&version==2);}
+  {std::ifstream f(p);std::string tag;unsigned version=0;f>>tag>>version;require(tag=="MGO2MT.INPUT"&&version==2);}
   constexpr std::array<unsigned,input_actions> oldPreset={0,1,2,3,5,4,6,7,8,9,14,15,10,11,12,13,16,17,18,19,20,21,22,23};
   auto legacy=InputConfig{};legacy.gamepad=oldPreset;std::swap(legacy.gamepad[4],legacy.gamepad[5]);
-  auto write_legacy=[&](const InputConfig& value){std::ofstream f(p);f<<"MGO2WIN.INPUT 1\n"<<value.device<<' '<<value.slot<<'\n';for(auto key:value.keyboard)f<<key<<' ';f<<'\n';for(auto code:value.gamepad)f<<code<<' ';f<<'\n';};
+  auto write_legacy=[&](const InputConfig& value){std::ofstream f(p);f<<"MGO2MT.INPUT 1\n"<<value.device<<' '<<value.slot<<'\n';for(auto key:value.keyboard)f<<key<<' ';f<<'\n';for(auto code:value.gamepad)f<<code<<' ';f<<'\n';};
   legacy.keyboard=c.keyboard;write_legacy(legacy);require(load_input(p,loaded)&&loaded.gamepad==InputConfig{}.gamepad&&loaded.keyboard==c.keyboard&&loaded.run_threshold==65);
   legacy.device=1;assign_input(legacy,8,9);write_legacy(legacy);require(load_input(p,loaded)&&loaded.gamepad==legacy.gamepad&&loaded.gamepad[4]==4&&loaded.gamepad[5]==5); // A custom legacy preset is preserved intact.
   auto previous=c;previous.gamepad=oldPreset;save_input(p,previous);require(load_input(p,loaded)&&loaded.gamepad==InputConfig{}.gamepad&&loaded.keyboard==c.keyboard&&loaded.left_deadzone==20&&loaded.run_threshold==70);
   assign_input(previous,8,9);save_input(p,previous);require(load_input(p,loaded)&&loaded.gamepad==previous.gamepad); // v2 custom remains byte-for-byte.
   previous.gamepad=oldPreset;write_legacy(previous);require(load_input(p,loaded)&&loaded.gamepad==InputConfig{}.gamepad);
-  {std::ofstream f(p);f<<"MGO2WIN.INPUT 1 2 0";}bool bad=false;try{load_input(p,loaded);}catch(...){bad=true;}require(bad&&loaded.device==1);
+  {std::ofstream f(p);f<<"MGO2MT.INPUT 1 2 0";}bool bad=false;try{load_input(p,loaded);}catch(...){bad=true;}require(bad&&loaded.device==1);
   auto invalid=c;invalid.keyboard[4]=VK_ESCAPE;require(!valid_input_config(invalid));invalid=c;invalid.gamepad[0]=invalid.gamepad[1];require(!valid_input_config(invalid));invalid=c;invalid.slot=4;require(!valid_input_config(invalid));
   invalid=c;invalid.left_deadzone=91;require(!valid_input_config(invalid));invalid=c;invalid.right_deadzone=91;require(!valid_input_config(invalid));invalid=c;invalid.run_threshold=9;require(!valid_input_config(invalid));invalid=c;invalid.run_threshold=101;require(!valid_input_config(invalid));invalid=c;invalid.run_hysteresis=31;require(!valid_input_config(invalid));invalid=c;invalid.run_threshold=10;invalid.run_hysteresis=10;require(!valid_input_config(invalid));
-  {std::ofstream f(p);f<<"MGO2WIN.INPUT 2\n1 0\n";for(auto key:c.keyboard)f<<key<<' ';f<<'\n';for(auto code:c.gamepad)f<<code<<' ';f<<"\n20 30 65";}bad=false;try{load_input(p,loaded);}catch(...){bad=true;}require(bad);
+  {std::ofstream f(p);f<<"MGO2MT.INPUT 2\n1 0\n";for(auto key:c.keyboard)f<<key<<' ';f<<'\n';for(auto code:c.gamepad)f<<code<<' ';f<<"\n20 30 65";}bad=false;try{load_input(p,loaded);}catch(...){bad=true;}require(bad);
   save_input(p,c);auto runtime=std::make_shared<ControllerInput>(p);XINPUT_STATE state{};bool connected=true;unsigned queried=0;
   runtime->reader=[&](DWORD slot,XINPUT_STATE* out){queried=slot;*out=state;return connected?DWORD(ERROR_SUCCESS):DWORD(ERROR_DEVICE_NOT_CONNECTED);};
   state.Gamepad.wButtons=XINPUT_GAMEPAD_B;require(!runtime->poll(true).pressed&&queried==3);state={};runtime->poll(true);state.Gamepad.wButtons=XINPUT_GAMEPAD_B;auto press=runtime->poll(true);require(runtime->actions(press)[4]&&menu_key(4)==VK_RETURN);require(!runtime->poll(true).pressed);

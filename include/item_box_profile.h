@@ -2,7 +2,7 @@
 #include "world_inventory.h"
 #include "weapon_catalog.h"
 #include "stage_collision.h"
-namespace mgo2win::item_box {
+namespace mgo2mt::item_box {
 enum class Size:uint8_t {primary,secondary,reserve,equipment,unknown};
 struct Profile {Size size=Size::unknown;stage::Vec3 halfExtent{150,150,150};};
 // Native box dimensions, not a recovered original item-mesh/model namespace.

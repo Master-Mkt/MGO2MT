@@ -2,7 +2,7 @@
 #include "character_catalog.h"
 #include "character_renderer.h"
 #include <memory>
-namespace mgo2win::sop {
+namespace mgo2mt::sop {
 using Vec3=std::array<float,3>;
 // HOST scope/full identity/life are rechecked by the caller. Defaults fail closed.
 struct Gate {bool linked=false,friendly=false,alive=false,jammed=false;};

@@ -10,7 +10,7 @@
 #include <iostream>
 #include <stdexcept>
 
-using namespace mgo2win::motion_blend;
+using namespace mgo2mt::motion_blend;
 static void check(bool value,const char* message){if(!value)throw std::runtime_error(message);}
 static std::wstring text(HWND dialog,int id){std::array<wchar_t,512> value{};GetDlgItemTextW(dialog,id,value.data(),int(value.size()));return value.data();}
 static std::string bytes(const std::filesystem::path& path){std::ifstream file(path,std::ios::binary);return {std::istreambuf_iterator<char>(file),std::istreambuf_iterator<char>()};}
@@ -38,10 +38,10 @@ static void layout(HWND dialog){
 }
 
 int main(){try{
- const auto folder=std::filesystem::temp_directory_path()/(L"mgo2win-blend-dialog-"+std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64()));
+ const auto folder=std::filesystem::temp_directory_path()/(L"mgo2mt-blend-dialog-"+std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64()));
  check(std::filesystem::create_directory(folder),"unique isolated UI fixture directory");
  const auto path=folder/L"motion_blend.cfg";
- OwnerInput ownerInput;WNDCLASSW ownerClass{};ownerClass.lpfnWndProc=owner_procedure;ownerClass.hInstance=GetModuleHandleW(nullptr);ownerClass.lpszClassName=L"MGO2WIN.MotionBlend.TestOwner";
+ OwnerInput ownerInput;WNDCLASSW ownerClass{};ownerClass.lpfnWndProc=owner_procedure;ownerClass.hInstance=GetModuleHandleW(nullptr);ownerClass.lpszClassName=L"MGO2MT.MotionBlend.TestOwner";
  check(RegisterClassW(&ownerClass)!=0,"register hidden test owner class");
  HWND owner=CreateWindowExW(0,ownerClass.lpszClassName,L"Hidden motion blend test owner",WS_OVERLAPPEDWINDOW,100,100,900,700,nullptr,nullptr,GetModuleHandleW(nullptr),&ownerInput);
  check(owner&&IsWindow(owner)&&!IsWindowVisible(owner),"non-visible native owner created");

@@ -4,7 +4,7 @@
 #include <cstring>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 static void check(bool ok){if(!ok)throw std::runtime_error("GWM test failure");}
 static void put(std::vector<char>&b,size_t p,uint32_t n){for(int i=0;i<4;++i)b[p+i]=char(n>>(8*i));}
 static void reject(const std::vector<char>&b){bool threw=false;try{CharacterModel m(b);}catch(const std::runtime_error&){threw=true;}check(threw);}

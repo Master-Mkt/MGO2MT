@@ -1,14 +1,15 @@
+#include "product_identity.h"
 #include "stage_lighting.h"
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
 #include <string>
-namespace mgo2win::stage {
+namespace mgo2mt::stage {
 static float dot(Vec3 a,Vec3 b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];}
 static Vec3 normal(Vec3 a){float l=std::sqrt(dot(a,a));if(l<1e-8f)return {0,1,0};for(auto&v:a)v/=l;return a;}
 Lighting Lighting::read(std::istream&in){
  auto require=[](bool ok){if(!ok)throw std::runtime_error("Invalid native stage lighting");};
- std::string magic;unsigned version,count;require(bool(in>>magic>>version>>count));require(magic=="MGO2WIN.STAGE_LIGHTS"&&(version>=1&&version<=4)&&count<=4096);
+ std::string magic;unsigned version,count;require(bool(in>>magic>>version>>count));require(magic==mgo2mt::brand::Format{"MGO2MT.STAGE_LIGHTS"}&&(version>=1&&version<=4)&&count<=4096);
  auto numbers=[&](auto&v){for(auto&x:v){require(bool(in>>x));require(std::isfinite(x)&&std::abs(x)<=1000000);}};
  // Original zero-width feather faces store positive infinity (1 / 0).
  auto fades=[&](Vec3&v){for(auto&x:v){std::string s;require(bool(in>>s));std::size_t used=0;try{x=std::stof(s,&used);}catch(...){require(false);}require(used==s.size()&&!std::isnan(x)&&x>=0);}};
@@ -66,6 +67,22 @@ LightSample Lighting::sample(Vec3 p,Vec3 n)const{
  for(const auto&light:points){auto c=point_sample(light,p,n);for(int i=0;i<3;++i)out.color[i]+=c[i];}
  for(const auto&light:authored){auto c=authored_sample(light,p,n);for(int i=0;i<3;++i)out.color[i]+=c[i];}
  return out;
+}
+size_t Lighting::sample_vertices(std::span<ModelVertex> vertices,std::stop_token stop)const{
+ // Mesh-local vertex blocks have tight bounds. Remove lights that cannot
+ // influence any vertex in the block; retain original order and arithmetic.
+ Lighting batch;batch.direction=direction;batch.direct=direct;batch.front=front;batch.back=back;batch.axis=axis;batch.ambientScale=ambientScale;
+ batch.hemispheres.reserve(hemispheres.size());batch.points.reserve(points.size());batch.authored.reserve(authored.size());
+ size_t evaluated=0;
+ for(size_t start=0;start<vertices.size();start+=256){if(stop.stop_requested())return evaluated;auto block=vertices.subspan(start,std::min<size_t>(256,vertices.size()-start));
+  Vec3 lo{1e30f,1e30f,1e30f},hi{-1e30f,-1e30f,-1e30f};for(const auto&v:block){float p[]={v.x,v.y,v.z};for(unsigned i=0;i<3;++i){lo[i]=std::min(lo[i],p[i]);hi[i]=std::max(hi[i],p[i]);}}
+  auto overlaps=[&](Vec3 a,Vec3 b){for(unsigned i=0;i<3;++i)if(lo[i]>b[i]||hi[i]<a[i])return false;return true;};
+  batch.hemispheres.clear();batch.points.clear();batch.authored.clear();
+  for(const auto&h:hemispheres)if((h.flags&0x100)&&!(h.flags&0x8000)&&overlaps(h.minimum,h.maximum))batch.hemispheres.push_back(h);
+  for(const auto&p:points)if((p.flags&0x100)&&!(p.flags&0x8000)){Vec3 a,b;for(unsigned i=0;i<3;++i){const float pad=(std::abs(p.position[i])+std::abs(p.range))*0.00000024f;a[i]=p.position[i]-p.range-pad;b[i]=p.position[i]+p.range+pad;}if(overlaps(a,b))batch.points.push_back(p);}
+  for(const auto&a:authored)if((a.flags&0x300)&&!(a.flags&0x8000)&&overlaps(a.minimum,a.maximum))batch.authored.push_back(a);
+  for(auto&v:block){auto c=batch.sample({v.x,v.y,v.z},{v.nx,v.ny,v.nz}).color;v.lr=c[0];v.lg=c[1];v.lb=c[2];v.lit=1;++evaluated;}
+ }return evaluated;
 }
 Vec3 Lighting::point_sample(const PointLight&l,Vec3 p,Vec3 n){
  // DG_GetLight 0x125E90..0x125FAC: active 0x100, disable 0x8000,

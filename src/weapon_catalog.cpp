@@ -1,11 +1,13 @@
+#include "product_identity.h"
 #include "weapon_catalog.h"
+#include "gameplay_config.h"
 #include <charconv>
 #include <fstream>
 #include <limits>
 #include <set>
 #include <string_view>
 
-namespace mgo2win::weapons {
+namespace mgo2mt::weapons {
 namespace {
 bool number(std::string_view text,uint32_t& out,uint32_t maximum=UINT32_MAX){
  if(text.empty())return false;
@@ -37,6 +39,12 @@ std::vector<std::string_view> fields(const std::string& line){
 }
 const char* category_name(Category c){switch(c){case Category::primary:return "PRIMARY";case Category::secondary:return "SECONDARY";case Category::support:return "SUPPORT";}return "UNKNOWN";}
 bool Catalog::load(const std::filesystem::path& path,std::string& error){
+ // A present JSON is authoritative. An invalid file must not silently restore
+ // the compiled/TSV loadout and hide a misspelled user configuration.
+ const auto json=path.extension()==".json"?path:path.parent_path()/"gameplay.json";
+ std::error_code ec;const bool hasJson=std::filesystem::exists(json,ec);
+ if(ec){error="Could not inspect gameplay configuration: "+ec.message();return false;}
+ if(hasJson){gameplay::Config config;if(!config.load(json,error))return false;std::map<uint16_t,std::string> names;for(const auto&d:config.definitions())names.emplace(d.weapon.id,d.name);entries_=config.entries();initial_dp_=config.initial_dp();all_names_=std::move(names);return true;}
  error.clear();std::ifstream in(path,std::ios::binary);
  if(!in){error="Weapon catalog could not be opened.";return false;}
  in.seekg(0,std::ios::end);auto size=in.tellg();
@@ -49,7 +57,7 @@ bool Catalog::load(const std::filesystem::path& path,std::string& error){
   if(line.size()>1024||line.find('\0')!=line.npos)return fail();
   if(line.empty()||line[0]=='#')continue;
   auto f=fields(line);uint32_t value=0;
-  if(!version){if(f.size()!=2||f[0]!="MGO2WIN_WEAPON_CATALOG"||f[1]!="1")return fail();version=true;continue;}
+  if(!version){if(f.size()!=2||f[0]!=mgo2mt::brand::Format{"MGO2MT_WEAPON_CATALOG"}||f[1]!="1")return fail();version=true;continue;}
   if(f[0]=="INITIAL_DP"){
    if(initial_seen||f.size()!=2)return fail();initial_seen=true;
    if(f[1]!="?"){if(!number(f[1],value))return fail();initial=value;}continue;
@@ -68,9 +76,10 @@ bool Catalog::load(const std::filesystem::path& path,std::string& error){
   next.push_back(std::move(entry));
  }
  if(in.bad()||!version||!initial_seen||next.empty()){error="Incomplete weapon catalog.";return false;}
- entries_=std::move(next);initial_dp_=initial;return true;
+ entries_=std::move(next);initial_dp_=initial;all_names_.clear();return true;
 }
 const Entry* Catalog::find(Category category,uint16_t id)const{for(const auto& e:entries_)if(e.id==id&&e.category==category)return &e;return nullptr;}
+std::string_view Catalog::name(uint16_t id)const{if(auto i=all_names_.find(id);i!=all_names_.end())return i->second;for(const auto&e:entries_)if(e.id==id)return e.display_name;return {};}
 Access access(const Entry& e,const SelectionContext& context){
  if(context.room_restrictions[0]&1){
   if(e.restriction_bit){auto bit=*e.restriction_bit;if(bit==0||bit>=128)return Access::unverified;if(context.room_restrictions[bit/8]&(1u<<(bit%8)))return Access::restricted;}

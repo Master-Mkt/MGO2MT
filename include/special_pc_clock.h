@@ -1,7 +1,7 @@
 #pragma once
 #include "combat_authority.h"
 #include <algorithm>
-namespace mgo2win::special_pc {
+namespace mgo2mt::special_pc {
 class Clock {
  uint64_t epoch_=0,at_=0;combat::Identity id_;uint32_t life_=0,serial_=0;Action action_=Action::none;double seconds_=0;
 public:

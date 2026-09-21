@@ -2,7 +2,7 @@
 #include <bcrypt.h>
 #include "host_protocol.h"
 #include <algorithm>
-namespace mgo2win::host {
+namespace mgo2mt::host {
 namespace {
 constexpr uint32_t lcg=1566083941;
 uint32_t read(std::span<const uint8_t>b,size_t at,unsigned n){if(at>b.size()||n>b.size()-at)throw Invalid(Error::extent);uint32_t v=0;for(unsigned i=0;i<n;++i)v|=uint32_t(b[at+i])<<(8*i);return v;}

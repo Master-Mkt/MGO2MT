@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <cstring>
 #include <stdexcept>
-namespace mgo2win::shadows {
+namespace mgo2mt::shadows {
 namespace {
 void ok(HRESULT h){if(FAILED(h))throw std::runtime_error("Shadow GPU resource unavailable");}
 struct Receiver {std::array<std::array<float,16>,6> matrices;std::array<float,8> splits;std::array<float,4> parameters,bias,eye,forward,direction,sun;};
@@ -81,10 +81,10 @@ bool Renderer::render(ID3D11DeviceContext*c,const WorldView& camera,std::array<f
   c->IASetInputLayout(layout_.Get());c->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);c->VSSetShader(vs_.Get(),nullptr,0);c->PSSetShader(ps_.Get(),nullptr,0);c->RSSetState(raster_.Get());c->OMSetDepthStencilState(depthState_.Get(),0);c->OMSetBlendState(nullptr,nullptr,0xffffffff);D3D11_VIEWPORT viewport{0,0,float(plan_.resolution),float(plan_.resolution),0,1};c->RSSetViewports(1,&viewport);auto buffer=casterBuffer_.Get();c->VSSetConstantBuffers(0,1,&buffer);auto sampler=alpha_.Get();c->PSSetSamplers(0,1,&sampler);
   for(unsigned cascade=0;cascade<plan_.count;++cascade){auto target=targets_[cascade].Get();c->OMSetRenderTargets(0,nullptr,target);c->ClearDepthStencilView(target,D3D11_CLEAR_DEPTH,1,0);XMFLOAT4X4 projection;std::memcpy(&projection,plan_.matrices[cascade].data(),64);
    for(const auto&caster:casters){const auto& r=*caster.renderer;if(r.sky_)continue;auto world=XMMatrixRotationY(caster.yaw)*XMMatrixTranslation(caster.origin[0],caster.origin[1],caster.origin[2]);struct Draw {XMFLOAT4X4 wvp;XMFLOAT4 palette,uv;} draw{};XMStoreFloat4x4(&draw.wvp,world*XMLoadFloat4x4(&projection));auto vb=r.vertices_.Get();UINT stride=sizeof(ModelVertex),offset=0;c->IASetVertexBuffers(0,1,&vb,&stride,&offset);c->IASetIndexBuffer(r.indices_.Get(),DXGI_FORMAT_R32_UINT,0);
-    for(size_t i=0;i<r.parts_.size();++i){const auto&part=r.parts_[i];const auto&o=part.original;draw.palette={};draw.uv={1,1,0,0};if((r.materialRules_[i]&4)&&o.paletteSlot<o.textures.size()){draw.palette={1,o.parameters[2][1],-o.parameters[2][2],0};float values[4];for(unsigned j=0;j<4;++j){uint32_t bits=0;for(unsigned k=0;k<4;++k)bits=(bits<<8)|o.textures[o.paletteSlot].raw[8+j*4+k];std::memcpy(&values[j],&bits,4);}draw.uv={values[0],values[1],values[2],values[3]};}
+    for(size_t i=0;i<r.parts_.size();++i){const auto&part=r.parts_[i];if(part.surfaceAlpha)continue;const auto&o=part.original;draw.palette={};draw.uv={1,1,0,0};if((r.materialRules_[i]&4)&&o.paletteSlot<o.textures.size()){draw.palette={1,o.parameters[2][1],-o.parameters[2][2],0};float values[4];for(unsigned j=0;j<4;++j){uint32_t bits=0;for(unsigned k=0;k<4;++k)bits=(bits<<8)|o.textures[o.paletteSlot].raw[8+j*4+k];std::memcpy(&values[j],&bits,4);}draw.uv={values[0],values[1],values[2],values[3]};}
      // Entirely prelit models never alpha-clip in the original forward path.
      // Coalesce only contiguous submitted ranges; gaps/hidden parts stay excluded.
-     auto count=part.count;if(r.opaqueShadow_)while(i+1<r.parts_.size()&&uint64_t(part.first)+count==r.parts_[i+1].first){++i;count+=r.parts_[i].count;}
+     auto count=part.count;if(r.opaqueShadow_)while(i+1<r.parts_.size()&&!r.parts_[i+1].surfaceAlpha&&uint64_t(part.first)+count==r.parts_[i+1].first){++i;count+=r.parts_[i].count;}
      c->UpdateSubresource(casterBuffer_.Get(),0,nullptr,&draw,0,0);auto texture=r.textures_.at(part.texture).Get();c->PSSetShaderResources(0,1,&texture);c->DrawIndexed(count,part.first,0);++stats_.drawCalls;stats_.triangles+=count/3;
     }
    }

@@ -1,5 +1,5 @@
 #include "combat_authority.h"
-namespace mgo2win::combat {
+namespace mgo2mt::combat {
 bool Authority::configure_health(const HealthRules& rules){
  if(active_||!rules.valid())return false;healthRules_=rules;
  for(auto& s:slots_)if(s){s->falling=falling::Tracker(rules.falling);s->regeneration.reset();}return true;

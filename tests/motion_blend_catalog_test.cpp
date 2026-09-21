@@ -9,7 +9,7 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {
 void check(bool value,const char* why){if(!value)throw std::runtime_error(why);}
 std::vector<char> read(const std::filesystem::path& path){std::ifstream in(path,std::ios::binary);check(bool(in),"motion asset missing");return {(std::istreambuf_iterator<char>(in)),{}};}

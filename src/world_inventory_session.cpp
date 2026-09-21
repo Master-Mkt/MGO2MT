@@ -2,7 +2,7 @@
 #include <limits>
 #include <algorithm>
 #include <cmath>
-namespace mgo2win::items {
+namespace mgo2mt::items {
 void ClientSession::reset(){auto generation=state_.connection+1;state_={};state_.connection=generation;header_={};receiver_={};next_=probeAt_=sentAt_=0;attempted_=false;queued_.reset();pending_.reset();}
 void ClientSession::disconnect(){std::lock_guard lock(mutex_);reset();}
 ClientState ClientSession::state()const{std::lock_guard lock(mutex_);return state_;}

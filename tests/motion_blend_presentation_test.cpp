@@ -4,8 +4,8 @@
 #include <limits>
 #include <stdexcept>
 
-using namespace mgo2win;
-using namespace mgo2win::motion_blend;
+using namespace mgo2mt;
+using namespace mgo2mt::motion_blend;
 static void check(bool value,const char* message){if(!value)throw std::runtime_error(message);}
 static bool near(double a,double b,double tolerance=1e-4){return std::abs(a-b)<=tolerance;}
 static MotionPose pose(float height=0){MotionPose p;p.rootBone=11;p.root={10,height,30};p.rotations={{11,{0,0,0,1}},{22,{0,0,0,1}}};return p;}

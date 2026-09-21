@@ -6,7 +6,7 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
-using namespace mgo2win::stage;
+using namespace mgo2mt::stage;
 int main(int argc,char** argv){
  if(argc!=3){std::cerr<<"stage_water_real_test <n023a.collision.cfg> <n023a.gww>\n";return 2;}
  std::ifstream ci(argv[1]);auto source=std::make_shared<Collision>(Collision::read(ci));

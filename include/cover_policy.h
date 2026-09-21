@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <optional>
 #include <cmath>
-namespace mgo2win::combat::cover {
+namespace mgo2mt::combat::cover {
 using Vec3=stage::Vec3;
 enum class Action:uint8_t {none,attach,detach};
 struct Intent {uint32_t request=0;Action action=Action::none;int8_t lean=0;bool firstPerson=false;bool operator==(const Intent&)const=default;};

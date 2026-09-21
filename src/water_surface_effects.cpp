@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <cmath>
 #include <set>
-namespace mgo2win::stage {
+namespace mgo2mt::stage {
 namespace {
 float dot(Vec3 a,Vec3 b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];}
 Vec3 sub(Vec3 a,Vec3 b){for(unsigned k=0;k<3;++k)a[k]-=b[k];return a;}

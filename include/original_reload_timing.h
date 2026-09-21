@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <optional>
 
-namespace mgo2win::original {
+namespace mgo2mt::original {
 // MGO2 SHA 1a55a41ee5afdebd89075bd205e412c8311f569ba9dc022f629bb63fb4bfd13a.
 // Full identity and PPC are in
 // notes/COMBAT_CLOCK_END_20260913.md. CPU path 175EA8 advances float32

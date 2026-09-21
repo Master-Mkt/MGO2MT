@@ -2,7 +2,7 @@
 #include <array>
 #include <cstdlib>
 #include <iostream>
-using namespace mgo2win::combat;
+using namespace mgo2mt::combat;
 using namespace original_object_audio;
 static void require(bool v) { if (!v) { std::cerr << "object contact audio contract failed\n"; std::exit(1); } }
 int main() {

@@ -1,7 +1,7 @@
 #pragma once
 #include "ladder_action.h"
 #include <algorithm>
-namespace mgo2win::ladder {
+namespace mgo2mt::ladder {
 class Input {
  uint64_t epoch_=0,actor_=0,life_=0,at_=0;bool armed_=false,held_=false,sent_=false;uint32_t sequence_=0;Intent pending_;
 public:

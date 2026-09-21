@@ -1,9 +1,10 @@
+#include "product_identity.h"
 #include "item_drop_policy.h"
 #include <fstream>
 #include <limits>
 #include <set>
 #include <stdexcept>
-namespace mgo2win::items {
+namespace mgo2mt::items {
 namespace {
 struct Reader {
  std::string_view s;size_t at=0;
@@ -37,7 +38,7 @@ PolicyEntry entry(Reader& r){PolicyEntry e;unsigned mask=0;r.object([&](const st
 bool DropPolicies::parse(std::string_view text,std::string& error){try{
  if(text.size()>2*1024*1024)throw std::runtime_error("Item drop policy exceeds 2 MiB");
  Reader r{text};std::map<uint64_t,PolicyEntry> candidate;unsigned mask=0;
- r.object([&](const std::string& key){if(key=="schema"){if(r.string()!="MGO2WIN.item_drop_policy")r.fail();mask|=1;}else if(key=="version"){if(r.number()!=1)r.fail();mask|=2;}else if(key=="entries"){
+ r.object([&](const std::string& key){if(key=="schema"){if(r.string()!=mgo2mt::brand::Format{"MGO2MT.item_drop_policy"})r.fail();mask|=1;}else if(key=="version"){if(r.number()!=1)r.fail();mask|=2;}else if(key=="entries"){
   r.need('[');if(!r.eat(']')){do{auto e=entry(r);auto entryKey=(uint64_t(e.domain)<<32)|e.id;if(candidate.size()>=65536||!candidate.emplace(entryKey,std::move(e)).second)r.fail();}while(r.eat(','));r.need(']');}mask|=4;
  }else r.fail();});r.ws();if(mask!=7||r.at!=text.size()||candidate.empty())r.fail();entries_.swap(candidate);error.clear();return true;
  }catch(const std::exception& e){error=e.what();return false;}}

@@ -3,10 +3,10 @@
 #include <iostream>
 #include <stdexcept>
 #include <cmath>
-using namespace mgo2win::water_audio;
+using namespace mgo2mt::water_audio;
 namespace {
 void check(bool v,const char* why){if(!v)throw std::runtime_error(why);}
-Actor fixture(){return {101,1,{0,2,0},{200.f,200.f,.65f,mgo2win::stage::WaterFoot::inWater},true,true};}
+Actor fixture(){return {101,1,{0,2,0},{200.f,200.f,.65f,mgo2mt::stage::WaterFoot::inWater},true,true};}
 uint32_t u32(const std::vector<uint8_t>&b,size_t n){return b[n]|uint32_t(b[n+1])<<8|uint32_t(b[n+2])<<16|uint32_t(b[n+3])<<24;}
 }
 int main(int argc,char**argv){try{

@@ -4,7 +4,7 @@
 #include <thread>
 #include <vector>
 #include "http_text.h"
-namespace mgo2win {
+namespace mgo2mt {
 // Text/layout are native Windows rendering; no HTML or script execution.
 class AgreementScreen {
  std::thread worker_;std::atomic_bool cancel_{false},done_{false};HttpText response_;

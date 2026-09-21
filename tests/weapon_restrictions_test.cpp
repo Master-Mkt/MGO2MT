@@ -4,7 +4,7 @@
 #include <iostream>
 #include <set>
 #include <stdexcept>
-using namespace mgo2win::restrictions;
+using namespace mgo2mt::restrictions;
 namespace {
 void check(bool value,const char* text){if(!value)throw std::runtime_error(text);}
 const Entry& entry(std::string_view key){const auto* e=find(key);if(!e)throw std::runtime_error("missing expected restriction entry");return *e;}
@@ -42,14 +42,14 @@ int main(){try{
  check(b==remaining&&enabled(b),"All Unlock is bounded to reviewed controls, not a destructive memset");
  const auto restored=b;set_all_locked(b,true);check(b==Bits{0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff},"All Lock restores all known masks");
  b=restored;set_category_locked(b,static_cast<Category>(255),true);check(b==restored&&category_mask(static_cast<Category>(255))==Bits{}&&!find("not-known"),"unknown categories and keys cannot modify settings");
- mgo2win::weapons::Catalog selectable;std::string error;
+ mgo2mt::weapons::Catalog selectable;std::string error;
  auto privateCatalog=std::filesystem::path(__FILE__).parent_path().parent_path()/"assets/weapon_catalog.tsv";
  if(std::filesystem::exists(privateCatalog)){
  check(selectable.load(privateCatalog,error),"ordinary catalog fixture");
- check(!selectable.find(mgo2win::weapons::Category::primary,22)&&entry("patriot").weapon_id==22&&entry("patriot").dp_only==true,"PATRIOT host restriction exists independently of equipment entitlement");
- check(!selectable.find(mgo2win::weapons::Category::primary,1)&&entry("knife").weapon_id==1,"fixed knife can be restricted without being a selectable primary row");
+ check(!selectable.find(mgo2mt::weapons::Category::primary,22)&&entry("patriot").weapon_id==22&&entry("patriot").dp_only==true,"PATRIOT host restriction exists independently of equipment entitlement");
+ check(!selectable.find(mgo2mt::weapons::Category::primary,1)&&entry("knife").weapon_id==1,"fixed knife can be restricted without being a selectable primary row");
  for(const auto& e:catalog())if(e.weapon_id&&unsigned(e.category)<3){
-  if(const auto* weapon=selectable.find(static_cast<mgo2win::weapons::Category>(e.category),*e.weapon_id)){
+  if(const auto* weapon=selectable.find(static_cast<mgo2mt::weapons::Category>(e.category),*e.weapon_id)){
    check(e.dp_only&&weapon->available_without_dp&&*e.dp_only==!*weapon->available_without_dp,"ordinary TDM DP-only hints match original availability branch");
   }
  }

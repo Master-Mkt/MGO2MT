@@ -1,6 +1,6 @@
 #include "host_match.h"
 #include <algorithm>
-namespace mgo2win::host {
+namespace mgo2mt::host {
 namespace {
 struct Delta {
  std::optional<uint8_t> phase,index,round,generation;

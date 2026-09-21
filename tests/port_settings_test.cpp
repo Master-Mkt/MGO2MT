@@ -3,7 +3,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <chrono>
-using namespace mgo2win;
+using namespace mgo2mt;
 void require(bool b){if(!b)throw std::runtime_error("Port setting contract failed");}
 int main(){
  uint16_t n=0;require(parse_port(L"1024",n)&&n==1024);require(parse_port(L"65535",n)&&n==65535);require(parse_port(L"05730",n)&&n==5730);
@@ -14,12 +14,12 @@ int main(){
   PortSettings cfg,loaded;require(!load_ports(path,loaded));cfg={true,5730};save_ports(path,cfg);require(load_ports(path,loaded)&&loaded.automatic&&loaded.port==5730);
   cfg={false,65535};save_ports(path,cfg);require(load_ports(path,loaded)&&!loaded.automatic&&loaded.port==65535);
   for(unsigned speed=256;speed<=2048;speed+=256){cfg.bandwidth_kbps=static_cast<uint16_t>(speed);save_ports(path,cfg);require(load_ports(path,loaded)&&loaded.bandwidth_kbps==speed);}
-  {std::ofstream f(path);f<<"MGO2WIN.NETWORK 1\n1 5730\n";}
+  {std::ofstream f(path);f<<"MGO2MT.NETWORK 1\n1 5730\n";}
   require(load_ports(path,loaded)&&loaded.automatic&&loaded.port==5730&&loaded.bandwidth_kbps==512);
-  for(auto body:{"MGO2WIN.NETWORK 2 0 5730 0","MGO2WIN.NETWORK 2 0 5730 255","MGO2WIN.NETWORK 2 0 5730 257","MGO2WIN.NETWORK 2 0 5730 2049","MGO2WIN.NETWORK 2 0 5730 -256","MGO2WIN.NETWORK 2 0 5730 2048 extra","MGO2WIN.NETWORK 3 0 5730 512"}){
+  for(auto body:{"MGO2MT.NETWORK 2 0 5730 0","MGO2MT.NETWORK 2 0 5730 255","MGO2MT.NETWORK 2 0 5730 257","MGO2MT.NETWORK 2 0 5730 2049","MGO2MT.NETWORK 2 0 5730 -256","MGO2MT.NETWORK 2 0 5730 2048 extra","MGO2MT.NETWORK 3 0 5730 512"}){
    {std::ofstream f(path);f<<body;}bool bad=false;try{load_ports(path,loaded);}catch(...){bad=true;}require(bad);
   }
-  for(auto body:{"MGO2WIN.NETWORK 2 0 5730","MGO2WIN.NETWORK 1 2 5730","MGO2WIN.NETWORK 1 0 80","MGO2WIN.NETWORK 1 0 5730 extra"}){
+  for(auto body:{"MGO2MT.NETWORK 2 0 5730","MGO2MT.NETWORK 1 2 5730","MGO2MT.NETWORK 1 0 80","MGO2MT.NETWORK 1 0 5730 extra"}){
    {std::ofstream f(path);f<<body;}bool bad=false;try{load_ports(path,loaded);}catch(...){bad=true;}require(bad);
   }
   PortReservation first,second;auto a=first.check({true,5730});require(a.status==PortStatus::available&&a.port>=1024);

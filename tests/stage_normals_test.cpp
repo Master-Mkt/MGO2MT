@@ -5,7 +5,7 @@
 #include <iterator>
 #include <cstring>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 void check(bool b,const char*m){if(!b)throw std::runtime_error(m);}
 std::vector<char> read(const std::filesystem::path&p){std::ifstream f(p,std::ios::binary);check(bool(f),"input");return {std::istreambuf_iterator<char>(f),{}};}
 int main(int argc,char**argv){try{

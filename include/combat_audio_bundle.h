@@ -4,7 +4,7 @@
 #include <optional>
 #include <vector>
 
-namespace mgo2win::combat {
+namespace mgo2mt::combat {
 // Input is the sfx directory. Returned paths are relative to the containing data root.
 // Effects performs the same bounded PCM, manifest, duplicate and safe-path validation
 // used by runtime playback. Nothing from an unvalidated manifest is returned.

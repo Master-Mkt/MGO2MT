@@ -1,0 +1,5 @@
+OpenSSL 3.5.7 (unmodified DLLs distributed by Python)
+Copyright (c) 1998-2026 The OpenSSL Project Authors
+Copyright (c) 1995-1998 Eric A. Young, Tim J. Hudson
+Licensed under the Apache License, Version 2.0.
+Official license and source: https://github.com/openssl/openssl/tree/openssl-3.5.7

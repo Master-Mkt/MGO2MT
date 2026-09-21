@@ -2,7 +2,7 @@
 // socket framing/waits/watchdog without exposing a production endpoint override.
 #include "../src/character_client.cpp"
 #include <future>
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {
 void check(bool b,const char*m){if(!b)throw std::runtime_error(m);}
 struct Socket {SOCKET value=INVALID_SOCKET;~Socket(){if(value!=INVALID_SOCKET)closesocket(value);}};

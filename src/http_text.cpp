@@ -8,7 +8,7 @@
 #include <sstream>
 #include <iomanip>
 #include "http_text.h"
-namespace mgo2win {
+namespace mgo2mt {
 namespace {
 constexpr size_t limit=0x40000; // Original AB30AC receive buffer capacity.
 struct Handle { HINTERNET h=nullptr; ~Handle(){if(h)WinHttpCloseHandle(h);} operator HINTERNET()const{return h;} };
@@ -47,7 +47,7 @@ HttpText fetch_policy(const std::wstring& url,const std::atomic_bool& cancel){
  HttpText result;
  try {
   if(!allowed_policy_url(url))throw std::runtime_error("Only https://openmgo2.com is allowed");
-  Handle session{WinHttpOpen(L"OpenMGO2-MGO2WIN/0.1",WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,WINHTTP_NO_PROXY_NAME,WINHTTP_NO_PROXY_BYPASS,0)};
+  Handle session{WinHttpOpen(L"OpenMGO2-MGO2MT/0.1",WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,WINHTTP_NO_PROXY_NAME,WINHTTP_NO_PROXY_BYPASS,0)};
   check(session.h!=nullptr);check(WinHttpSetTimeouts(session,3000,3000,3000,3000));
   Handle connection{WinHttpConnect(session,L"openmgo2.com",INTERNET_DEFAULT_HTTPS_PORT,0)};check(connection.h!=nullptr);
   const auto path=url.substr(std::wstring(L"https://openmgo2.com").size());

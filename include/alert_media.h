@@ -3,7 +3,7 @@
 #include <filesystem>
 #include <memory>
 #include <span>
-namespace mgo2win::alert_media {
+namespace mgo2mt::alert_media {
 std::vector<uint8_t> verified_bytes(const std::filesystem::path& directory,const notices::Media&,bool video);
 struct Frame {uint32_t width=0,height=0;uint64_t index=0;std::vector<uint32_t> pixels;};
 struct Status {bool running=false,finished=false;uint64_t decodedFrames=0;std::string error;

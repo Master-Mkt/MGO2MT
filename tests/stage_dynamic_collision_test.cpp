@@ -3,12 +3,12 @@
 #include <stdexcept>
 #include <cmath>
 #include <sstream>
-using namespace mgo2win::stage;
+using namespace mgo2mt::stage;
 static void check(bool ok){if(!ok)throw std::runtime_error("Dynamic collision regression");}
 int main(){try{
- std::string encoded="MGO2WIN.STAGE_COLLISION 2 3 1 1\n4768953 .5 .5 1\n0 0 0\n100 0 0\n0 0 100\n0 1 2 0 0 0\n";
+ std::string encoded="MGO2MT.STAGE_COLLISION 2 3 1 1\n4768953 .5 .5 1\n0 0 0\n100 0 0\n0 0 100\n0 1 2 0 0 0\n";
  std::istringstream input(encoded);auto restoredMaterial=Collision::read(input);check(restoredMaterial.material(0).verified&&restoredMaterial.material(0).id==4768953);
- for(auto bad:{std::string("MGO2WIN.STAGE_COLLISION 2 0 0 1\n7 -1 .5 1"),std::string("MGO2WIN.STAGE_COLLISION 2 0 0 1\n7 .5 .5 2"),std::string("MGO2WIN.STAGE_COLLISION 2 0 0 65537"),encoded+"extra"}){bool failed=false;try{std::istringstream stream(bad);Collision::read(stream);}catch(...){failed=true;}check(failed);}
+ for(auto bad:{std::string("MGO2MT.STAGE_COLLISION 2 0 0 1\n7 -1 .5 1"),std::string("MGO2MT.STAGE_COLLISION 2 0 0 1\n7 .5 .5 2"),std::string("MGO2MT.STAGE_COLLISION 2 0 0 65537"),encoded+"extra"}){bool failed=false;try{std::istringstream stream(bad);Collision::read(stream);}catch(...){failed=true;}check(failed);}
  auto floor=Collision::make({{-2000,0,-2000},{2000,0,-2000},{2000,0,2000},{-2000,0,2000}},{{{0,1,2},0,0,0},{{0,2,3},0,0,0}},{{77,.4f,.25f,true}});
  auto h=floor.sweep_segment({-100,400,0},{100,400,0},{0,-1000,0},50,1);check(h&&std::abs(h->fraction-.349f)<.001f&&h->normal[1]>.99f);
  auto contacts=floor.contacts({-100,40,0},{100,40,0},50);check(!contacts.empty()&&std::abs(contacts[0].penetration-10)<.01f);check(floor.material(contacts[0].triangle).id==77);

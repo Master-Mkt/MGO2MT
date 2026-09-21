@@ -1,0 +1,528 @@
+{
+  "version": 1,
+  "icons": [
+    {
+      "domain": "weapon",
+      "id": 2,
+      "rgba_sha256": "d437b422c01d1e3bed1720d4f2c01b6f6778c34289565315a6355164506db274",
+      "layout_sha256": "474c6a62eb7bdc973c3105674b5e331f31e8bd05a1f81879d5678a69c7141104"
+    },
+    {
+      "domain": "weapon",
+      "id": 3,
+      "rgba_sha256": "e630f63ecdab25ab6c75b966d1685e1ce538b4a28cc488d7fb961b90575c5274",
+      "layout_sha256": "ae8228df6ebd5fddc6c48385a953834ff1b5460b5865b3e9a1d752e59404fc30"
+    },
+    {
+      "domain": "weapon",
+      "id": 4,
+      "rgba_sha256": "945ab1056e504b65ddf8868b813a91e05139534691b7c50cac37c6f9315d3b46",
+      "layout_sha256": "9318240f7dcf8ae560b3e1c21e2682e4bf7f769114f1fbcc299ab9177901fdaa"
+    },
+    {
+      "domain": "weapon",
+      "id": 7,
+      "rgba_sha256": "9ff096e3163f017c23cd8aca3d25cd02623070c8aad7048e8c8c741e42fc617a",
+      "layout_sha256": "63ad9e74486ecdad0a178e52bfe101bd4e7812894231e1d0b9ea0b50ae8c92e7"
+    },
+    {
+      "domain": "weapon",
+      "id": 8,
+      "rgba_sha256": "5ebca5e7e8ca44c09469a078a7a0f5bf594fa448e68ab488763f0532f5311dbf",
+      "layout_sha256": "48ecf1f25d5921ead8c1c9cd22180bd2b1ed23cdb0fc0784b0d12f2e6a558c74"
+    },
+    {
+      "domain": "weapon",
+      "id": 15,
+      "rgba_sha256": "383156bf86d69c424d96c48c09158e8f98033a8617b640f3ff8f2de9c5229326",
+      "layout_sha256": "229f0426f3bc7054eebacfedf2105b70049de23618c7bc96f2c2af1065195e64"
+    },
+    {
+      "domain": "weapon",
+      "id": 18,
+      "rgba_sha256": "e256f64ca28082a51a3dfae22f22d6d5d4a1bacbb4ac7075da259e218518002e",
+      "layout_sha256": "0848ca23604d837f7a5ad24fca7384c9b80abea0e4cea935e356ad7c7bfb0f75"
+    },
+    {
+      "domain": "weapon",
+      "id": 20,
+      "rgba_sha256": "aba1f2b7ec0289af31d21add0dac32b75c453ee200ed8b461fae64ac8439c32d",
+      "layout_sha256": "37d3a681998516b74d3ddc287d5de517f4ea57edb696f6527a11f6e8c21ca5f6"
+    },
+    {
+      "domain": "weapon",
+      "id": 23,
+      "rgba_sha256": "ee9755fbd81cfef2da0f487eec5418d0f5d2fb3e943e3a0b114042fa655920f7",
+      "layout_sha256": "eb1586e1a0eedf81179de602943202285abbefc5d8845259f0c569ad737a08fe"
+    },
+    {
+      "domain": "weapon",
+      "id": 24,
+      "rgba_sha256": "4ef60dfb3a51c949f2bb87d882c65abc8d2254ad41a8cb4365031776cfd7cde4",
+      "layout_sha256": "88d0de36743fa29c0deff6a95a317780bea9c2542a186012c94a319c578a92a8"
+    },
+    {
+      "domain": "weapon",
+      "id": 25,
+      "rgba_sha256": "860fcb3746e04b1cee6c111b316fc6e205aa1edc093f1d901585cbd32753ad58",
+      "layout_sha256": "58730cb8410728407a5bf432fe32bfc32c78dbb5bb1185918932736f01eecd94"
+    },
+    {
+      "domain": "weapon",
+      "id": 26,
+      "rgba_sha256": "adf999a22f9ecd39bebafe987034e50670b05950cfb6b345039bced4bc2e7bb9",
+      "layout_sha256": "3aa3a469451b4f9cf4ebe47588f5147c35fb516a65df25290c5d9a3757e22d06"
+    },
+    {
+      "domain": "weapon",
+      "id": 30,
+      "rgba_sha256": "0d45f8cfd019becc351580140c74e0c3a591b00a2c529572a44fa405990c3300",
+      "layout_sha256": "2d71beb16b8f6403899f42f1b132a088aef4f44b89309271d119425d047aa492"
+    },
+    {
+      "domain": "weapon",
+      "id": 31,
+      "rgba_sha256": "fefc6a46caf20ffe432818be7df0678cd9fccca2a831875e9a77b747ce68414f",
+      "layout_sha256": "9798a6c543dfe514cbbc3d5b3c73bff13b89137c693243f2502c97fd276cc024"
+    },
+    {
+      "domain": "weapon",
+      "id": 35,
+      "rgba_sha256": "7ba04271dee8b728bcee21b56d65735798dbee1f845067223239a86ce6e81ac0",
+      "layout_sha256": "ec9acfa91047008bc9046f2285cc1cfbfa2f3317a9bcb1394369b4fbb6a37705"
+    },
+    {
+      "domain": "weapon",
+      "id": 37,
+      "rgba_sha256": "86412fb50507a26d21fb6fda9b21b5bda88deb70f3498be919a23fce592f8785",
+      "layout_sha256": "0615dcb230030790e1ebbd1298a13057ca91bc6a4df9c6e29e6444a61327493b"
+    },
+    {
+      "domain": "weapon",
+      "id": 38,
+      "rgba_sha256": "24033be4abeb7fc68bbc3e734d9736023dc3a3a0c7421ea0bb9d5db12454e818",
+      "layout_sha256": "8fca257711202192910a232d9245ac614f81b837b21643b721ebd3f6bdf35c61"
+    },
+    {
+      "domain": "weapon",
+      "id": 39,
+      "rgba_sha256": "6be8b8e51f47a8ccb5d85f1f64c02c7a15d379265e72b57e6ea037ed27874476",
+      "layout_sha256": "55400e82a31182bac5f07a33be5880495823b57fa56cba9ae39d9a40e99d063b"
+    },
+    {
+      "domain": "weapon",
+      "id": 41,
+      "rgba_sha256": "0f385c79553cc60744c3b7cba8de0441c3cec1a52cda4cafb284b1e731668889",
+      "layout_sha256": "509e4fd75077d33290bffde4926c7abe5deba3ca3881f167840203994b20966e"
+    },
+    {
+      "domain": "weapon",
+      "id": 42,
+      "rgba_sha256": "dfd31aeefdbc0e4e0c264beae81269cb5d5f7dc0bffc1cdd3b3aa5db791dd957",
+      "layout_sha256": "62d62ba1e366c28ffb989b23e4cc6f7819c865af9e812ee1fb49ac08bf41cc0e"
+    },
+    {
+      "domain": "weapon",
+      "id": 43,
+      "rgba_sha256": "8839cb8ae65918717a1f9b97ca4f2dd1ab331fe1b7bdef9e6155cb25f7a8d1d0",
+      "layout_sha256": "434b9edede7ec2cfa6e9db06ffb665d7ae51fc52cd071458de6956ea88e478f8"
+    },
+    {
+      "domain": "weapon",
+      "id": 44,
+      "rgba_sha256": "9d1e9495ccba0bb2b11292f8a241a6900a82ba27972dfe8ea1bf5094a87ca8fb",
+      "layout_sha256": "b78b786716fb91238692aeea6d8797d4ba72ca82c4ffc6fc07d8824710b612be"
+    },
+    {
+      "domain": "weapon",
+      "id": 50,
+      "rgba_sha256": "ed09c40a8a8bc406b6f4374f3497b9bc1eb89560ccca41278619b0e781531799",
+      "layout_sha256": "07c65641cbaa98dbb342a19a5bd3ec26db245b1577f5c8e02c80e597aa16ea48"
+    },
+    {
+      "domain": "weapon",
+      "id": 52,
+      "rgba_sha256": "760b5613147ee0ac593e7fa9c4a04367ae8a2368f076d9b819231564d5e57644",
+      "layout_sha256": "824f61b5732cee96403382fc52e48802c737a94b8a3b2b5c0b6b3cc5ae9e5e69"
+    },
+    {
+      "domain": "weapon",
+      "id": 53,
+      "rgba_sha256": "947454c07a7a68478080ea9767a2cc279cfddef44361a93ec252ece12080dcfa",
+      "layout_sha256": "f7b1b8e49db9e345aad218b2f7be8655283ab2a0863d69a2c65a34c337c36d34"
+    },
+    {
+      "domain": "weapon",
+      "id": 54,
+      "rgba_sha256": "33cf7ec5faab2055826b66c00b2dd461b2032ce2d4b3475d006a283631c2cac0",
+      "layout_sha256": "93374e34e77e9a883209ee5f9f83c522eb1ce54ed93a56d50eb3f82bf573caf1"
+    },
+    {
+      "domain": "weapon",
+      "id": 55,
+      "rgba_sha256": "d83840bc191a7cda6de60b29a9c69b16e085ce0c70b2c73ee97b9cacc1fa10d3",
+      "layout_sha256": "ade292a658d6793e5abbfbfb784ade857d2ddf72526cd16ef0adb4cc2190a8bb"
+    },
+    {
+      "domain": "weapon",
+      "id": 56,
+      "rgba_sha256": "274a3186430e0678c602c77833fd90e39ad05b398d07410e5e1807516800f37a",
+      "layout_sha256": "59df90be52795357c07a89f7d937ad56bde34b420b6eb6fa3a5fc9a728498242"
+    },
+    {
+      "domain": "weapon",
+      "id": 57,
+      "rgba_sha256": "274a3186430e0678c602c77833fd90e39ad05b398d07410e5e1807516800f37a",
+      "layout_sha256": "59df90be52795357c07a89f7d937ad56bde34b420b6eb6fa3a5fc9a728498242"
+    },
+    {
+      "domain": "weapon",
+      "id": 58,
+      "rgba_sha256": "274a3186430e0678c602c77833fd90e39ad05b398d07410e5e1807516800f37a",
+      "layout_sha256": "59df90be52795357c07a89f7d937ad56bde34b420b6eb6fa3a5fc9a728498242"
+    },
+    {
+      "domain": "weapon",
+      "id": 59,
+      "rgba_sha256": "274a3186430e0678c602c77833fd90e39ad05b398d07410e5e1807516800f37a",
+      "layout_sha256": "59df90be52795357c07a89f7d937ad56bde34b420b6eb6fa3a5fc9a728498242"
+    },
+    {
+      "domain": "weapon",
+      "id": 63,
+      "rgba_sha256": "451e0e6ea85443e86acbf7a1eb7fc42ceb6d5c31bd6ff4aa8816207d6a397c20",
+      "layout_sha256": "791de22ffcdae348b4dfd92798876800977bbf5cba1f6574966d71575e639fa4"
+    },
+    {
+      "domain": "weapon",
+      "id": 64,
+      "rgba_sha256": "48ffbc293ab69920dc5b794895f2b7cd1c86991c2f5da1d0e419309bee4fa992",
+      "layout_sha256": "1cde231576698c6cebd2ac22ce78abbc0ac710116f84cca33be30faeb79cbb1a"
+    },
+    {
+      "domain": "weapon",
+      "id": 65,
+      "rgba_sha256": "67379a59da038d726b2c53235b820339cabc9c5ba6c666cec62ce9b0dc4d8887",
+      "layout_sha256": "7dcba411b2af0ffc17e7680a70199101ac2114c864b90ca46748bbe31a2bb9e3"
+    },
+    {
+      "domain": "weapon",
+      "id": 66,
+      "rgba_sha256": "763456c532f8b1f8e8f4492d544c093c4ac53f3fe3372b238a9c6b1fffa38be1",
+      "layout_sha256": "da63987018a605855a8c2f7fce09b752613efffc58ba908d0657954d57db5541"
+    },
+    {
+      "domain": "weapon",
+      "id": 67,
+      "rgba_sha256": "8f73198168503a39c1ea2e971dddcece99a0423265040e86319559dfbd196a4f",
+      "layout_sha256": "d968065ff0bb942cdbac2e80c5fa033778ecfc9469c5e630e4f4f6f8339410eb"
+    },
+    {
+      "domain": "weapon",
+      "id": 69,
+      "rgba_sha256": "a7ef4c362e0bf5f8689796884cd43d9da0cf9d459b00f486173bef88c25a8057",
+      "layout_sha256": "3863ce4bba9faebbc1b9b4360ed6655405e8ad37f7f5d9ff1fed518f0b001cb4"
+    },
+    {
+      "domain": "weapon",
+      "id": 73,
+      "rgba_sha256": "1424d5ce35665c9ae1495776e8fb791f1f063644b6cde3beda31cd84d1b0081b",
+      "layout_sha256": "6c024eac98489d59fd7d4e03d72bb34f2442ec413f0b2c4b7f27c8ecac842e98"
+    },
+    {
+      "domain": "equipment",
+      "id": 6,
+      "rgba_sha256": "07f9a2e566ba300248b817d67e0bce1c24303ae2aaff48cb11cf9052c514dee7",
+      "layout_sha256": "04e37ba7a7e8211d152eaa89a113b1ef43e1c8e2b7a6ebee7d45ddeee5e120e3"
+    },
+    {
+      "domain": "equipment",
+      "id": 8,
+      "rgba_sha256": "20272d6a77839d36511adb90dc2f3f178d08502a85b329511241a0c04c06d869",
+      "layout_sha256": "1fe96f9f43e8ceec08b6e9cd50df271649c806e796eb13a549e5f66d90301233"
+    },
+    {
+      "domain": "equipment",
+      "id": 9,
+      "rgba_sha256": "06aa442057ba63d0c0d642cc7e6c529633a524739aaf6fdd609645d1958ab843",
+      "layout_sha256": "ac671c7243b2666bcc5b9d522125f5c2370938a9c602575d1fdbc052521dbd69"
+    },
+    {
+      "domain": "equipment",
+      "id": 10,
+      "rgba_sha256": "e4114b004466df973d0f7bed2f06979665fcad9bf44d0a11318004e5d6dfc842",
+      "layout_sha256": "fa51d9999fba21891628a46d8994e51c0d90a10d6ade823f65d98bae3d43ac7c"
+    },
+    {
+      "domain": "equipment",
+      "id": 16,
+      "rgba_sha256": "61f7ae496856cfb5a8c47c894b73adb69c9ad88215e529129ee9728a7c494a9b",
+      "layout_sha256": "94f6d4d5a1ec1646ea287af554e3e1214acd71a0a4e1a1434b1bee2b14c26c5e"
+    },
+    {
+      "domain": "equipment",
+      "id": 19,
+      "rgba_sha256": "e533f8717578315597ed4fc08e691502377733d3b06118a0e143139257ab66a5",
+      "layout_sha256": "9062769fb246bfb98ec2d928250c780809a33830ca23ca8b7702270e64fece5e"
+    },
+    {
+      "domain": "equipment",
+      "id": 20,
+      "rgba_sha256": "3f4847e970f6534a0d020b7c0c7f35004ab8ca7872645ab15a9d0ddd1fc840d9",
+      "layout_sha256": "fc2bc51850080395617491ff40e469e282619f8ce30ee25d42025bca54dabb97"
+    },
+    {
+      "domain": "equipment",
+      "id": 21,
+      "rgba_sha256": "d64879de9fadb5dbb876f0c578767ee6f14c26bcbad0e37a6c85dbff8428aff2",
+      "layout_sha256": "6a5a83fba03b9c73f82036ae8ded45d7f51fc01906e5a2c95431183438f18484"
+    },
+    {
+      "domain": "equipment",
+      "id": 22,
+      "rgba_sha256": "f707161740b6fe17b1e4040f7b88c63140790f24fc5f7216bd1e30581246a9e7",
+      "layout_sha256": "8660f97f148ffe93e335cf0abc2becf07864151130bac30609af4b0e38e26cda"
+    },
+    {
+      "domain": "equipment",
+      "id": 23,
+      "rgba_sha256": "04c6d92d3cd39f42e5e9d7bc4fc9ef6a4abc6ea21f271b84f9c244360338420d",
+      "layout_sha256": "c52da9ab44d0550a21c3f94fe1d812dca6f929b3a280a2042b8af89b147037f5"
+    },
+    {
+      "domain": "equipment",
+      "id": 24,
+      "rgba_sha256": "29ca97ce477808288ecd7044bbf0759dd57b9a106d42031041bab7db0362f803",
+      "layout_sha256": "0322d57e501793786bfb366ee318bd0740a1e4fb8a5c1d504dd2aebd8e94eeb1"
+    },
+    {
+      "domain": "equipment",
+      "id": 61,
+      "rgba_sha256": "63aca91ed2e0ba03c14427508a11b3835b261a912c5e2da278a7f7cea716fd5b",
+      "layout_sha256": "aba03a5d31ae7ca7091925c4e6cd9d799b43bc90967bce415e1de2cd6316aa21"
+    },
+    {
+      "domain": "equipment",
+      "id": 62,
+      "rgba_sha256": "d64879de9fadb5dbb876f0c578767ee6f14c26bcbad0e37a6c85dbff8428aff2",
+      "layout_sha256": "6a5a83fba03b9c73f82036ae8ded45d7f51fc01906e5a2c95431183438f18484"
+    },
+    {
+      "domain": "equipment",
+      "id": 63,
+      "rgba_sha256": "d64879de9fadb5dbb876f0c578767ee6f14c26bcbad0e37a6c85dbff8428aff2",
+      "layout_sha256": "6a5a83fba03b9c73f82036ae8ded45d7f51fc01906e5a2c95431183438f18484"
+    },
+    {
+      "domain": "equipment",
+      "id": 64,
+      "rgba_sha256": "d64879de9fadb5dbb876f0c578767ee6f14c26bcbad0e37a6c85dbff8428aff2",
+      "layout_sha256": "6a5a83fba03b9c73f82036ae8ded45d7f51fc01906e5a2c95431183438f18484"
+    },
+    {
+      "domain": "equipment",
+      "id": 65,
+      "rgba_sha256": "d64879de9fadb5dbb876f0c578767ee6f14c26bcbad0e37a6c85dbff8428aff2",
+      "layout_sha256": "6a5a83fba03b9c73f82036ae8ded45d7f51fc01906e5a2c95431183438f18484"
+    },
+    {
+      "domain": "equipment",
+      "id": 66,
+      "rgba_sha256": "d64879de9fadb5dbb876f0c578767ee6f14c26bcbad0e37a6c85dbff8428aff2",
+      "layout_sha256": "6a5a83fba03b9c73f82036ae8ded45d7f51fc01906e5a2c95431183438f18484"
+    },
+    {
+      "domain": "equipment",
+      "id": 67,
+      "rgba_sha256": "4e5de77ce8b046c52b4497b4cae2a36511752f7baf0a9ebb299b5e6694a99613",
+      "layout_sha256": "87a4c5b91babcf99838806ba2388e30e1654168b1d8eba0fbbbc4bf577b877ab"
+    }
+  ],
+  "skills": [
+    {
+      "name": "skill_star",
+      "key": 9295075,
+      "rgba_sha256": "e46973620979cab962fcca3d6d0de8603850f5f6ebdded6b1e402b7571e72bc3",
+      "size": [
+        32,
+        32
+      ]
+    },
+    {
+      "name": "participants",
+      "key": 10194753,
+      "rgba_sha256": "08c5f164e1c9a5904d5cc06549e31dc7837ee230e7bc274fafc1773a8ab49ab2",
+      "size": [
+        64,
+        64
+      ]
+    },
+    {
+      "name": "rules",
+      "key": 6549783,
+      "rgba_sha256": "7a940b0c94feacda6f36c2ae65302d14abf3077f3099ea14d0f4c536980b08dc",
+      "size": [
+        64,
+        13
+      ]
+    },
+    {
+      "name": "deploy",
+      "key": 6838952,
+      "rgba_sha256": "a172e45a56bed554f24e8aeed04ad1fc0c9d4f4412350824d41ea24e51696c6d",
+      "size": [
+        136,
+        48
+      ]
+    },
+    {
+      "name": "skills",
+      "key": 9295075,
+      "rgba_sha256": "e46973620979cab962fcca3d6d0de8603850f5f6ebdded6b1e402b7571e72bc3",
+      "size": [
+        32,
+        32
+      ]
+    },
+    {
+      "name": "equipment",
+      "key": 6437422,
+      "rgba_sha256": "6d2fe2775a4b127676bbeeddd5c6eb8305509f3ddcfe8e2445e2a7d514ae5c29",
+      "size": [
+        40,
+        40
+      ]
+    },
+    {
+      "name": "options",
+      "key": 7197923,
+      "rgba_sha256": "3a9557b99245232568aecce922cd1ea4f05e0e9476484db71d9f2bef1a2919dd",
+      "size": [
+        64,
+        32
+      ]
+    }
+  ],
+  "fonts": [
+    {
+      "name": "SCE-PS3-NR-B-JPN.TTF",
+      "sha256": "6ee0551aca9f3570295913abd24550bc0d29b9be1a44caeb733723b6d6c24b27"
+    },
+    {
+      "name": "SCE-PS3-NR-R-JPN.TTF",
+      "sha256": "87572758dafd3826b8c0507087e4b09990cf74c597b4d5881a9d366d077b0c18"
+    }
+  ],
+  "equipment_display": [
+    [
+      6,
+      70.0,
+      56.0
+    ],
+    [
+      8,
+      128.0,
+      56.0
+    ],
+    [
+      9,
+      128.0,
+      56.0
+    ],
+    [
+      10,
+      64.0,
+      56.0
+    ],
+    [
+      16,
+      128.0,
+      56.0
+    ],
+    [
+      19,
+      219.61181640625,
+      49.91943359375
+    ],
+    [
+      20,
+      182.25,
+      53.15625
+    ],
+    [
+      21,
+      219.61181640625,
+      49.91943359375
+    ],
+    [
+      22,
+      219.61181640625,
+      49.91943359375
+    ],
+    [
+      23,
+      42.0,
+      42.0
+    ],
+    [
+      24,
+      42.0,
+      42.0
+    ],
+    [
+      61,
+      219.61181640625,
+      49.91943359375
+    ],
+    [
+      62,
+      219.61181640625,
+      49.91943359375
+    ],
+    [
+      63,
+      219.61181640625,
+      49.91943359375
+    ],
+    [
+      64,
+      219.61181640625,
+      49.91943359375
+    ],
+    [
+      65,
+      219.61181640625,
+      49.91943359375
+    ],
+    [
+      66,
+      219.61181640625,
+      49.91943359375
+    ],
+    [
+      67,
+      60.0,
+      60.0
+    ]
+  ],
+  "controller": {
+    "layout": 12962672,
+    "texture": 8932063,
+    "rgba_sha256": "578d4d89c763d6455c0cbbd19100d3cc716fc7d0e1f9a504eacbd568f98ecac1"
+  },
+  "hold": {
+    "layout_sha256": "bd92296b6e8b2abf129aacd25c685876cad1956b22f8a6fb48491bd373b0bd6a",
+    "font": 1756348,
+    "texture": 3745176,
+    "first": 32,
+    "last": 126,
+    "atlas_size": [
+      1024,
+      156
+    ],
+    "glyph_size": [
+      32,
+      26
+    ]
+  }
+}

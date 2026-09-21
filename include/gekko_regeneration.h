@@ -1,7 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <cstdint>
-namespace mgo2win::special_pc::regeneration {
+namespace mgo2mt::special_pc::regeneration {
 // User-requested Windows rule, not a recovered original MGS4/MGO2 ability.
 inline constexpr uint32_t maximum_hp=1000;
 struct Scope {

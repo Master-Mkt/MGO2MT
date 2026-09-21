@@ -5,7 +5,7 @@
 #include <limits>
 #include <set>
 #include <stdexcept>
-namespace mgo2win::items::wire {
+namespace mgo2mt::items::wire {
 namespace {
 struct Invalid{};
 void require(bool b){if(!b)throw Invalid{};}
@@ -17,7 +17,7 @@ struct IO {
  void number(float& v){auto bits=std::bit_cast<uint32_t>(v);value(bits,4);v=std::bit_cast<float>(bits);require(std::isfinite(v));}
  void actor(Actor& a,bool neutral=false){value(a.slot,1);zero(1);value(a.instance,2);value(a.character,4);value(a.life,4);require(neutral?a==Actor{}:(a.slot<24&&a.instance&&a.character));}
  void header(Header& h){value(h.scope.epoch,8);value(h.scope.generation,8);value(h.token,8);actor(h.actor);zero(4);value(h.sequence,8);require(h.scope.epoch&&h.scope.generation&&h.token);}
- void entity(Entity& e,Scope scope){e.key.scope=scope;value(e.key.id,8);value(e.revision,8);value(e.kind,1);value(e.contents.domain,1);value(e.contents.resource,1);zero(1);value(e.contents.item,4);value(e.contents.quantity,4);value(e.contents.magazine,4);value(e.contents.reserve,4);value(e.contents.charges,4);actor(e.owner,e.kind==PlacementKind::round);number(e.position.x);number(e.position.y);number(e.position.z);number(e.position.yaw);
+ void entity(Entity& e,Scope scope){e.key.scope=scope;value(e.key.id,8);value(e.revision,8);value(e.kind,1);value(e.contents.domain,1);value(e.contents.resource,1);zero(1);value(e.contents.item,4);value(e.contents.quantity,4);value(e.contents.magazine,4);value(e.contents.reserve,4);value(e.contents.charges,4);actor(e.owner,e.kind==PlacementKind::round);number(e.position.x);number(e.position.y);number(e.position.z);number(e.position.yaw);number(e.position.nx);number(e.position.ny);number(e.position.nz);require(std::abs(e.position.nx*e.position.nx+e.position.ny*e.position.ny+e.position.nz*e.position.nz-1.f)<.001f);
   require(e.key.id&&e.revision&&e.kind<=PlacementKind::round&&e.contents.domain<=Domain::world_item&&e.contents.resource<=Resource::charges&&e.contents.item&&e.contents.quantity&&(e.kind==PlacementKind::round||e.owner.life));
   if(e.contents.resource==Resource::durable)require(!e.contents.magazine&&!e.contents.reserve&&!e.contents.charges);
   if(e.contents.resource==Resource::ammunition)require(e.contents.quantity==1&&!e.contents.charges);

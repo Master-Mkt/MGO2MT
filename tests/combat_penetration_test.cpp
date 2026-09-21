@@ -5,13 +5,13 @@
 #include "combat_audio.h"
 #include "bullet_decals_overlay.h"
 #include <iostream>
-using namespace mgo2win;
-using namespace mgo2win::combat;
+using namespace mgo2mt;
+using namespace mgo2mt::combat;
 namespace {
 void check(bool b,const char* text){if(!b)throw std::runtime_error(text);}
-std::shared_ptr<const stage::Collision> scene(int resistance,int layers=1,bool known=true,bool back=false,uint64_t attribute=4,uint32_t materialHash=1){
+std::shared_ptr<const stage::Collision> scene(int resistance,int layers=1,bool known=true,bool back=false,uint64_t attribute=stage::attribute::bullet|stage::attribute::bullet_mark,uint32_t materialHash=1){
  std::vector<Vec3> vertices{{-200000,0,-200000},{200000,0,-200000},{200000,0,200000},{-200000,0,200000}};
- std::vector<stage::CollisionTriangle> triangles{{{0,1,2}},{{0,2,3}}};
+ std::vector<stage::CollisionTriangle> triangles{{{0,1,2},stage::attribute::floor|stage::attribute::player},{{0,2,3},stage::attribute::floor|stage::attribute::player}};
  for(int i=0;i<layers;++i){unsigned n=unsigned(vertices.size());float z=1500.f+i*30;vertices.insert(vertices.end(),{{-1000,0,z},{1000,0,z},{1000,3104,z},{-1000,3104,z}});
   triangles.push_back({back?std::array<unsigned,3>{n,n+1,n+2}:std::array<unsigned,3>{n,n+2,n+1},attribute,0,0,0});
   triangles.push_back({back?std::array<unsigned,3>{n,n+2,n+3}:std::array<unsigned,3>{n,n+3,n+2},attribute,0,0,0});
@@ -31,13 +31,13 @@ int main(int argc,char** argv){try{
  check(damage(scene(100,3))==0&&damage(scene(250))==0,"cumulative resistance and equality stop");
  check(damage(scene(0,1,false))==0,"missing material fails closed at1000");
  check(damage(scene(1000,1,true,true))==275,"backface free");
- check(damage(scene(1000,1,true,false,0x8000))==275,"low32 free surface flag");
+ check(damage(scene(1000,1,true,false,stage::attribute::bullet|stage::attribute::through))==275,"low32 free surface flag on bullet-query surface");
  check(damage(scene(0,12))==0,"exhausted force cannot heal or use zero-force full-damage sentinel");
  check(damage(scene(0,70))==0,"native surface work bound cannot shoot past truncation");
  auto wall=scene(100);auto shared=trace_ak102({0,1552,0},{0,0,1},5000,*wall);check(shared.impacts.size()==1&&shared.priorForceCost==100,"shared diagonal counts one plane");
  // Use actual recovered stage material hashes and bank/WAV mapping at the
  // real authority-to-audio boundary, rather than dispatching a synthetic cue.
- {Authority host;host.begin(7,scene(100,1,true,false,4,0x15bccc),initial_profiles(20,1,0));join(host);auto hit=host.fire(a,{7,1,25,{0,0,1}},0);check(hit.events.size()==4&&hit.events[1].cue==8000&&hit.events[2].cue==8168,"host selects raw GEOM material cue8000 while body retains8168");if(argc>1){Effects audio;check(audio.load(argv[1]),"actual decoded PCM material bank loads");std::vector<Sound> played;audio.dispatch(hit.events,{0,1552,0},[&](const auto& s){played.push_back(s);});check(played.size()==3&&played[0].cue==10002&&played[1].cue==8000&&played[2].cue==8168,"actual shot/material/body files dispatched from host events");audio.dispatch(hit.events,{0,1552,0},[&](const auto& s){played.push_back(s);});check(played.size()==3,"material sound replay suppressed");check(!audio.play_cue(0,{},{},[](const auto&){}),"authored silence stays silent");}}
+ {Authority host;host.begin(7,scene(100,1,true,false,stage::attribute::bullet|stage::attribute::bullet_mark,0x15bccc),initial_profiles(20,1,0));join(host);auto hit=host.fire(a,{7,1,25,{0,0,1}},0);check(hit.events.size()==4&&hit.events[1].cue==8000&&hit.events[2].cue==8168,"host selects raw GEOM material cue8000 while body retains8168");if(argc>1){Effects audio;check(audio.load(argv[1]),"actual decoded PCM material bank loads");std::vector<Sound> played;audio.dispatch(hit.events,{0,1552,0},[&](const auto& s){played.push_back(s);});check(played.size()==3&&played[0].cue==10002&&played[1].cue==8000&&played[2].cue==8168,"actual shot/material/body files dispatched from host events");audio.dispatch(hit.events,{0,1552,0},[&](const auto& s){played.push_back(s);});check(played.size()==3,"material sound replay suppressed");check(!audio.play_cue(0,{},{},[](const auto&){}),"authored silence stays silent");}}
  // Actual Service output spans several original four-event frames and replicas
  // consume the complete ordered event stream exactly once.
  Service service(9);service.configure(scene(100,2),initial_profiles(20,1,0));check(service.admit(a)&&service.receive(a,wire::encode(wire::Accept{9}),0),"offered/accepted service");join(service.authority());service.deliveries();Replica replica;check(replica.snapshot(service.authority().snapshot()),"pre-shot event baseline");
@@ -66,7 +66,7 @@ int main(int argc,char** argv){try{
  auto mark=decals::static_impact(impact,{9,1},*wall);check(bool(mark),"static impact revalidated against GEOM");decals::Pool pool({1024,120000,10000,32,1});pool.synchronize({9,1},0,0);pool.synchronize({9,1},1,1);check(pool.emit(*mark,1),"new event creates mark");
  std::vector<uint32_t> image(1280*720);auto marks=pool.sample(2);decals::paint(image,marks,{0,1552,0},{0,0,1},*wall);check(std::count_if(image.begin(),image.end(),[](auto p){return p!=0;})>5,"native mark projects into scene");
  for(size_t n=0;n<image.size();++n)if(image[n])check(n%1280>=620&&n%1280<1236&&n/1280>=120&&n/1280<512,"mark confined to scene viewport");
- auto blocker=stage::Collision::make({{-10000,0,750},{10000,0,750},{10000,5000,750},{-10000,5000,750}},{{{0,1,2}},{{0,2,3}}});std::fill(image.begin(),image.end(),0);decals::paint(image,marks,{0,1552,0},{0,0,1},*wall,&blocker);check(std::none_of(image.begin(),image.end(),[](auto p){return p!=0;}),"closer geometry occludes marks");
+ auto blocker=stage::Collision::make({{-10000,0,750},{10000,0,750},{10000,5000,750},{-10000,5000,750}},{{{0,1,2},stage::attribute::bullet},{{0,2,3},stage::attribute::bullet}});std::fill(image.begin(),image.end(),0);decals::paint(image,marks,{0,1552,0},{0,0,1},*wall,&blocker);check(std::none_of(image.begin(),image.end(),[](auto p){return p!=0;}),"closer explicit hit geometry occludes marks");
  impact.target=b;check(!decals::static_impact(impact,{9,1},*wall),"body has no wall decal");impact.target={};check(!decals::static_impact(impact,{9,1},*scene(100,1,true,false,0x40048000)),"water has no bullet mark");
  std::cout<<"AK GEOM budget, force/HP, shared faces, 64-layer bound, service chunks and visible static decals PASS\n";return 0;
 }catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}

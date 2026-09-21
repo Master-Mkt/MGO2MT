@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <stdexcept>
 
-namespace mgo2win::chat {
+namespace mgo2mt::chat {
 namespace {
 bool next(std::string_view s, size_t& i, uint32_t& cp) {
     const auto byte = [&](size_t at) { return static_cast<uint8_t>(s[at]); };

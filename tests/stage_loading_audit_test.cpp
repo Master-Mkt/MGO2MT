@@ -6,7 +6,7 @@
 #include <iostream>
 #include <thread>
 
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {
 void check(bool value,const char* message){if(!value)throw std::runtime_error(message);}
 stage::Result wait(stage::Assets& assets){

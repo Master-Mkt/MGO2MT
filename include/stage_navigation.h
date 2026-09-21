@@ -4,7 +4,7 @@
 #include "water_gameplay.h"
 #include "cover_policy.h"
 #include <memory>
-namespace mgo2win::stage {
+namespace mgo2mt::stage {
 // A maneuver can keep its travel heading while the player looks elsewhere.
 struct WalkInput {float forward=0,right=0,turn=0,look=0,speed=3500,yawRate=2,pitchRate=1.5f;std::optional<float> movementYaw;};
 using NavigationWaterState=water_gameplay::Contact;

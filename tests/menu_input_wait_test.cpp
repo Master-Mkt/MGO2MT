@@ -2,7 +2,7 @@
 #include "character_screen.h"
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 void require(bool value,const char* why){if(!value)throw std::runtime_error(why);}
 int main(){
  using Kind=MenuInputWait::Kind;

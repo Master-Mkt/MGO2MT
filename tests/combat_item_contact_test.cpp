@@ -3,11 +3,11 @@
 #include <iostream>
 #include <memory>
 #include <stdexcept>
-using namespace mgo2win;using namespace mgo2win::combat;
+using namespace mgo2mt;using namespace mgo2mt::combat;
 namespace {
 void check(bool b,const char*s){if(!b)throw std::runtime_error(s);}
 const Identity id{0,1,100};
-auto floor(){return std::make_shared<stage::Collision>(stage::Collision::make({{-10000,0,-10000},{10000,0,-10000},{10000,0,10000},{-10000,0,10000}},{{{0,1,2}},{{0,2,3}}}));}
+auto floor(){return std::make_shared<stage::Collision>(stage::Collision::make({{-10000,0,-10000},{10000,0,-10000},{10000,0,10000},{-10000,0,10000}},{{{0,1,2},stage::attribute::native_solid},{{0,2,3},stage::attribute::native_solid}}));}
 std::vector<Weapon> fixture_weapons(){std::vector<Weapon> w;for(uint16_t weaponId:{uint16_t(25),uint16_t(3),uint16_t(1),uint16_t(22)}){Weapon x;x.id=weaponId;x.heldOnly=true;w.push_back(x);}return w;}
 auto authority(const weapons::Catalog& catalog,uint16_t item,float x=400,std::shared_ptr<const stage::Collision> obstacle={}){
  auto a=std::make_unique<Authority>();a->begin(1,floor(),fixture_weapons(),obstacle);a->item_box_catalog(catalog);items::Seed seed{*a->item_template(items::Domain::weapon,item),{x,2,0,0}};check(a->seed_items(std::span<const items::Seed>(&seed,1)),"seed without drop permission");return a;
@@ -25,7 +25,7 @@ int main(int argc,char**argv){try{
  {auto a=authority(catalog,1);join(*a,primary);check(a->item_held(id,123)->slots[4].contents.item==1&&a->advance_items(0).events.empty()&&a->item_state().entities.size()==1,"initial knife prevents duplicate contact pickup");}
  {auto a=authority(catalog,3,1400);join(*a,primary);check(a->advance_items(0).events.empty()&&a->item_state().entities.size()==1,"1500 manual pickup range not auto contact");}
  {auto a=authority(catalog,3);std::array<uint16_t,2> held{25,3};join(*a,held);check(a->advance_items(0).events.empty(),"duplicate held item never auto-acquired");}
- {auto wall=std::make_shared<stage::Collision>(stage::Collision::make({{300,0,-2000},{300,2500,-2000},{300,2500,2000},{300,0,2000}},{{{0,1,2}},{{0,2,3}}}));auto a=authority(catalog,3,400,wall);join(*a,primary);check(a->advance_items(0).events.empty(),"conservative overlap cannot pickup through wall");}
+ {auto wall=std::make_shared<stage::Collision>(stage::Collision::make({{300,0,-2000},{300,2500,-2000},{300,2500,2000},{300,0,2000}},{{{0,1,2},stage::attribute::native_solid},{{0,2,3},stage::attribute::native_solid}}));auto a=authority(catalog,3,400,wall);join(*a,primary);check(a->advance_items(0).events.empty(),"conservative overlap cannot pickup through wall");}
  {auto a=authority(catalog,3);join(*a,primary);a->active(false);check(a->advance_items(0).events.empty(),"inactive no contact acquisition");a->active(true);check(a->advance_items(501).events.empty(),"stale player pose no contact acquisition");}
  // Drop owner must actually exit and return, even after the timer expires.
  {auto a=std::make_unique<Authority>();a->begin(1,floor(),fixture_weapons());a->item_box_catalog(catalog);items::DropPolicy policy;policy.drop=items::DropOverride::allow;check(a->item_policy(3,policy),"explicit native drop policy");std::array<uint16_t,2> inventory{25,3};join(*a,inventory);

@@ -8,7 +8,7 @@ static void require(bool x){if(!x)throw std::runtime_error("Background animation
 static uint32_t word(const std::vector<char>& b,size_t p){uint32_t n;std::memcpy(&n,b.data()+p,4);return n;}
 int main(int argc,char**argv){try{
  require(argc==2);std::ifstream f(argv[1],std::ios::binary);require(bool(f));std::vector<char>b((std::istreambuf_iterator<char>(f)),{});
- mgo2win::TitleAnimation rear(b),front(b,18000,true);
+ mgo2mt::TitleAnimation rear(b),front(b,18000,true);
  rear.tick(5,0);const auto first=rear.node_values(56);
  for(int t=10;t<=400;t+=5)rear.tick(5,0);
  require(rear.node_values(56)[0]!=first[0]||rear.node_values(56)[1]!=first[1]);
@@ -27,7 +27,7 @@ int main(int argc,char**argv){try{
    for(unsigned c=0;c<count;++c){if(loop&&!changed){uint32_t zero=0;std::memcpy(bad.data()+p+4,&zero,4);}p+=132;}
   }if(loop&&!changed){changed=true;break;}
  }
- bool rejected=false;try{mgo2win::TitleAnimation invalid(bad);}catch(const std::exception&){rejected=true;}require(changed&&rejected);
+ bool rejected=false;try{mgo2mt::TitleAnimation invalid(bad);}catch(const std::exception&){rejected=true;}require(changed&&rejected);
  std::cout<<"original movement, two layers, 13 loops, clock reset, zero-duration loop rejection: passed\n";
  return 0;
 }catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}

@@ -1,7 +1,7 @@
 #include "login_form.h"
 #include <stdexcept>
 #include <iostream>
-using F=mgo2win::LoginForm;
+using F=mgo2mt::LoginForm;
 void require(bool b){if(!b)throw std::runtime_error("Login form contract");}
 int main(){try{
  F f;f.focus(2);f.key(F::confirm);require(f.focus()==0&&!f.notice().empty());

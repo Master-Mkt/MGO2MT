@@ -2,7 +2,7 @@
 #include <iostream>
 #include <memory>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {
 void check(bool value,const char* message){if(!value)throw std::runtime_error(message);}
 struct Match {
@@ -27,7 +27,7 @@ struct Match {
 int main(){try{
  {
   Match aiming;combat::wire::Input in;in.epoch=1;in.sequence=1;in.pose={{0,2,0}};in.weapon=23;in.aiming=true;
-  auto bytes=combat::wire::encode(in);check(bytes[5]==19&&std::get<combat::wire::Input>(combat::wire::decode(bytes)).aiming,"Aim state round trip");
+  auto bytes=combat::wire::encode(in);check(bytes[5]==combat::wire::version&&std::get<combat::wire::Input>(combat::wire::decode(bytes)).aiming,"Aim state round trip");
   check(aiming.host.receive(aiming.id,bytes,100),"Aim input admitted");aiming.tick(100);check(aiming.player().aiming&&aiming.player().ammo==20,"Aim presentation does not fire");
   combat::wire::Frame frame;frame.status=combat::wire::Status::active;frame.snapshot=aiming.host.authority().snapshot();auto copied=std::get<combat::wire::Frame>(combat::wire::decode(combat::wire::encode(frame)));check(copied.snapshot.players[1]->aiming,"Remote aim state survives snapshot");
   auto old=bytes;old[5]=17;check(!combat::wire::recognized(old),"Older peers rejected explicitly");
@@ -56,11 +56,11 @@ int main(){try{
  auto merged=combat::wire::coalesce_input(down,up);check(merged.pose.feet[2]==20&&!merged.fire&&merged.firePressed,"sender preserves tap and release separately");
  up.suspended=true;merged=combat::wire::coalesce_input(merged,up);check(merged.suspended&&!merged.firePressed,"sender suspension cancels pending actions");
  auto encoded=combat::wire::encode(down);auto old=encoded;old[5]=2;bool rejected=false;try{combat::wire::decode(old);}catch(const combat::wire::Invalid&){rejected=true;}check(rejected,"v2 cannot be decoded as v14 input");
- // GWCB14 preserves the flags prefix and appends ladder action1/anchor2/axis4.
- constexpr size_t flagsOffset=7+8+4+24+2+1+4;check(encoded.size()==flagsOffset+1+4+7+5+7&&encoded[flagsOffset]==5,"fixture identifies flags before life/cover/special-PC/ladder tails");
+ // GWCB24 retains the flags prefix and adds mounted action1/instance2/request4.
+ constexpr size_t flagsOffset=7+8+4+24+2+1+4;check(encoded.size()==flagsOffset+1+4+7+5+7+1+7&&encoded[flagsOffset]==5,"fixture identifies flags before life/cover/special-PC/ladder/debug/mounted tails");
  check(std::get<combat::wire::Input>(combat::wire::decode(encoded))==down,"neutral ladder preserves complete trigger input");
- auto missingLadder=encoded;missingLadder.resize(missingLadder.size()-7);rejected=false;try{combat::wire::decode(missingLadder);}catch(const combat::wire::Invalid&){rejected=true;}check(rejected,"v14 rejects old input extent instead of defaulting absent ladder");
- auto ladderWithFire=down;ladderWithFire.ladder={mgo2win::ladder::Action::enter,1,0};rejected=false;try{combat::wire::encode(ladderWithFire);}catch(const combat::wire::Invalid&){rejected=true;}check(rejected,"ladder and trigger cannot share active input");
- for(unsigned flags=0;flags<256;++flags){auto bytes=encoded;bytes[flagsOffset]=uint8_t(flags);bool accepted=true;try{combat::wire::decode(bytes);}catch(const combat::wire::Invalid&){accepted=false;}check(accepted==(flags==0||flags==1||flags==2||flags==4||flags==5||flags==8||flags==16||flags==32||flags==48||flags==64||flags==65||flags==68||flags==69),"only unambiguous input flags are accepted");}
+ auto missingMounted=encoded;missingMounted.resize(missingMounted.size()-7);rejected=false;try{combat::wire::decode(missingMounted);}catch(const combat::wire::Invalid&){rejected=true;}check(rejected,"v24 rejects old input extent instead of defaulting absent mounted intent");
+ auto ladderWithFire=down;ladderWithFire.ladder={mgo2mt::ladder::Action::enter,1,0};rejected=false;try{combat::wire::encode(ladderWithFire);}catch(const combat::wire::Invalid&){rejected=true;}check(rejected,"ladder and trigger cannot share active input");
+ for(unsigned flags=0;flags<256;++flags){auto bytes=encoded;bytes[flagsOffset]=uint8_t(flags);bool accepted=true;try{combat::wire::decode(bytes);}catch(const combat::wire::Invalid&){accepted=false;}check(accepted==(flags==0||flags==1||flags==2||flags==4||flags==5||flags==8||flags==16||flags==32||flags==48||flags==64||flags==65||flags==68||flags==69||flags==128),"only unambiguous input flags are accepted");}
  std::cout<<"host trigger scheduling: automatic, semi, release, coalesced pulse, reload, timeout, rejected pose/weapon, suspend, native v14 passed\n";return 0;
 }catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}

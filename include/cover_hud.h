@@ -3,7 +3,7 @@
 #include <span>
 #include <cstdint>
 #include <string_view>
-namespace mgo2win::cover_hud {
+namespace mgo2mt::cover_hud {
 struct Model {bool available=false,attached=false,pending=false;int lean=0;bool left=false,right=false,firstPerson=false;std::wstring_view action=L"Y";};
 void draw(HDC,std::span<const HFONT>,const Model&);
 class Renderer {

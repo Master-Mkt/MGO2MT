@@ -2,7 +2,7 @@
 #include "cover_policy.h"
 #include <algorithm>
 #include <cmath>
-namespace mgo2win::combat::cover {
+namespace mgo2mt::combat::cover {
 namespace {
 float dot(Vec3 a,Vec3 b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];}
 Vec3 add(Vec3 a,Vec3 b){for(unsigned i=0;i<3;++i)a[i]+=b[i];return a;}
@@ -11,7 +11,7 @@ Vec3 mul(Vec3 a,float s){for(auto& v:a)v*=s;return a;}
 Vec3 facing(float yaw){return {std::sin(yaw),0,std::cos(yaw)};}
 bool finite(Vec3 p){for(auto v:p)if(!std::isfinite(v)||std::abs(v)>=1000000)return false;return true;}
 bool supported(stage::Capsule c){return (c.radius==260||c.radius==350)&&(c.height==1700||c.height==1100)&&c.skin==2;}
-bool ground(const stage::Collision& w,Vec3 feet){auto p=feet;p[1]+=40;auto hit=w.ray(p,{0,-1,0},90);return hit&&std::abs(hit->normal[1])>.65f&&std::abs(hit->position[1]-feet[1])<=40;}
+bool ground(const stage::Collision& w,Vec3 feet){auto p=feet;p[1]+=40;auto hit=w.ray(p,{0,-1,0},90,stage::query::player_floor);return hit&&std::abs(hit->normal[1])>.65f&&std::abs(hit->position[1]-feet[1])<=40;}
 std::optional<Contact> wall(const stage::Collision&w,Vec3 feet,stage::Capsule c,Vec3 direction){
  std::optional<Contact> result;
  for(float ratio:{.4f,.8f}){auto p=feet;p[1]+=c.height*ratio;auto hit=w.ray(p,direction,c.radius+native_policy.probeGap);

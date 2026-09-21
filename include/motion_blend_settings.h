@@ -4,7 +4,7 @@
 #include <string>
 #include <string_view>
 
-namespace mgo2win::motion_blend {
+namespace mgo2mt::motion_blend {
 // Native transition progress per second, NOT a per-frame blend weight.
 // This user setting belongs in motion_blend.cfg, outside the asset manifest.
 struct Settings {

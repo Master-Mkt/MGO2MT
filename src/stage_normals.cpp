@@ -5,7 +5,7 @@
 #include <cstring>
 #include <fstream>
 #include <stdexcept>
-namespace mgo2win::stage {
+namespace mgo2mt::stage {
 std::array<float,3> rsx_cmp_normal(uint32_t p){
  auto sign=[](uint32_t v,unsigned bits){return int(v)-((v&(1u<<(bits-1)))?int(1u<<bits):0);};
  std::array<float,3> n{float(sign(p&2047,11)*32),float(sign((p>>11)&2047,11)*32),float(sign((p>>22)&1023,10)*64)};

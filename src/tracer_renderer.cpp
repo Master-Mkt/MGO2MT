@@ -6,12 +6,13 @@
 #include <cmath>
 #include <cstring>
 #include <stdexcept>
-namespace mgo2win::combat::tracers {
+namespace mgo2mt::combat::tracers {
 using Microsoft::WRL::ComPtr;using namespace DirectX;
 namespace {
 void check(HRESULT h){if(FAILED(h))throw std::runtime_error("Tracer D3D11 failure");}
 struct Vertex {XMFLOAT4 clip,color;};
 bool valid(Vec3 p){for(float x:p)if(!std::isfinite(x)||std::abs(x)>1000000)return false;return true;}
+float linear_color(float value){value=(std::max)(0.f,value);return value<=.04045f?value/12.92f:(std::min)(65504.f,std::pow((value+.055f)/1.055f,2.4f));}
 }
 struct Renderer::Impl {ComPtr<ID3D11Buffer> vertices;ComPtr<ID3D11VertexShader> vs;ComPtr<ID3D11PixelShader> ps;ComPtr<ID3D11InputLayout> layout;ComPtr<ID3D11DepthStencilState> depth;ComPtr<ID3D11BlendState> blend;ComPtr<ID3D11RasterizerState> raster;};
 Renderer::Renderer(ID3D11Device*d):impl_(std::make_unique<Impl>()){
@@ -27,10 +28,10 @@ Renderer::Renderer(ID3D11Device*d):impl_(std::make_unique<Impl>()){
 }
 Renderer::~Renderer()=default;
 bool Renderer::render(ID3D11DeviceContext*c,CharacterRenderer&surface,const WorldView&camera,std::span<const Segment>segments){
- if(!c||segments.empty()||segments.size()>Pool::capacity||!valid(camera.eye)||!valid(camera.direction)||!std::isfinite(camera.aspect)||camera.aspect<=0||camera.aspect>32)return false;
+ if(!c||segments.empty()||segments.size()>Pool::capacity||!valid(camera.eye)||!valid(camera.direction)||!std::isfinite(camera.aspect)||camera.aspect<=0||camera.aspect>32||!valid_vertical_fov(camera.verticalFov))return false;
  const auto eye=XMVectorSet(camera.eye[0],camera.eye[1],camera.eye[2],1),raw=XMVectorSet(camera.direction[0],camera.direction[1],camera.direction[2],0);if(XMVectorGetX(XMVector3LengthSq(raw))<1e-8f)return false;
  const auto forward=XMVector3Normalize(raw),up=std::abs(XMVectorGetY(forward))>.999f?XMVectorSet(0,0,1,0):XMVectorSet(0,1,0,0);
- const auto vp=XMMatrixLookToLH(eye,forward,up)*world_projection(camera.aspect);
+ const auto vp=XMMatrixLookToLH(eye,forward,up)*world_projection(camera.aspect,camera.verticalFov);
  std::vector<Vertex> vertices;vertices.reserve(segments.size()*12);
  for(const auto&s:segments){if(!valid(s.from)||!valid(s.to)||!std::isfinite(s.opacity)||s.opacity<=0||s.opacity>1)continue;
   auto a=XMVectorSet(s.from[0],s.from[1],s.from[2],1),b=XMVectorSet(s.to[0],s.to[1],s.to[2],1);
@@ -42,7 +43,11 @@ bool Renderer::render(ID3D11DeviceContext*c,CharacterRenderer&surface,const Worl
   // on that ray and uses the segment's true depth, never an always-on-top dot.
   if(length<2){float x=length>1e-5f?dx/length:1,y=length>1e-5f?dy/length:0;float extra=(2-length)*.5f;pa.x-=x*extra*2/surface.width_*pa.w;pa.y-=y*extra*2/surface.height_*pa.w;pb.x+=x*extra*2/surface.width_*pb.w;pb.y+=y*extra*2/surface.height_*pb.w;dx=x;dy=y;length=1;}
   float nx=-dy/length,ny=dx/length;
-  for(int layer=0;layer<2;++layer){float width=layer?1.f:2.5f;XMFLOAT4 color=layer?XMFLOAT4(1,1,.8f,s.opacity):XMFLOAT4(1,.65f,.1f,s.opacity*.4f);Vertex q[4];
+  const bool custom=s.widthPixels>0;if(!std::isfinite(s.widthPixels)||s.widthPixels<0||s.widthPixels>8||!valid(s.color))continue;
+  for(int layer=0;layer<(custom?1:2);++layer){float width=custom?s.widthPixels:layer?1.f:2.5f;XMFLOAT4 color=custom?XMFLOAT4(s.color[0],s.color[1],s.color[2],s.opacity):layer?XMFLOAT4(1,1,.8f,s.opacity):XMFLOAT4(1,.65f,.1f,s.opacity*.4f);Vertex q[4];
+   // Both native streak colors and weather segment settings are sRGB.
+   // Coverage is unchanged; conversion precedes linear-target alpha blending.
+   if(surface.hdr()){color.x=linear_color(color.x);color.y=linear_color(color.y);color.z=linear_color(color.z);}
    for(int i=0;i<4;++i){auto p=i<2?pa:pb;float side=(i==0||i==2)?-1.f:1.f;p.x+=side*nx*width*2/surface.width_*p.w;p.y+=side*ny*width*2/surface.height_*p.w;q[i]={p,color};}
    for(int i:{0,1,2,2,1,3})vertices.push_back(q[i]);
   }

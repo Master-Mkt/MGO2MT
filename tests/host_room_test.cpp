@@ -2,8 +2,8 @@
 #include "character_client.h"
 #include <algorithm>
 #include <iostream>
-using namespace mgo2win;
-using namespace mgo2win::host;
+using namespace mgo2mt;
+using namespace mgo2mt::host;
 namespace {
 void check(bool value,const char*message){if(!value)throw std::runtime_error(message);}
 template<class F>void invalid(F f){bool rejected=false;try{f();}catch(const std::invalid_argument&){rejected=true;}check(rejected,"invalid settings accepted");}

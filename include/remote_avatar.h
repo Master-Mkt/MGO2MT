@@ -2,7 +2,7 @@
 #include "combat_authority.h"
 #include "host_roster.h"
 #include "player_motion.h"
-namespace mgo2win::remote {
+namespace mgo2mt::remote {
 // Native presentation from host-authorized GWCB pose/capsule/HP/life.
 // Motion labels, speed thresholds and 100ms interpolation are Windows policy.
 // Aim/supine/weapon attachments are not represented by this wire contract.

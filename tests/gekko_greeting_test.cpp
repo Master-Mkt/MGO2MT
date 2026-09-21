@@ -4,7 +4,7 @@
 #include "item_menu_shortcut.h"
 #include <fstream>
 #include <iostream>
-using namespace mgo2win;
+using namespace mgo2mt;
 void check(bool x,const char*s){if(!x)throw std::runtime_error(s);}
 std::vector<char> read(const char*p){std::ifstream in(p,std::ios::binary);check(bool(in),"asset missing");return {(std::istreambuf_iterator<char>(in)),{}};}
 int main(int argc,char**argv){try{

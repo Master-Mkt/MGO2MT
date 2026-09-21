@@ -4,7 +4,7 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
-using namespace mgo2win::projectile;
+using namespace mgo2mt::projectile;
 static void check(bool ok,const char*why){if(!ok)throw std::runtime_error(why);}
 static const Scope scope{7,12};static const Owner owner{1,2,99,1};
 static Shot shot(uint64_t id=1,uint16_t weapon=50){return {scope,owner,id,weapon,{0,100,0},{0,0,1}};}
@@ -54,7 +54,7 @@ static void ammo(){Ammo empty{10,0,30};auto a=refill(empty);check(a&&*a==Ammo{10
  check(!refill({10,10,30})&&!refill({10,0,0})&&!refill({10,11,2}),"full dry invalid refuse");
  a=consume({1,1,3});check(a&&*a==Ammo{1,0,3},"rocket one round");check(!consume(*a),"no empty shot");
  a=refill(*a);check(a&&*a==Ammo{1,1,2},"rocket reload conservation");
- using namespace mgo2win::weapon_extensions;
+ using namespace mgo2mt::weapon_extensions;
  check(original_base_damage(2,1000)==Damage{0,245},"original MK2 stamina only");
  check(original_base_damage(50,1000)==Damage{1125,0},"original RPG HP base");
  check(original_base_damage(2,500)==Damage{0,122}&&original_base_damage(50,0)==Damage{1125,0},"force integer/default");

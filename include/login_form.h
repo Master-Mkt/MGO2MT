@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <string>
 #include <string_view>
-namespace mgo2win {
+namespace mgo2mt {
 // Native UI policy, not a claim about the original server's credential contract.
 // Fixed storage avoids retaining password copies after edits/back navigation.
 class LoginForm {

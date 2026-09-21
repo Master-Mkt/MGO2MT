@@ -6,7 +6,7 @@
 #include <span>
 #include <vector>
 
-namespace mgo2win::host {
+namespace mgo2mt::host {
 // Local host policy, not original network phase numbers or a ready packet.
 enum class RoundPhase { waiting, preparing };
 enum class StartReason { none, all_ready, countdown };

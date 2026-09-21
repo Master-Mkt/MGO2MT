@@ -1,7 +1,7 @@
 #include "combat_object_damage.h"
 #include "combat_wire.h"
 #include <iostream>
-using namespace mgo2win;
+using namespace mgo2mt;
 void check(bool v,const char* message){if(!v)throw std::runtime_error(message);}
 int main(int argc,char**argv){try{
  check(argc==2,"actual stage directory required");const std::filesystem::path root=argv[1];

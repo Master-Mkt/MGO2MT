@@ -7,7 +7,7 @@
 #include <span>
 #include <vector>
 
-namespace mgo2win::clan {
+namespace mgo2mt::clan {
 struct Image {
     static constexpr unsigned width=64,height=64;
     // Top-down, premultiplied BGRA for AC_SRC_ALPHA, not raw RGBA wire bytes.

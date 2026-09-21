@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <fstream>
 #include "stage_water.h"
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {
 void check(bool value,const char* why){if(!value)throw std::runtime_error(why);}
 stage::Collision scene(bool floor=true,bool corner=false){

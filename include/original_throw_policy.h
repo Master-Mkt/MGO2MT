@@ -5,7 +5,7 @@
 #include <limits>
 #include <optional>
 
-namespace mgo2win::original::throwing {
+namespace mgo2mt::original::throwing {
 // Current ELF evidence: notes/ORIGINAL_THROW_POLICY_20260913.md.
 // These are original coordinate/clock values, not SI or final range multipliers.
 inline constexpr std::uint16_t grenade_weapon_id=52;

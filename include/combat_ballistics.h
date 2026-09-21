@@ -2,16 +2,16 @@
 #include "stage_collision.h"
 #include "original_bullet_penetration.h"
 #include <algorithm>
-namespace mgo2win::combat {
+namespace mgo2mt::combat {
 struct BallisticPath {float distance=0;bool blocked=false;int priorForceCost=0;std::vector<stage::CollisionRayHit> impacts;};
 // A host-owned, instantaneous ray adapter. Surface resistance and target force
 // math are recovered; projectile travel time, ricochet and body-through are not.
 inline BallisticPath trace_ak102(stage::Vec3 origin,stage::Vec3 direction,float maximum,
-                                const stage::Collision& world,const stage::Collision* objects=nullptr){
+                                const stage::Collision& world,const stage::Collision* objects=nullptr,int originalBudget=original_bullet_penetration::ak102_budget){
  BallisticPath out;out.distance=maximum;
- auto hits=world.ray_all(origin,direction,maximum);if(objects){auto extra=objects->ray_all(origin,direction,maximum);hits.insert(hits.end(),extra.begin(),extra.end());}
+ auto hits=world.ray_all(origin,direction,maximum,stage::query::bullet);if(objects){auto extra=objects->ray_all(origin,direction,maximum,stage::query::bullet);hits.insert(hits.end(),extra.begin(),extra.end());}
  std::stable_sort(hits.begin(),hits.end(),[](const auto&a,const auto&b){return a.distance<b.distance;});
- int budget=original_bullet_penetration::ak102_budget;std::optional<stage::CollisionRayHit> previous;unsigned surfaces=0;
+ int budget=originalBudget;std::optional<stage::CollisionRayHit> previous;unsigned surfaces=0;
  for(const auto& hit:hits){
   // GEOM polygons triangulate to several shared-edge hits. Count one identical
   // oriented plane/material/object at a distance, preserving distinct layers.

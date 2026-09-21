@@ -7,7 +7,7 @@
 #include <sstream>
 #include <stdexcept>
 
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {
 void check(bool ok,const char* why){if(!ok)throw std::runtime_error(why);}
 stage::Result loaded(stage::Assets& assets){
@@ -33,7 +33,7 @@ size_t visible_indices(const stage::ObjectBinding& binding,uint8_t state){size_t
 
 // Only files created by this fixture are removed. Never modify source assets.
 struct TemporaryBindings {
- std::filesystem::path root=std::filesystem::temp_directory_path()/("mgo2win-object-assets-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+ std::filesystem::path root=std::filesystem::temp_directory_path()/("mgo2mt-object-assets-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
  TemporaryBindings(){check(std::filesystem::create_directory(root),"temporary directory created");std::filesystem::create_directory(root/"objects");}
  ~TemporaryBindings(){std::error_code error;for(const auto& p:{root/"objects/model.gwm",root/"escape.gwm",root/"n022a.objects.cfg",root/"n022a.bindings.cfg",root/"objects",root})std::filesystem::remove(p,error);}
  void write(const std::string& value){std::ofstream out(root/"n022a.bindings.cfg");out<<value;check(bool(out),"temporary binding written");}
@@ -43,7 +43,7 @@ void invalid_bindings(const std::filesystem::path& source,const stage::ObjectReg
  const auto model=source/"objects/s01a_car_a0_sk.gwm";
  std::filesystem::copy_file(model,temp.root/"objects/model.gwm");std::filesystem::copy_file(model,temp.root/"escape.gwm");
  auto fixture=[&](const char* path,uint64_t partMask){
-  std::ostringstream text;text<<"MGO2WIN.STAGE_BINDINGS 1 n022a_success32 32\n";
+  std::ostringstream text;text<<"MGO2MT.STAGE_BINDINGS 1 n022a_success32 32\n";
   for(size_t i=0;i<registry.entries.size();++i){const auto& entry=registry.entries[i];
    text<<entry.bindingId<<' '<<unsigned(entry.width)<<' '<<(i>=17?int(i-17):-1)<<" 0 0 0 0 0 0 "<<(i==0?1:0)<<" 0\n";
    if(i==0)text<<"1 0 0 "<<path<<' '<<partMask<<" - 0 0 0 0 0 0 0 0\n";

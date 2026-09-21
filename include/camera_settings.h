@@ -6,7 +6,7 @@
 #include <string>
 #include <string_view>
 #include "original_camera_speed.h"
-namespace mgo2win::camera {
+namespace mgo2mt::camera {
 // The reference OPTIONS screen has independent vertical/horizontal direction
 // choices for normal, shoulder and subjective cameras. Original setting curves
 // are mapped by the save converter; absolute rates/integration remain native.
@@ -27,7 +27,7 @@ struct Settings {
  bool operator==(const Settings&)const=default;
 };
 inline std::string encode(const Settings& settings){
- std::string text="MGO2WIN.CAMERA 2";
+ std::string text="MGO2MT.CAMERA 2";
  for(bool value:settings.reversed){text+=' ';text+=value?'1':'0';}
  for(unsigned value:settings.speed){
   if(!original::camera_speed::valid_display(value))throw std::invalid_argument("camera speed outside 1..10");
@@ -36,7 +36,7 @@ inline std::string encode(const Settings& settings){
  text+='\n';return text;
 }
 inline std::optional<Settings> decode(std::string_view text){
- constexpr std::string_view prefix="MGO2WIN.CAMERA ";
+ const std::string_view prefix=text.starts_with("MGO2WIN.CAMERA ")?"MGO2WIN.CAMERA ":"MGO2MT.CAMERA ";
  if(text.size()<prefix.size()+14||!text.starts_with(prefix)||text.back()!='\n')return std::nullopt;
  const char version=text[prefix.size()];if(version!='1'&&version!='2')return std::nullopt;
  const auto base=prefix.size()+1;

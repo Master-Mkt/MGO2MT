@@ -3,7 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
-using namespace mgo2win;
+using namespace mgo2mt;
 void check(bool x,const char* s){if(!x)throw std::runtime_error(s);}
 template<class F>void rejects(F f){bool bad=false;try{f();}catch(const std::exception&){bad=true;}check(bad,"bad bank rejected");}
 int main(int argc,char** argv){try{

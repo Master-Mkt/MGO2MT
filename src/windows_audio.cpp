@@ -36,9 +36,9 @@ static uint32_t u32(const std::vector<unsigned char>& b, size_t p) {
     if (p > b.size() || b.size()-p < 4) throw std::runtime_error("Truncated WAV");
     return b[p] | uint32_t(b[p+1])<<8 | uint32_t(b[p+2])<<16 | uint32_t(b[p+3])<<24;
 }
-int run_audio_probe(int argc, wchar_t** argv, const std::atomic_bool* cancel, const mgo2win::AudioControl* control) {
+int run_audio_probe(int argc, wchar_t** argv, const std::atomic_bool* cancel, const mgo2mt::AudioControl* control) {
     try {
-        if(argc != 3 && argc != 6) throw std::runtime_error("Usage: mgo2win_audio file.wav seconds [loop_start loop_end play_begin] (sample frames)");
+        if(argc != 3 && argc != 6) throw std::runtime_error("Usage: mgo2mt_audio file.wav seconds [loop_start loop_end play_begin] (sample frames)");
         const double seconds = std::stod(argv[2]);
         if (!(seconds > 0 && seconds <= 600)) throw std::runtime_error("Duration must be 0..600 seconds");
         std::ifstream f(std::filesystem::path(argv[1]), std::ios::binary|std::ios::ate);
@@ -65,7 +65,7 @@ int run_audio_probe(int argc, wchar_t** argv, const std::atomic_bool* cancel, co
         }else{
         // BGM uses the same bounded PCM/smpl reader as its library scanner.
         // Retain extensible PCM support for existing non-BGM diagnostic WAVs.
-        if(control&&control->loopWhole){auto w=mgo2win::read_pcm_wave(bytes);nativeLoopBegin=w.loopBegin;nativeLoopEnd=w.loopEnd?w.loopEnd:w.dataSize/(w.channels*2);}
+        if(control&&control->loopWhole){auto w=mgo2mt::read_pcm_wave(bytes);nativeLoopBegin=w.loopBegin;nativeLoopEnd=w.loopEnd?w.loopEnd:w.dataSize/(w.channels*2);}
         if(std::memcmp(bytes.data(),"RIFF",4) || std::memcmp(bytes.data()+8,"WAVE",4) || uint64_t(u32(bytes,4))+8 != bytes.size()) throw std::runtime_error("Invalid RIFF/WAVE extent");
         for(size_t p=12; p<bytes.size();) {
             if(bytes.size()-p<8) throw std::runtime_error("Truncated chunk header");
@@ -78,7 +78,7 @@ int run_audio_probe(int argc, wchar_t** argv, const std::atomic_bool* cancel, co
                 if(dataAt) throw std::runtime_error("Duplicate data chunk");
                 dataAt=begin; dataSize=n;
             } else if(!std::memcmp(bytes.data()+p,"smpl",4)) {
-                auto w=mgo2win::read_pcm_wave(bytes);if(w.loopEnd){nativeLoopBegin=w.loopBegin;nativeLoopEnd=w.loopEnd;}
+                auto w=mgo2mt::read_pcm_wave(bytes);if(w.loopEnd){nativeLoopBegin=w.loopBegin;nativeLoopEnd=w.loopEnd;}
             }
             p=begin+n+(n&1); if(p>bytes.size()) throw std::runtime_error("Missing chunk padding");
         }
@@ -89,8 +89,8 @@ int run_audio_probe(int argc, wchar_t** argv, const std::atomic_bool* cancel, co
            fmt.nBlockAlign!=fmt.nChannels*2 || fmt.nAvgBytesPerSec!=fmt.nSamplesPerSec*fmt.nBlockAlign || dataSize%fmt.nBlockAlign ||
            !((fmt.wFormatTag==WAVE_FORMAT_PCM && fmt.cbSize==0) || (fmt.wFormatTag==WAVE_FORMAT_EXTENSIBLE && fmt.cbSize==22 && IsEqualGUID(format.SubFormat,pcm))))
             throw std::runtime_error("Expected valid 16-bit PCM WAV");
-        std::optional<mgo2win::PcmLayerPair> layers;
-        std::optional<mgo2win::AudioLayerFader> layerFader;
+        std::optional<mgo2mt::PcmLayerPair> layers;
+        std::optional<mgo2mt::AudioLayerFader> layerFader;
         const bool layersRequested=control&&!control->alternateWave.empty();
         if(layersRequested){
             try{
@@ -101,7 +101,7 @@ int run_audio_probe(int argc, wchar_t** argv, const std::atomic_bool* cancel, co
                 std::vector<unsigned char> altBytes(static_cast<size_t>(altSize));
                 alt.seekg(0);alt.read(reinterpret_cast<char*>(altBytes.data()),altSize);
                 if(!alt)throw std::runtime_error("Alternate WAV read");
-                auto paired=mgo2win::interleave_audio_layers(bytes,altBytes,control->loopWhole);
+                auto paired=mgo2mt::interleave_audio_layers(bytes,altBytes,control->loopWhole);
                 layerFader.emplace(control->layerMix,control->alternate.load());
                 layers.emplace(std::move(paired));
             }catch(const std::exception&){
@@ -133,7 +133,7 @@ int run_audio_probe(int argc, wchar_t** argv, const std::atomic_bool* cancel, co
         std::array<float,2> layerGains{};unsigned matrixUpdates=0,layerSwitches=0;
         if(layers){
             layerGains=layerFader->update(lastAlternate,0);
-            const auto matrix=mgo2win::audio_layer_matrix(layerGains);
+            const auto matrix=mgo2mt::audio_layer_matrix(layerGains);
             check(audio.source->SetOutputMatrix(audio.master,4,2,matrix.data()));
         }
         float lastRatio=control?control->frequencyRatio.load():1.f;
@@ -152,7 +152,7 @@ int run_audio_probe(int argc, wchar_t** argv, const std::atomic_bool* cancel, co
                 if(alternate!=lastAlternate){lastAlternate=alternate;++layerSwitches;}
                 const auto gains=layerFader->update(alternate,GetTickCount64()-started);
                 if(gains!=layerGains){
-                    const auto matrix=mgo2win::audio_layer_matrix(gains);
+                    const auto matrix=mgo2mt::audio_layer_matrix(gains);
                     check(audio.source->SetOutputMatrix(audio.master,4,2,matrix.data()));
                     layerGains=gains;++matrixUpdates;
                 }

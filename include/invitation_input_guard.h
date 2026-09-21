@@ -1,6 +1,6 @@
 #pragma once
 
-namespace mgo2win::invitation_ui {
+namespace mgo2mt::invitation_ui {
 // UI-thread state. Presenter updates do not acknowledge a newly painted screen.
 class InputGuard {
  bool paintedModal_=false,leftOwned_=false;

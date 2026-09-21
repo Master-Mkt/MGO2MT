@@ -1,7 +1,7 @@
 #pragma once
 #include "stage_navigation.h"
 #include <cstdint>
-namespace mgo2win::stage {
+namespace mgo2mt::stage {
 // Native procedural presentation. No original texture, sound, or event timing is claimed.
 struct WaterEffectLine {Vec3 from{},to{};float alpha=0;bool splash=false;};
 class WaterEffects {

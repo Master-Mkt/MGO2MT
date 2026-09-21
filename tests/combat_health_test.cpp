@@ -4,14 +4,14 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
-using namespace mgo2win;using namespace combat;
+using namespace mgo2mt;using namespace combat;
 namespace {
 void check(bool v,const char* why){if(!v)throw std::runtime_error(why);}
 Identity id(unsigned n){return {uint8_t(n),uint16_t(n+1),uint32_t(n+100)};}
 Weapon gun(){return {25,999,0,100,300,10,10,50000,9001,9002,true};}
 std::shared_ptr<const stage::Collision> terrain(float height=0){
- std::vector<Vec3> v{{-30000,0,-30000},{30000,0,-30000},{30000,0,30000},{-30000,0,30000}};std::vector<stage::CollisionTriangle> t{{{0,2,1}},{{0,3,2}}};
- if(height){v.insert(v.end(),{{-2000,height,-2000},{2000,height,-2000},{2000,height,2000},{-2000,height,2000}});t.push_back({{4,6,5}});t.push_back({{4,7,6}});}return std::make_shared<const stage::Collision>(stage::Collision::make(v,t));
+ std::vector<Vec3> v{{-30000,0,-30000},{30000,0,-30000},{30000,0,30000},{-30000,0,30000}};std::vector<stage::CollisionTriangle> t{{{0,2,1},stage::attribute::native_solid},{{0,3,2},stage::attribute::native_solid}};
+ if(height){v.insert(v.end(),{{-2000,height,-2000},{2000,height,-2000},{2000,height,2000},{-2000,height,2000}});t.push_back({{4,6,5},stage::attribute::native_solid});t.push_back({{4,7,6},stage::attribute::native_solid});}return std::make_shared<const stage::Collision>(stage::Collision::make(v,t));
 }
 void fall(float height,bool lethal){
  Authority h;h.begin(1,terrain(height),gekko_test_profiles(gun()));Pose p;p.feet={0,height+2,0};check(h.join(id(0),1,p,1000,1000,std::array<uint16_t,1>{25},0),"valid upper-platform spawn");h.active(true);
@@ -33,9 +33,9 @@ void regeneration(){
  check(h.assign_special(id(1),special_pc::Kind::gekko,true,60000)==Reject::none,"return gekko keeps ratio");check(h.snapshot().players[1]->hp==900,"no transform freeheal");h.explode({{{2,0,1,100,1},50,0,1},2,b.feet,1000,1000,false},60000);check(!h.snapshot().players[1]->alive,"lethal explosion");h.advance(90000);check(h.snapshot().players[1]->hp==0,"regeneration never revives");
 }
 void rules(){
- const std::string good="MGO2WIN_HEALTH 1\nfall_safe_height 3000\nfall_severe_height 7000\nfall_fatal_height 10000\nfall_severe_damage_permille 900\ngekko_full_recovery_ms 30000\n";
+ const std::string good="MGO2MT_HEALTH 1\nfall_safe_height 3000\nfall_severe_height 7000\nfall_fatal_height 10000\nfall_severe_damage_permille 900\ngekko_full_recovery_ms 30000\n";
  std::istringstream in(good);auto p=HealthRules::read(in);check(p.valid()&&p.regeneration.fullRecoveryMs==30000,"valid explicit host settings");
- for(const auto& bad:{good+"gekko_full_recovery_ms 1\n",good+"unknown 1\n",std::string("MGO2WIN_HEALTH 1\n"),std::string(4097,'x')}){bool rejected=false;try{std::istringstream s(bad);HealthRules::read(s);}catch(...){rejected=true;}check(rejected,"invalid config rejected");}
+ for(const auto& bad:{good+"gekko_full_recovery_ms 1\n",good+"unknown 1\n",std::string("MGO2MT_HEALTH 1\n"),std::string(4097,'x')}){bool rejected=false;try{std::istringstream s(bad);HealthRules::read(s);}catch(...){rejected=true;}check(rejected,"invalid config rejected");}
  p.regeneration.fullRecoveryMs=30001;check(!p.valid(),"cannot exceed30second setting");
 }
 }

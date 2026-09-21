@@ -1,7 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <cstdint>
-namespace mgo2win::water_gameplay {
+namespace mgo2mt::water_gameplay {
 // User-requested native extension. These are tunable native defaults, not
 // recovered MGO2/MGS4 constants. Values are host-owned.
 struct OxygenPolicy {

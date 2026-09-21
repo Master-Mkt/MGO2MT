@@ -1,6 +1,6 @@
 #pragma once
 #include "combat_authority.h"
-namespace mgo2win::special_pc {
+namespace mgo2mt::special_pc {
 // Observe authoritative transitions only; held buttons/repeated snapshots do not replay.
 class SaluteAudio {
  struct Seen {combat::Identity identity{};uint32_t life=0,serial=0;Action action=Action::none;};

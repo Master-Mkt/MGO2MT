@@ -7,7 +7,7 @@
 #include <iostream>
 #include <syncstream>
 #include <stdexcept>
-namespace mgo2win {
+namespace mgo2mt {
 AgreementScreen::AgreementScreen(std::wstring url):url_(std::move(url)){
  if(!allowed_policy_url(url_))throw std::runtime_error("Invalid OpenMGO2 policy URL");
  dc_=CreateCompatibleDC(nullptr);if(!dc_)throw std::runtime_error("Text DC failure");

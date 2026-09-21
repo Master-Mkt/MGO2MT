@@ -11,7 +11,7 @@
 #include <numbers>
 #include <set>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {
 namespace cw=combat::wire;
 namespace spawn=combat::spawn;

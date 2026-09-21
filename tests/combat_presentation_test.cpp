@@ -3,7 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 void check(bool b,const char*s){if(!b)throw std::runtime_error(s);}
 std::vector<char> read(const char*p){std::ifstream f(p,std::ios::binary);check(bool(f),"fixture missing");return {std::istreambuf_iterator<char>(f),{}};}
 int main(int argc,char**argv){try{

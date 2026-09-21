@@ -1,6 +1,6 @@
 #pragma once
 #include <cstdint>
-namespace mgo2win {
+namespace mgo2mt {
 // PC-select presentation only. No stage actor or host gameplay state changes.
 class SelectionPresentation {
 public:

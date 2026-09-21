@@ -2,7 +2,7 @@
 #include <windows.h>
 #include "stage_music.h"
 
-namespace mgo2win {
+namespace mgo2mt {
 // Native deployment selector. Opening/browsing/cancelling does not change music.
 class MusicMenu {
  HDC dc_=nullptr;HBITMAP bitmap_=nullptr;HGDIOBJ old_=nullptr;HFONT font_=nullptr;void* pixels_=nullptr;

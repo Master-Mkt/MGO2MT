@@ -7,10 +7,11 @@
 #include <cstring>
 #include <set>
 #include <stdexcept>
-namespace mgo2win::water_visuals {
+namespace mgo2mt::water_visuals {
 namespace {
 using Microsoft::WRL::ComPtr;using namespace DirectX;
 void ok(HRESULT value){if(FAILED(value))throw std::runtime_error("Water surface D3D11 failure");}
+float linear_color(float value){return value<=.04045f?value/12.92f:std::pow((value+.055f)/1.055f,2.4f);}
 bool finite(Vec3 p){return std::all_of(p.begin(),p.end(),[](float x){return std::isfinite(x)&&std::abs(x)<1e7f;});}
 bool triangle(Vec3 a,Vec3 b,Vec3 c){
  const double x1=double(b[0])-a[0],y1=double(b[1])-a[1],z1=double(b[2])-a[2];
@@ -62,9 +63,12 @@ Renderer::Renderer(ID3D11Device* device,const Mesh& data,Policy policy):impl_(st
 }
 Renderer::~Renderer()=default;
 bool Renderer::render(ID3D11DeviceContext* context,CharacterRenderer& surface,const WorldView& camera)const{
- if(!context||!impl_->count||impl_->policy.opacity==0||!finite(camera.eye)||!finite(camera.direction)||!std::isfinite(camera.aspect)||camera.aspect<=0||camera.aspect>32||camera.direction[0]*camera.direction[0]+camera.direction[2]*camera.direction[2]<=.00001f)return false;
+ if(!context||!impl_->count||impl_->policy.opacity==0||!finite(camera.eye)||!finite(camera.direction)||!std::isfinite(camera.aspect)||camera.aspect<=0||camera.aspect>32||!valid_vertical_fov(camera.verticalFov)||camera.direction[0]*camera.direction[0]+camera.direction[2]*camera.direction[2]<=.00001f)return false;
  auto& r=*impl_;Constants data{};const auto eye=XMVectorSet(camera.eye[0],camera.eye[1],camera.eye[2],1),direction=XMVectorSet(camera.direction[0],camera.direction[1],camera.direction[2],0);
- XMStoreFloat4x4(&data.viewProjection,XMMatrixLookToLH(eye,direction,XMVectorSet(0,1,0,0))*world_projection(camera.aspect));data.color={r.policy.gray,r.policy.gray,r.policy.gray,r.policy.opacity};
+ // Policy colors are display/sRGB settings. Float16 world targets blend in
+ // linear light; the ordinary target retains the original exact constants.
+ const float gray=surface.hdr()?linear_color(r.policy.gray):r.policy.gray;
+ XMStoreFloat4x4(&data.viewProjection,XMMatrixLookToLH(eye,direction,XMVectorSet(0,1,0,0))*world_projection(camera.aspect,camera.verticalFov));data.color={gray,gray,gray,r.policy.opacity};
  ID3D11ShaderResourceView* nil=nullptr;context->PSSetShaderResources(0,1,&nil);auto target=surface.target_.Get();context->OMSetRenderTargets(1,&target,surface.depthView_.Get());context->OMSetDepthStencilState(r.depth.Get(),0);context->OMSetBlendState(r.blend.Get(),nullptr,0xffffffff);
  D3D11_VIEWPORT viewport{0,0,float(surface.width_),float(surface.height_),0,1};context->RSSetViewports(1,&viewport);context->RSSetState(r.raster.Get());context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);context->IASetInputLayout(r.layout.Get());
  auto vertices=r.vertices.Get();UINT stride=sizeof(Vec3),offset=0;context->IASetVertexBuffers(0,1,&vertices,&stride,&offset);context->IASetIndexBuffer(r.indices.Get(),DXGI_FORMAT_R32_UINT,0);context->VSSetShader(r.vertexShader.Get(),nullptr,0);context->PSSetShader(r.pixelShader.Get(),nullptr,0);

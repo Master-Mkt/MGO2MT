@@ -1,7 +1,7 @@
 #pragma once
 #include "native_radio.h"
 #include <mutex>
-namespace mgo2win::radio {
+namespace mgo2mt::radio {
 enum class DeliveryState {none,queued,awaiting_echo,confirmed,unconfirmed};
 struct SessionState {
  uint64_t generation=0,epoch=0; Identity self; uint32_t life=0;

@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <cmath>
-namespace mgo2win::combat {
+namespace mgo2mt::combat {
 enum class EvadeKind:uint8_t {none=0,roll=1,backstep=2,rollLeft=3,rollRight=4};
 // Native directional variants reuse the reviewed forward roll phases.
 inline constexpr bool is_roll(EvadeKind kind){return kind==EvadeKind::roll||kind==EvadeKind::rollLeft||kind==EvadeKind::rollRight;}

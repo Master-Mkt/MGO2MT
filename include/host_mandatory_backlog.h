@@ -4,7 +4,7 @@
 #include <deque>
 #include <vector>
 #include <utility>
-namespace mgo2win::host {
+namespace mgo2mt::host {
 // Per-peer unsent reliable FIFO. GWCB 8 with 24 players and a SOP footer
 // uses up to 23 frames/shot: 24 shooters yield 552 records in one tick.
 // A second maximum burst can overflow this bounded queue for a slow peer;

@@ -3,7 +3,7 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
-using namespace mgo2win::gekko_locomotion;
+using namespace mgo2mt::gekko_locomotion;
 void check(bool b,const char*m){if(!b)throw std::runtime_error(m);}
 int main(){try{
  Scope scope{1,1,100,1,2,0};State s;Policy p;check(valid(p),"native policy valid");

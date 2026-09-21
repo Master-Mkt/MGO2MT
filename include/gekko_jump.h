@@ -2,7 +2,7 @@
 #include "special_pc.h"
 #include <optional>
 #include <span>
-namespace mgo2win::special_pc {
+namespace mgo2mt::special_pc {
 struct JumpBody {stage::Vec3 feet{};stage::Capsule capsule{};};
 struct RecoveryFall {stage::Vec3 feet{};float speed=0;uint64_t at=0;uint32_t life=0;bool grounded=false;};
 bool advance_recovery_fall(RecoveryFall&,uint64_t now,const stage::Collision&,std::span<const JumpBody> peers={});

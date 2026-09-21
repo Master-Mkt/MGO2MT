@@ -2,7 +2,7 @@
 #include <iostream>
 #include <source_location>
 #include <functional>
-using namespace mgo2win::names;
+using namespace mgo2mt::names;
 static void check(bool value,std::source_location at=std::source_location::current()){
  if(!value){std::cerr<<"native names check line "<<at.line()<<'\n';throw std::runtime_error("native names check");}
 }

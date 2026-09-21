@@ -2,7 +2,7 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
-using namespace mgo2win::weapon_accuracy;
+using namespace mgo2mt::weapon_accuracy;
 namespace {void check(bool b,const char*m){if(!b)throw std::runtime_error(m);}}
 int main(){try{
  check(valid(native_ak)&&!valid({4,3,1,1})&&!valid({0,100001,1,1})&&!valid({0,3,0,1})&&!valid({0,3,1,0}),"bounded native policy");check(mix(0)==0xe220a8397b1dcdafull,"fixed HOST mixer golden");

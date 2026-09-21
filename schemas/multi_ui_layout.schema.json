@@ -1,0 +1,411 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "MGO2MT.UI_LAYOUT.1",
+  "title": "MGO2MT shared UI layout",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "width",
+    "height",
+    "elements"
+  ],
+  "properties": {
+    "format": {
+      "const": "MGO2MT.UI_LAYOUT.1"
+    },
+    "width": {
+      "const": 1280
+    },
+    "height": {
+      "const": 720
+    },
+    "elements": {
+      "type": "array",
+      "maxItems": 4096,
+      "items": {
+        "$ref": "#/$defs/element"
+      }
+    }
+  },
+  "$defs": {
+    "flags": {
+      "type": "array",
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128
+      }
+    },
+    "element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "width",
+        "height"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "kind": {
+          "enum": [
+            "panel",
+            "text",
+            "image",
+            "button",
+            "dropdown"
+          ]
+        },
+        "screen": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "default": "*"
+        },
+        "state": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "default": "*"
+        },
+        "flagsAll": {
+          "$ref": "#/$defs/flags"
+        },
+        "flagsNone": {
+          "$ref": "#/$defs/flags"
+        },
+        "x": {
+          "type": "number",
+          "minimum": -8192,
+          "maximum": 8192,
+          "default": 0
+        },
+        "y": {
+          "type": "number",
+          "minimum": -8192,
+          "maximum": 8192,
+          "default": 0
+        },
+        "width": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 4096
+        },
+        "height": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 4096
+        },
+        "anchor": {
+          "enum": [
+            "top-left",
+            "top-center",
+            "top-right",
+            "middle-left",
+            "center",
+            "middle-right",
+            "bottom-left",
+            "bottom-center",
+            "bottom-right"
+          ],
+          "default": "top-left"
+        },
+        "z": {
+          "type": "number",
+          "minimum": -100000,
+          "maximum": 100000,
+          "default": 0
+        },
+        "visible": {
+          "type": "boolean",
+          "default": true
+        },
+        "color": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          },
+          "default": [
+            255,
+            255,
+            255,
+            255
+          ]
+        },
+        "texture": {
+          "type": "string",
+          "maxLength": 512
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "bind": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "fontSize": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 256,
+          "default": 24
+        },
+        "font": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "default": "Yu Gothic"
+        },
+        "onClick": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "$ref": "#/$defs/action"
+          },
+          "default": []
+        },
+        "hoverColor": {
+          "$ref": "#/$defs/rgba"
+        },
+        "pressedColor": {
+          "$ref": "#/$defs/rgba"
+        },
+        "textColor": {
+          "$ref": "#/$defs/rgba"
+        },
+        "shadowColor": {
+          "$ref": "#/$defs/rgba"
+        },
+        "delayMs": {
+          "maximum": 60000,
+          "default": 0,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "shadowX": {
+          "maximum": 256,
+          "default": 0,
+          "minimum": -256,
+          "type": "number"
+        },
+        "shadowY": {
+          "maximum": 256,
+          "default": 0,
+          "minimum": -256,
+          "type": "number"
+        },
+        "options": {
+          "maxItems": 64,
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "value": {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              },
+              "label": {
+                "maxLength": 512,
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "value",
+              "label"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "selected": {
+          "maxLength": 128,
+          "default": "",
+          "type": "string"
+        },
+        "onChange": {
+          "maxItems": 32,
+          "items": {
+            "$ref": "#/$defs/action"
+          },
+          "type": "array"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "image"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "texture"
+            ],
+            "properties": {
+              "texture": {
+                "minLength": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "text"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "width": {
+                "maximum": 1280
+              },
+              "height": {
+                "maximum": 720
+              }
+            }
+          }
+        }
+      ]
+    },
+    "action": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "playSound"
+            },
+            "sound": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*[\\\\:]).+\\.(?:wav|mp3|WAV|MP3)$"
+            },
+            "volume": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 1
+            },
+            "waitForEnd": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          "required": [
+            "type",
+            "sound"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "emitEvent"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          },
+          "required": [
+            "type",
+            "name"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "setVariable"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "value": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          "required": [
+            "type",
+            "name",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "setVisible"
+            },
+            "target": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "visible": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          "required": [
+            "type",
+            "target"
+          ]
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "ms": {
+              "maximum": 60000,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "type": {
+              "const": "delay"
+            }
+          },
+          "required": [
+            "type",
+            "ms"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "rgba": {
+      "maxItems": 4,
+      "items": {
+        "maximum": 255,
+        "minimum": 0,
+        "type": "integer"
+      },
+      "minItems": 4,
+      "type": "array"
+    }
+  }
+}

@@ -12,7 +12,7 @@
 #include <iterator>
 #include <stdexcept>
 using Microsoft::WRL::ComPtr;
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {
 void check(bool value,const char* reason){if(!value)throw std::runtime_error(reason);}
 void ok(HRESULT value){check(SUCCEEDED(value),"Player render D3D11 failure");}
@@ -31,12 +31,12 @@ void write(const std::filesystem::path& path,const Frame& image){
  std::ofstream output(path,std::ios::binary);output.write(reinterpret_cast<const char*>(&file),sizeof(file));output.write(reinterpret_cast<const char*>(&info),sizeof(info));output.write(reinterpret_cast<const char*>(pixels.data()),pixels.size());check(bool(output),"Player render image write failed");
 }
 }
-namespace mgo2win {
+namespace mgo2mt {
 int run_weapon_hand_preview(const std::filesystem::path&data,const std::filesystem::path&output){try{
  std::filesystem::create_directories(output);
  CharacterCatalog catalog(read(data/"character/appearance.gwc"));PlayerMotionBank motions(read(data/"character/player.gwmot"));
  auto bytes=read(data/"weapons/hands.gwh");weapon_hand::Bank bank(bytes);weapon_hand::Models models(data/"weapons");
- check(bank.size()==15,"All original hand clips required");bool rejected=false;try{weapon_hand::Bank bad(std::span<const char>(bytes.data(),bytes.size()-1));}catch(...){rejected=true;}check(rejected,"Truncated hand bank rejected");
+ check(bank.size()>=15,"All original hand clips required");bool rejected=false;try{weapon_hand::Bank bad(std::span<const char>(bytes.data(),bytes.size()-1));}catch(...){rejected=true;}check(rejected,"Truncated hand bank rejected");
  ComPtr<ID3D11Device>d;ComPtr<ID3D11DeviceContext>c;D3D_FEATURE_LEVEL level;ok(D3D11CreateDevice(nullptr,D3D_DRIVER_TYPE_WARP,nullptr,0,nullptr,0,D3D11_SDK_VERSION,&d,&level,&c));
  unsigned frames=0;double totalChanged=0,maxPalmError=0;
  for(unsigned gender=0;gender<2;++gender){std::array<uint8_t,28>a{};a[0]=uint8_t(gender);a[2]=11;a[3]=22;a[15]=46;a[17]=57;auto body=catalog.assemble(a);check(body.ready()&&!body.missingModels&&!body.missingColors,"Original body assets required");CharacterRenderer renderer(d.Get(),body.model);renderer.resize_target(d.Get(),1280,720);

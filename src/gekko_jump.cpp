@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
-namespace mgo2win::special_pc {
+namespace mgo2mt::special_pc {
 namespace {
 using stage::Vec3;
 bool finite(Vec3 v){for(auto x:v)if(!std::isfinite(x)||std::abs(x)>=1000000)return false;return true;}

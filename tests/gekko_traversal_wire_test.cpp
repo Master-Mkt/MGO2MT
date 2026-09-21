@@ -3,7 +3,7 @@
 #include "special_pc_clock.h"
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;using namespace mgo2win::combat;
+using namespace mgo2mt;using namespace mgo2mt::combat;
 namespace {void check(bool b,const char*s){if(!b)throw std::runtime_error(s);}template<class F>bool rejects(F f){try{f();}catch(const wire::Invalid&){return true;}return false;}}
 int main(){try{
  Snapshot snapshot;snapshot.epoch=9;snapshot.revision=1;snapshot.eventWatermark=1;
@@ -13,7 +13,7 @@ int main(){try{
  size_t maximum=0;
  for(auto action:{special_pc::Action::jump,special_pc::Action::climb,special_pc::Action::salute,special_pc::Action::kick})for(bool name:{false,true}){
   for(auto&p:frame.snapshot.players)p->specialPc={special_pc::Kind::gekko,name,action,UINT32_MAX,uint16_t(special_pc::duration(action)-1)};
-  auto bytes=wire::encode(frame);maximum=(std::max)(maximum,bytes.size());check(bytes[5]==19&&bytes.size()<=2000,"24 action states plus shot stay within GWCB19 bound");
+  auto bytes=wire::encode(frame);maximum=(std::max)(maximum,bytes.size());check(bytes[5]==wire::version&&bytes.size()<=2000,"24 action states plus shot stay within GWCB22 bound");
   check(std::get<wire::Frame>(wire::decode(bytes))==frame,"action4 and name bit remain independent and elapsed13 preserves5023ms");
   auto old=bytes;old[5]=16;check(!wire::recognized(old)&&rejects([&]{wire::decode(old);}),"old version rejected");
   bytes.pop_back();check(rejects([&]{wire::decode(bytes);}),"truncated action frame rejected");
@@ -28,5 +28,5 @@ int main(){try{
  values={};input.step(values,true,special_pc::Action::none,40);values[5]=1;check(input.step(values,true,special_pc::Action::none,50,false)&&input.intent(true).action==special_pc::Action::jump,"new A with no eligible wall remains jump");
  special_pc::Clock clock;special_pc::State state{special_pc::Kind::gekko,true,special_pc::Action::jump,1,5000};check(clock.sample(9,id,1,state,100)==5.,"long jump clock accepts landing phase");check(clock.sample(9,id,1,state,200)==5.024,"jump extrapolation bounded to new duration");
  state={special_pc::Kind::gekko,true,special_pc::Action::climb,2,1599};check(clock.sample(9,id,1,state,210)==1.599,"new climb resets local clock");
- std::cout<<"Gekko GWCB19 climb/long jump/name visibility/input/clock PASS maximum="<<maximum<<'\n';return 0;
+ std::cout<<"Gekko GWCB22 climb/long jump/name visibility/input/clock PASS maximum="<<maximum<<'\n';return 0;
  }catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}

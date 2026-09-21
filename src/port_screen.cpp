@@ -6,7 +6,7 @@
 #include <iostream>
 #include <syncstream>
 #include <stdexcept>
-namespace mgo2win {
+namespace mgo2mt {
 PortScreen::PortScreen(std::filesystem::path path,bool external,std::function<StunResult(uintptr_t,const std::atomic_bool&)> probe,std::shared_ptr<ControllerInput> input,std::shared_ptr<GraphicsSettings> graphics,uint16_t fixedPort):fixedPort_(fixedPort),store_(std::move(path)),external_(external),probe_(std::move(probe)),input_(std::move(input)),graphics_(std::move(graphics)){
  if(fixedPort_&&fixedPort_<1024)throw std::runtime_error("Invalid fixed local test port");
  if(!graphics_)graphics_=std::make_shared<GraphicsSettings>(store_.parent_path()/L"graphics.cfg");
@@ -201,5 +201,5 @@ const void* PortScreen::draw(){
  finish_menu_surface(pixels_);if(controls_tab_)controls_->paint_original(pixels_);return pixels_;
 }
 std::vector<unsigned> PortScreen::cues(){for(auto c:controls_->cues())cue(c);for(auto c:graphics_->cues())cue(c);auto out=std::move(cues_);cues_.clear();return out;}
-void PortScreen::report()const{controls_->report();std::osyncstream(std::cout)<<"{\"port_settings_report\":true,\"checks\":"<<checks_<<",\"saved\":"<<(saved_?"true":"false")<<",\"restored\":"<<(restored_?"true":"false")<<",\"returned\":"<<(back_?"true":"false")<<",\"automatic\":"<<(settings_.automatic?"true":"false")<<",\"port_number\":\""<<std::string(number_.begin(),number_.end())<<"\",\"bandwidth_kbps\":"<<settings_.bandwidth_kbps<<",\"external_reachability_tested\":false}"<<std::endl;}
+void PortScreen::report()const{std::string portNumber;portNumber.reserve(number_.size());for(wchar_t c:number_)portNumber.push_back(static_cast<char>(c));controls_->report();std::osyncstream(std::cout)<<"{\"port_settings_report\":true,\"checks\":"<<checks_<<",\"saved\":"<<(saved_?"true":"false")<<",\"restored\":"<<(restored_?"true":"false")<<",\"returned\":"<<(back_?"true":"false")<<",\"automatic\":"<<(settings_.automatic?"true":"false")<<",\"port_number\":\""<<portNumber<<"\",\"bandwidth_kbps\":"<<settings_.bandwidth_kbps<<",\"external_reachability_tested\":false}"<<std::endl;}
 }

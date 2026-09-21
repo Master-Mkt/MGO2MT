@@ -1,7 +1,7 @@
 #include "authentication.h"
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 void require(bool condition){if(!condition)throw std::runtime_error("Authentication contract test failed");}
 int main(){
  const std::string denied="1,0,0_0_0_0_0_0_0_0_0_0,0000000000000000";

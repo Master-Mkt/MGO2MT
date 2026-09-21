@@ -4,8 +4,8 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
-using namespace mgo2win;
-using namespace mgo2win::special_pc;
+using namespace mgo2mt;
+using namespace mgo2mt::special_pc;
 namespace {
 void check(bool x,const char*s){if(!x)throw std::runtime_error(s);}
 std::vector<char> read(const char*p){std::ifstream in(p,std::ios::binary);check(bool(in),"asset missing");return {(std::istreambuf_iterator<char>(in)),{}};}
@@ -13,7 +13,7 @@ template<class F>void rejects(F f){bool bad=false;try{f();}catch(const std::exce
 float length(std::array<float,3>a,std::array<float,3>b){float sum=0;for(unsigned k=0;k<3;++k)sum+=(a[k]-b[k])*(a[k]-b[k]);return std::sqrt(sum);}
 }
 int main(int argc,char**argv){try{
- check(argc==3,"gekko_motion_test gekko.gwmot gekko.gwc");auto bytes=read(argv[1]);GekkoMotionBank bank(bytes);CharacterCatalog catalog(read(argv[2]));auto body=catalog.assemble({});check(body.ready()&&catalog.skeleton(0).size()==59&&bank.size()==7,"dedicated original Gekko rig and clips");
+ check(argc==4,"gekko_motion_test gekko.gwmot gekko.gwc gekko_jump.gwjc");std::string curveError;check(configure_gekko_jump(argv[3],curveError)&&using_local_gekko_jump(),"local root compensation loaded");auto bytes=read(argv[1]);GekkoMotionBank bank(bytes);CharacterCatalog catalog(read(argv[2]));auto body=catalog.assemble({});check(body.ready()&&catalog.skeleton(0).size()==59&&bank.size()==7,"dedicated original Gekko rig and clips");
  check(duration(GekkoMotion::jump)==3.15&&duration(GekkoMotion::kick)==125./60,"native clock follows source sample count");
  size_t samples=0;
  for(auto action:{GekkoMotion::idle,GekkoMotion::walk,GekkoMotion::run,GekkoMotion::jump,GekkoMotion::kick}){

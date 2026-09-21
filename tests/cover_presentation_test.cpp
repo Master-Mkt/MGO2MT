@@ -4,7 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 void check(bool v,const char* text){if(!v)throw std::runtime_error(text);}
 int main(int argc,char** argv){try{
  check(argc==2,"bank path");std::ifstream in(argv[1],std::ios::binary);std::vector<char> bytes{std::istreambuf_iterator<char>(in),{}};cover::CoverMotionBank bank(bytes);cover::Timeline clock;

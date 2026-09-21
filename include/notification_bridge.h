@@ -2,7 +2,7 @@
 #include "notification_wire.h"
 #include "server_notifications.h"
 #include "tournament_invitation.h"
-namespace mgo2win::notifications {
+namespace mgo2mt::notifications {
 // Database publication uses server UTC anchored to the receive monotonic clock;
 // retail invitation expiry is a separate, already-reviewed monotonic deadline.
 inline uint64_t server_now(const notices::State& state,uint64_t now,uint64_t fallback){

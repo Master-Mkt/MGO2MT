@@ -1,6 +1,6 @@
 #pragma once
 #include "stage_assets.h"
-namespace mgo2win::combat {
+namespace mgo2mt::combat {
 // Collision-only host world. Does not load textures, character meshes or a GPU.
 class World {
  std::shared_ptr<const stage::Collision> base_,world_,hits_;

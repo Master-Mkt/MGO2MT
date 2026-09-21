@@ -4,15 +4,15 @@
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 using namespace combat;
 namespace {
 void check(bool value,const char* what){if(!value)throw std::runtime_error(what);}
 constexpr Identity shooter{0,11,111},target{1,22,222};
 std::shared_ptr<const stage::Collision> floor_wall(int resistance=-1){
  std::vector<Vec3> vertices{{-50000,0,-50000},{50000,0,-50000},{50000,0,50000},{-50000,0,50000}};
- std::vector<stage::CollisionTriangle> triangles{{{0,1,2}},{{0,2,3}}};
- if(resistance>=0){vertices.insert(vertices.end(),{{-10000,0,1500},{10000,0,1500},{10000,5000,1500},{-10000,5000,1500}});triangles.push_back({{4,6,5},4,0,0,0});triangles.push_back({{4,7,6},4,0,0,0});}
+ std::vector<stage::CollisionTriangle> triangles{{{0,1,2},stage::attribute::native_solid},{{0,2,3},stage::attribute::native_solid}};
+ if(resistance>=0){vertices.insert(vertices.end(),{{-10000,0,1500},{10000,0,1500},{10000,5000,1500},{-10000,5000,1500}});triangles.push_back({{4,6,5},stage::attribute::native_solid,0,0,0});triangles.push_back({{4,7,6},stage::attribute::native_solid,0,0,0});}
  return std::make_shared<const stage::Collision>(stage::Collision::make(vertices,triangles,{{1,.5f,.5f,true,resistance<0?100:resistance,true}}));
 }
 Vec3 center(unsigned region,host_hit::Stance stance,Vec3 feet){
@@ -57,7 +57,7 @@ int main(){try{
  // The current renderer displays a stunned standing player down on the ground.
  // Keep its damage proxy down too; capsule metadata alone cannot leave a ghost.
  {
-  Authority a;auto w=initial_profiles(20,1,0);Weapon stun;stun.id=26;stun.staminaDamage=1000;stun.intervalMs=100;stun.reloadMs=1000;stun.magazine=30;stun.range=200000;w.push_back(stun);a.begin(3,floor_wall(),w);
+  Authority a;auto w=initial_profiles(20,1,0);Weapon stun;stun.id=26;stun.staminaDamage=1000;stun.intervalMs=100;stun.reloadMs=1000;stun.magazine=30;stun.range=200000;*std::find_if(w.begin(),w.end(),[](const Weapon& weapon){return weapon.id==26;})=stun;a.begin(3,floor_wall(),w);
   Pose source,victim;source.feet={0,2,0};victim.feet={0,2,5000};
   auto aim=[&](unsigned index,host_hit::Stance stance){auto p=center(index,stance,victim.feet);Vec3 d{p[0],p[1]-1552,p[2]};float length=std::sqrt(d[0]*d[0]+d[1]*d[1]+d[2]*d[2]);for(auto&v:d)v/=length;source.yaw=std::atan2(d[0],d[2]);source.pitch=std::asin(d[1]);return d;};
   auto d=aim(0,host_hit::Stance::standing);check(a.join(shooter,1,source,1000,1000,std::array<uint16_t,2>{26,25},0)&&a.join(target,2,victim,1000,1000,std::array<uint16_t,1>{25},0),"stun fixture admitted");a.active(true);check(bool(a.fire(shooter,{3,1,26,d},0)),"stamina shot accepted");check(a.snapshot().players[target.slot]->stunned,"standing life becomes stunned");

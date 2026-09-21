@@ -1,7 +1,7 @@
 #include "chat_session.h"
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win::chat;
+using namespace mgo2mt::chat;
 static void check(bool value,const char* label){if(!value)throw std::runtime_error(label);}
 static void join(Session& s){s.connect(7);s.enter(17);s.roster({{7,"SELF",1},{8,"PEER",2}},true);}
 int main(){try{

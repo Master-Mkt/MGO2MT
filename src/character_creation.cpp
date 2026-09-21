@@ -6,7 +6,7 @@
 #include <iostream>
 #include <syncstream>
 #include <imm.h>
-namespace mgo2win {
+namespace mgo2mt {
 namespace {
 constexpr unsigned ids[]={1,2,3,13,14,15,16,17,18,19};
 constexpr unsigned colors[]={4,5,6,20,21,22,23,24,25,26};

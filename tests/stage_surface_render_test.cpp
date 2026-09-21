@@ -9,7 +9,7 @@
 #include <iostream>
 #include <iterator>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 using Microsoft::WRL::ComPtr;
 namespace {
 void check(bool v,const char* message){if(!v)throw std::runtime_error(message);}

@@ -3,7 +3,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <limits>
-using namespace mgo2win;
+using namespace mgo2mt;
 static void require(bool v){if(!v)throw std::runtime_error("camera speed policy check failed");}
 int main(){
  using namespace original::camera_speed;
@@ -43,7 +43,7 @@ int main(){
   require(!relative_to_default(mode,0)&&!relative_to_default(mode,11));
  }
  require(!mode_factor(Mode(255),5)&&!relative_to_default(Mode(255),5));
- const auto legacy=camera::decode("MGO2WIN.CAMERA 1 0 1 0 1 0 1\n");
+ const auto legacy=camera::decode("MGO2MT.CAMERA 1 0 1 0 1 0 1\n");
  require(legacy.has_value()&&legacy->speed==std::array<unsigned,3>{5,5,5});
  require(legacy->rates(false,false)==std::array<float,2>{2,1.5f});
  for(unsigned mode=0;mode<3;++mode)for(unsigned value=1;value<=10;++value){
@@ -55,10 +55,10 @@ int main(){
   require(settings.motion(mode==2,mode!=0,.25f,.75f)==std::array<float,2>{.25f,-.75f});
   require(settings.rates((mode+1)%3==2,(mode+1)%3!=0)==std::array<float,2>{2,1.5f});
  }
- for(const auto bad:{"MGO2WIN.CAMERA 2 0 0 0 0 0 0 0 5 5\n","MGO2WIN.CAMERA 2 0 0 0 0 0 0 11 5 5\n",
-  "MGO2WIN.CAMERA 2 0 0 0 0 0 0 05 5 5\n","MGO2WIN.CAMERA 2 0 0 0 0 0 0 5 5\n",
-  "MGO2WIN.CAMERA 2 0 0 0 0 0 0 5 5 5 1\n","MGO2WIN.CAMERA 2 0 0 0 0 0 0 -1 5 5\n",
-  "MGO2WIN.CAMERA 2 0 0 0 0 0 0 4294967296 5 5\n","MGO2WIN.CAMERA 1 0 0 0 0 0 0 5 5 5\n"})require(!camera::decode(bad));
+ for(const auto bad:{"MGO2MT.CAMERA 2 0 0 0 0 0 0 0 5 5\n","MGO2MT.CAMERA 2 0 0 0 0 0 0 11 5 5\n",
+  "MGO2MT.CAMERA 2 0 0 0 0 0 0 05 5 5\n","MGO2MT.CAMERA 2 0 0 0 0 0 0 5 5\n",
+  "MGO2MT.CAMERA 2 0 0 0 0 0 0 5 5 5 1\n","MGO2MT.CAMERA 2 0 0 0 0 0 0 -1 5 5\n",
+  "MGO2MT.CAMERA 2 0 0 0 0 0 0 4294967296 5 5\n","MGO2MT.CAMERA 1 0 0 0 0 0 0 5 5 5\n"})require(!camera::decode(bad));
  const auto encoded=camera::encode(*legacy);for(std::size_t n=0;n<encoded.size();++n)require(!camera::decode(std::string_view(encoded).substr(0,n)));
  camera::Settings invalid;invalid.speed[0]=std::numeric_limits<unsigned>::max();
  require(invalid.rates(false,false)==std::array<float,2>{2,1.5f});

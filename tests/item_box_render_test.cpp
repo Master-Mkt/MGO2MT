@@ -6,7 +6,7 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
-using namespace mgo2win;using Microsoft::WRL::ComPtr;
+using namespace mgo2mt;using Microsoft::WRL::ComPtr;
 namespace {
 void check(bool x,const char*s){if(!x)throw std::runtime_error(s);}void ok(HRESULT h){check(SUCCEEDED(h),"Item box WARP");}
 using Pixels=std::vector<uint8_t>;

@@ -1,7 +1,7 @@
 #pragma once
 #include "combat_wire.h"
 #include <algorithm>
-namespace mgo2win::combat {
+namespace mgo2mt::combat {
 struct Standing {Identity id;uint32_t kills=0,deaths=0;unsigned rank=0;};
 // Local DM scoring: one confirmed enemy elimination, no inferred original
 // headshot bonus or death tie-break. Equal kills share the same place.

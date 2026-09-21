@@ -1,0 +1,1417 @@
+{
+  "format": "MGO2MT.EXCV_PUBLIC_SOURCE.1",
+  "original_assets": false,
+  "embedded_archive_keys": false,
+  "network_runtime": false,
+  "policy": "Converter-only AST snapshot; only selected local decoder may run; original analysis files preserved.",
+  "files": [
+    {
+      "file": "archive_inventory.py",
+      "size": 1559,
+      "sha256": "7fe359595eb2f697e1ee32086790b50fc9a3423ba649f0f3ea16955cbcf7f443",
+      "source_sha256": "d10074fa54656932b57e511aca52b6ec43446ea5e6e2263f23d560d3c289a3f3",
+      "omitted_analysis_nodes": [
+        {
+          "line": 7,
+          "kind": "Assign",
+          "name": "SOURCE"
+        },
+        {
+          "line": 8,
+          "kind": "Assign",
+          "name": "LEGACY"
+        },
+        {
+          "line": 32,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 57,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "audit_object_registry.py",
+      "size": 2934,
+      "sha256": "863136db8d8bd8509f12989466c6d99aa1003635ffdf647a50fe31da0a725189",
+      "source_sha256": "3292281bba33cb12ed635d084375e527d84b45469db7ddf4f9d5fed217909b30",
+      "omitted_analysis_nodes": [
+        {
+          "line": 55,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 119,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "audit_texture_alpha.py",
+      "size": 2739,
+      "sha256": "1631fe586f78a84d6aa45e85c9456da107f5880ad24f7eb229538194e080c073",
+      "source_sha256": "d897aaf66f890b7a2f9c0c2e2eb9e5a14dd0d2d4cb2dff80b457006f0dfb31b0",
+      "omitted_analysis_nodes": [
+        {
+          "line": 32,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 60,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "character_dci.py",
+      "size": 968,
+      "sha256": "3ed6767717e7cb17ee3fa1c0daec08f479b27bae2965a4964680301a359e9b66",
+      "source_sha256": "3188da8324c7cd35d25e7a666f16db3a83048598ee0257902d4feb99feba045e",
+      "omitted_analysis_nodes": [],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "character_motion.py",
+      "size": 4043,
+      "sha256": "58c6b84e3873fa2b3e4c2baaf31dc1af52bf4af9f75eec8e684fc225a394c628",
+      "source_sha256": "0f1b2eaa24616b455269ff63edafa8896ff5fe1f575a33e204d29a5a77032058",
+      "omitted_analysis_nodes": [],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "compile_combat_spawn.py",
+      "size": 5225,
+      "sha256": "e2ba2f5e0a204285802c26d53858b560f1d05985b962ae81313a1780c2115827",
+      "source_sha256": "fb2485bcf02271c5bba6d3e8637778b7e215dd135109d1b236718b88702e8ad9",
+      "omitted_analysis_nodes": [
+        {
+          "line": 56,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "compile_object_registry.py",
+      "size": 12986,
+      "sha256": "c0ec80eb7072aa1d900148959fab97ceea00dea9c5ebeef04c86f11bb4af1eeb",
+      "source_sha256": "3a8a5cc1480c1d278cd61f2d639ea2cafcf646ab6501cdba6f7b8a46bd64dc75",
+      "omitted_analysis_nodes": [
+        {
+          "line": 245,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 261,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "compile_stage_objects.py",
+      "size": 1452,
+      "sha256": "c85d7b3c3a3897a02a9920e9c30af57f9ea264fd350c701716efa0fec2901d55",
+      "source_sha256": "6439a2f72ca793b9e49827555856232b3183d39973d498f0f49ab21a82b380c6",
+      "omitted_analysis_nodes": [
+        {
+          "line": 25,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 89,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "compile_stage_pickups.py",
+      "size": 6123,
+      "sha256": "54dc473d7cc2be5557b7d15626e4b22c8de2a1903614e6b7ca3a4cf6a0858131",
+      "source_sha256": "b372cc6551ef80058f35adf4729b13a9c1e41745478c611ea680f60c8f7f4463",
+      "omitted_analysis_nodes": [
+        {
+          "line": 94,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 104,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "compile_stage_scene.py",
+      "size": 8391,
+      "sha256": "d5ddb9d61459d0e6b20aff39883caa4700965ab03c9630a6e91d8ab00eddb6f7",
+      "source_sha256": "04d3efe39f47e08dab223c66b4155ff9f2220e425ff474da89e550d4ac19d7bb",
+      "omitted_analysis_nodes": [
+        {
+          "line": 120,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 185,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "compile_tdm_spawn.py",
+      "size": 9146,
+      "sha256": "68d23131025093aa3012a6cfeaadf20dd2eaa00cd89519fb00eea8fa9e8750b8",
+      "source_sha256": "4d1e6a355ecd7f9f329fb76044ebe754b4f9ee0b26b6472a86a30df2c565b132",
+      "omitted_analysis_nodes": [
+        {
+          "line": 188,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "convert_character_catalog.py",
+      "size": 15917,
+      "sha256": "267ce95933fc16e61bf1d89b1fa9926ce5e7b66c373c0baaca0ab429b4429104",
+      "source_sha256": "8af84ac692113c141e8c7ecbf57b03d738994d4dd2b2b9c38559b4570488b57f",
+      "omitted_analysis_nodes": [
+        {
+          "line": 186,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "convert_character_model.py",
+      "size": 1187,
+      "sha256": "cea7d7040e553b48201ad70deac80a863af7695876c137441ed3470daec6b50e",
+      "source_sha256": "659a69288c8f1ea21c64da959409b315980eae00764b81447ec49d178965faaa",
+      "omitted_analysis_nodes": [
+        {
+          "line": 22,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 92,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "convert_stage_model.py",
+      "size": 23626,
+      "sha256": "bb81dc7c60f37e0f1e986b9bec39e2df00012ee39fb429683f17ba279afba380",
+      "source_sha256": "662529a3f58e2555af062bb8991872261e633ad8f0d51bc4021a389ce1e8acee",
+      "omitted_analysis_nodes": [
+        {
+          "line": 313,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "elf_image.py",
+      "size": 1524,
+      "sha256": "68346fd99abe6a913cd1b5a7adb2c52c45a0c0eac97bcdb4d409f16871e8d248",
+      "source_sha256": "016f9c4495ce5e57aead87d41934952e50309669aa9e59c685fbb770f4625f5b",
+      "omitted_analysis_nodes": [
+        {
+          "line": 29,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "excv_actor_profile.json",
+      "size": 187826,
+      "sha256": "c097e60c72906d6a65f796aeadc8c0ab1e5c21aa2e0a7af1dbc71e8e354cd2b1",
+      "source_sha256": "c097e60c72906d6a65f796aeadc8c0ab1e5c21aa2e0a7af1dbc71e8e354cd2b1",
+      "omitted_analysis_nodes": [],
+      "kind": "bounded resource recipe metadata"
+    },
+    {
+      "file": "excv_actor_resources.py",
+      "size": 18983,
+      "sha256": "ea0b1d21129fa7ddf5871842dacdc0a641333a38991f5e14b87cc004f1aeeeb4",
+      "source_sha256": "b37dc89ea1e8061483066712cf60da392f04b805d565e4818e40d05ae8d3f2d2",
+      "omitted_analysis_nodes": [
+        {
+          "line": 217,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 222,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "excv_audio_profile.py",
+      "size": 149630,
+      "sha256": "0d3d5baf53595c53639a09b1b307f3cc738ae60201807be7e0aab114bc083a25",
+      "source_sha256": "c3870d53bb7c6b7d0ee729942d97553f597988ed946c8d28c4b4922d9a67a038",
+      "omitted_analysis_nodes": [],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "excv_audio_resources.py",
+      "size": 20901,
+      "sha256": "f3aa7d40d8fc13c921f044031ce710540551b1548036886b3eb2e4af5d1e9a0e",
+      "source_sha256": "07f7eee2913a9ffab1c8ead6bd5f7b570f11d5c4946e1cbd24201a8a476aa2bc",
+      "omitted_analysis_nodes": [
+        {
+          "line": 262,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 267,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": [
+          252
+        ]
+      }
+    },
+    {
+      "file": "excv_briefing_map.py",
+      "size": 6366,
+      "sha256": "0d5bfc02f359084154b9f74eda692a13581fa28eeecb28be778b9e98ec379625",
+      "source_sha256": "0f0e6c537e33156696d364e3dd295e49a37d4c0aea271faa3b3748d7749b1351",
+      "omitted_analysis_nodes": [
+        {
+          "line": 69,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "excv_character_profile.json",
+      "size": 222950,
+      "sha256": "957d3b802dd8562643d4af628576e1a7eed96dfc19d72a49e6a3d6ae34d8f09a",
+      "source_sha256": "957d3b802dd8562643d4af628576e1a7eed96dfc19d72a49e6a3d6ae34d8f09a",
+      "omitted_analysis_nodes": [],
+      "kind": "bounded resource recipe metadata"
+    },
+    {
+      "file": "excv_character_resources.py",
+      "size": 15218,
+      "sha256": "129925fe36218ee47fb2d6a5b5e08c070fd0f664b3bfe5cc6eb4e9f55c9d7ec2",
+      "source_sha256": "cc3903ee1369a63ea9a3102a78387f11d7a98f04fe1f8e0af5531181a20807f4",
+      "omitted_analysis_nodes": [
+        {
+          "line": 171,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 176,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "excv_core.py",
+      "size": 11770,
+      "sha256": "1d9617bfb890a13181bfeafe8e5ca74248146bacfd8f5a28f5c4801ddd1baeb5",
+      "source_sha256": "bb2856b2b601f21149e587cb446da2a060ae68aaa9818f99714c3491e9c0966f",
+      "omitted_analysis_nodes": [],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "excv_damage_effect_resources.py",
+      "size": 5363,
+      "sha256": "6e770bd26fdcd224e38405dac20bc35c66fb5812c7a62f3387cf5be9ce9c4bc2",
+      "source_sha256": "47545c2fe2e55b8df593712b6f140d474be2b2f81ce98332263224912c820405",
+      "omitted_analysis_nodes": [
+        {
+          "line": 119,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 129,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "excv_effect_resources.py",
+      "size": 11196,
+      "sha256": "33da82f7279b3c91ad5a7dddb793fd1a023beb95a4f86f2a42f73f4dd309eb02",
+      "source_sha256": "ca74aca0c6836a115df1e98d92b9a33c522a92d798daa501754a56c307ce6774",
+      "omitted_analysis_nodes": [
+        {
+          "line": 150,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 155,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "excv_gekko_profile.json",
+      "size": 27670,
+      "sha256": "ca8148b9c6389f03a4ecff5948cd4c6f26bf5911f1ef56d364eb05f919110f4d",
+      "source_sha256": "ca8148b9c6389f03a4ecff5948cd4c6f26bf5911f1ef56d364eb05f919110f4d",
+      "omitted_analysis_nodes": [],
+      "kind": "bounded resource recipe metadata"
+    },
+    {
+      "file": "excv_gekko_resources.py",
+      "size": 17382,
+      "sha256": "6272b664526d2a7d39236ca71ad08c41e6c379eae4631340ee22ec4b87ff13cc",
+      "source_sha256": "cc5167416a6e164ec66c6f82073e1b273b7df5fd16e8dad1b44cfd4e4adf2456",
+      "omitted_analysis_nodes": [
+        {
+          "line": 210,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 213,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "excv_install.py",
+      "size": 15147,
+      "sha256": "97a70d184817a93b4923c2b911192bd557f90f0a8637a5a5d187ab75f87913b1",
+      "source_sha256": "c5423a69d5531ade41a05624d79ece3a3244073ce892b567092e77758ae20d80",
+      "omitted_analysis_nodes": [],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "excv_native_profile.json",
+      "size": 145811,
+      "sha256": "04e850c734a8e28e1173d48857073daa6d8f19843c55daa3038c43da46976cfb",
+      "source_sha256": "04e850c734a8e28e1173d48857073daa6d8f19843c55daa3038c43da46976cfb",
+      "omitted_analysis_nodes": [],
+      "kind": "bounded resource recipe metadata"
+    },
+    {
+      "file": "excv_native_resources.py",
+      "size": 8526,
+      "sha256": "4bf377115dbcd919827f13218a0864ad8a2b25b111bbf95bf805c6b9d9cf5210",
+      "source_sha256": "f692446d5ecee96364a3412dc30cc2f1efd65bd64fefc9974f544a2f3b19d012",
+      "omitted_analysis_nodes": [
+        {
+          "line": 104,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 108,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "excv_profiles_b.py",
+      "size": 9341,
+      "sha256": "7395b3514d6204f8ffbae26ef22d0295a8442620fcf3f80de37bb726155740f2",
+      "source_sha256": "3b0b124e3bf8976e5e1a1e8a33eaebdbaf23aeb72cdc96e954370d012e165555",
+      "omitted_analysis_nodes": [],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "excv_runtime_assembly.py",
+      "size": 6808,
+      "sha256": "3583028818b286b292834cc93c0cccd6a37c401a0491ac647d47703d86a20745",
+      "source_sha256": "cf877bf989c8592fdc7983f54285cef7a0787397f58153184e3ce259db1e3bec",
+      "omitted_analysis_nodes": [],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "excv_stage.py",
+      "size": 18525,
+      "sha256": "d4cba75c7ddd93b17a8a54959e337c50ec3f297cb9cbb5bf0dee1f9a44857d05",
+      "source_sha256": "c244bb9d04378ab1f10f99a6c34dda6db0fbf3597cf25afd4dc58c6c67e093f5",
+      "omitted_analysis_nodes": [],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "excv_stage_runtime.py",
+      "size": 32466,
+      "sha256": "42dce3acfe1bffa6c17d81128cfd60ad0ab813390869a03c083f0a17ec3745fa",
+      "source_sha256": "48bf07f5614c690b5fc8ecb587a7ea7e0de4981228a8a8c24c9027a79389e94f",
+      "omitted_analysis_nodes": [
+        {
+          "line": 347,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "excv_stage_runtime_batch.py",
+      "size": 6220,
+      "sha256": "84e344689bf07208ee2742e405c59c501fbbddcc8119bdc1e6d4d51dc89dd0b5",
+      "source_sha256": "7eb64bab79206fa4920023f0bdf37705f06600caa730c58b29d1b9e2169e1917",
+      "omitted_analysis_nodes": [],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "excv_title_runtime.py",
+      "size": 18209,
+      "sha256": "32c8ea33f6b7f4acba877158e8aa071c24730d0b58c7b1c1c3dfe2d8c8884a74",
+      "source_sha256": "975ea3ff9aa6c6f9772cd60f2d6b841b881416362296dd61b3ce47cb1a91d33b",
+      "omitted_analysis_nodes": [
+        {
+          "line": 238,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 243,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "excv_ui_icon.py",
+      "size": 10779,
+      "sha256": "a99377e5a831ac11ea029d55fbb457cd2bc34a2817a77c4150013d30aae17d3d",
+      "source_sha256": "7d42942d01231f1584687c0be93364aa0cdfdc7bbd69a587e4adf52dfbad9f9c",
+      "omitted_analysis_nodes": [],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "excv_ui_profile.py",
+      "size": 18439,
+      "sha256": "1679012cdf4cbc3179bb7f670fff2457c2459979fa0a551d182ee846f78e6fff",
+      "source_sha256": "7ac1a7ea85dbbb173dba3ada3a6e9ec463e10e6ff65e7c479d2d09807ad2f514",
+      "omitted_analysis_nodes": [],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "excv_ui_resources.py",
+      "size": 23387,
+      "sha256": "c098ec086549f618155adcb7566a02ea0b45f0c05fbe26b1141f15f8efd98668",
+      "source_sha256": "00f429b678dc0c5f37434a7a994bc488b3817192c0c7ce8f1805665653c08f73",
+      "omitted_analysis_nodes": [
+        {
+          "line": 280,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 283,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "excv_ui_runtime.py",
+      "size": 10830,
+      "sha256": "6e7e364f6befc0d268a63425c031f0c593f050ed821e8bceb469905d74bf8007",
+      "source_sha256": "0e0edbd3fdd7aab38b1cc2c1dad42024b950fbb3037b5750aa7d80e963678843",
+      "omitted_analysis_nodes": [
+        {
+          "line": 124,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "excv_ui_runtime_profile.json",
+      "size": 16885,
+      "sha256": "3aeb120414fbb4b1ce822fefbdafdfb15e118937381da282a4c032e5b7dadfe1",
+      "source_sha256": "3aeb120414fbb4b1ce822fefbdafdfb15e118937381da282a4c032e5b7dadfe1",
+      "omitted_analysis_nodes": [],
+      "kind": "bounded resource recipe metadata"
+    },
+    {
+      "file": "export_title_animation.py",
+      "size": 4677,
+      "sha256": "733c2e48bf43e6b6ed0bdce1ef37d5a968328f31de870d379fdcd5c5f2d878aa",
+      "source_sha256": "a31316f186ef75191beb05637f260da5bba9568dd547e3aff378724755a7f39e",
+      "omitted_analysis_nodes": [
+        {
+          "line": 53,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "export_title_preview.py",
+      "size": 9009,
+      "sha256": "9399c97ee4cbdf1af5814f9ca6d08f2b753cbdb71581825527f240a5d590f827",
+      "source_sha256": "8b7d7765cff01bd9e9f488d1a27e4246a0c300294fc832f62795666639117104",
+      "omitted_analysis_nodes": [
+        {
+          "line": 118,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 140,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "extract_authored_water_surface.py",
+      "size": 3998,
+      "sha256": "bf07b2e7f3856d1450f4132aa1ca3a1bb02476e4e9f9786f87c9efcaa3e5800e",
+      "source_sha256": "e4f811ba5000787f8383a5adcb52682fb351ce29af382f8317b9af4f43351158",
+      "omitted_analysis_nodes": [
+        {
+          "line": 86,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 149,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "extract_briefing_icons.py",
+      "size": 3470,
+      "sha256": "0ab6072b05947d78ba0995bc23b8f01cc3022328b2502b859598f3cf86d09e19",
+      "source_sha256": "d317a568b663cf215aab2400fcfd3b762625cd848d575bc7abb5f9122db63a28",
+      "omitted_analysis_nodes": [
+        {
+          "line": 84,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 133,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "extract_stage_normals.py",
+      "size": 3843,
+      "sha256": "6a8f0d6489ca35088cea4e5fbf49477f46c46522f57dc2556feac95be7f99892",
+      "source_sha256": "f2cbcd4236d544908481bf37b4b11b4cdaea5894d10bec3e98eb1a943de90b57",
+      "omitted_analysis_nodes": [
+        {
+          "line": 46,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "extract_start_sound.py",
+      "size": 5698,
+      "sha256": "722ae210efa98dff1d5a24656ebaf782e970a2c38c2341cf6e46c7513d1358d0",
+      "source_sha256": "df19f911323543cd659f5782c6fc17631f268e3508287644a18ea57884a8ba41",
+      "omitted_analysis_nodes": [
+        {
+          "line": 146,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "gcx_inspect.py",
+      "size": 4723,
+      "sha256": "6caf6b16e4d904ae180ddb4f60c6211b37a78e613ed6973c6039916a137406c7",
+      "source_sha256": "3be19edc7e5f16b1d526e9ed1b163a8e204f2ccc0265eccff45a2991c57599a6",
+      "omitted_analysis_nodes": [
+        {
+          "line": 75,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 95,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "gwp.py",
+      "size": 285,
+      "sha256": "0b1fedbf3c657861ee209930ad151533c8308f7eb5b392c110af6de2a8343b9e",
+      "source_sha256": "ffa7b67ba67c4221cc4c51f45b1e29799cdc2a7d13f2ccb6bac4074e3a5aa51a",
+      "omitted_analysis_nodes": [
+        {
+          "line": 1,
+          "kind": "Expr",
+          "name": ""
+        },
+        {
+          "line": 16,
+          "kind": "Assign",
+          "name": ""
+        },
+        {
+          "line": 17,
+          "kind": "Assign",
+          "name": ""
+        },
+        {
+          "line": 18,
+          "kind": "Assign",
+          "name": ""
+        },
+        {
+          "line": 34,
+          "kind": "FunctionDef",
+          "name": "unique_object"
+        },
+        {
+          "line": 42,
+          "kind": "FunctionDef",
+          "name": "lobby_membership_text"
+        },
+        {
+          "line": 63,
+          "kind": "FunctionDef",
+          "name": "load"
+        },
+        {
+          "line": 208,
+          "kind": "FunctionDef",
+          "name": "progress"
+        },
+        {
+          "line": 247,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 305,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "la2_inspect.py",
+      "size": 5426,
+      "sha256": "31755872f50eeaed4a7472c0775cd0eca28f111d247234f1441ce1dbdd99a7fc",
+      "source_sha256": "ade12c292b007266c02b1b731dbfc4f32a7307c187526b43ae58c476064d5e47",
+      "omitted_analysis_nodes": [
+        {
+          "line": 68,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 74,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "material_restore_profiles.py",
+      "size": 10313,
+      "sha256": "19471f4897376c77f57db3e37d1be3f884695a07c125062e33ee620607fde080",
+      "source_sha256": "ffec0253f47edade131bbc300d4c19b4233ef4613730c7b90478a1c11e1c2dda",
+      "omitted_analysis_nodes": [],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "mgo2excv.py",
+      "size": 27239,
+      "sha256": "5540b665ba3d5b4f3abd7212696b4d878254830dcb6d22c2ef7a8a82fb536c04",
+      "source_sha256": "f5b280148e436b9ee4aa8e2bf254e791d77409e45364bdcf26dbd164a996ee68",
+      "omitted_analysis_nodes": [],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "native_assets.py",
+      "size": 3603,
+      "sha256": "7cb771f7e2e0df218f09804ee56f1ee54fd32f920e5412b81cfb08fe14a4da45",
+      "source_sha256": "04d3f47e956eeb3a6b5b4cc4f580ebc427c0e245d4625644ec954e3573336baa",
+      "omitted_analysis_nodes": [
+        {
+          "line": 76,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "original_material.py",
+      "size": 5348,
+      "sha256": "48ac6e7d6b8f968b6555b534853f74d5968ec25ed6563aef7d98b7d23093d7e9",
+      "source_sha256": "5317a23d3919c588d8be8b9d5d368180ca7e1506841e5ea46005bb5125b9b08a",
+      "omitted_analysis_nodes": [],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "prepare_all_weapon_audio.py",
+      "size": 7428,
+      "sha256": "465c104f3592822396fa77cdcdab023b0e2a1c73c47be423dc1778794da36121",
+      "source_sha256": "2a72714133951709663cac468767f8b984838a946860827d92089153dcc0f784",
+      "omitted_analysis_nodes": [
+        {
+          "line": 15,
+          "kind": "Assign",
+          "name": "SOURCE"
+        },
+        {
+          "line": 16,
+          "kind": "Assign",
+          "name": "SOCOM"
+        },
+        {
+          "line": 92,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 113,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "prepare_character_slots.py",
+      "size": 2131,
+      "sha256": "5ee330e2e9113dadad694643472860d487d72cecd69a348fd3e27fb192194982",
+      "source_sha256": "5000f3cfb52dbf46a4ecc5e59ff0e0ef0f1662c0b6ef59011c47347e19a6ad34",
+      "omitted_analysis_nodes": [
+        {
+          "line": 40,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 56,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "prepare_combat_impact_audio.py",
+      "size": 2993,
+      "sha256": "1949dc23cd3fe441b0e2618080baf45d3ddd822823fc82467c4061ff90a2dd8f",
+      "source_sha256": "60a60bf96ea3d37b2aa01a019c721061391b3e86719e6b9362f7fc75f37479f9",
+      "omitted_analysis_nodes": [
+        {
+          "line": 69,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 104,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "prepare_gekko_model.py",
+      "size": 11922,
+      "sha256": "94a1fa22a9fd1007abe33b76d87cf396fd15b825ec30af1829c61f36074776a3",
+      "source_sha256": "5976f99725567ec6b4a04b6835953a9088463ac9d1fe73cecbf6cd1bbbf1f0ca",
+      "omitted_analysis_nodes": [
+        {
+          "line": 166,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "prepare_normal_ak102_audio.py",
+      "size": 5599,
+      "sha256": "47aebc4d3fb5fedfd891169df0820c24247258882f8600fe2fab061b25dcfa0e",
+      "source_sha256": "62c8e4d51c65321b86003e3c1cebe4ab02f2fcc71e5b98167674eff53eb6cc2d",
+      "omitted_analysis_nodes": [
+        {
+          "line": 24,
+          "kind": "Assign",
+          "name": "SOURCE"
+        },
+        {
+          "line": 123,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 166,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "prepare_stage_water.py",
+      "size": 6679,
+      "sha256": "742b6f01b52281259e01e1745c82154e8d0039e78df5681965b515a621a814a7",
+      "source_sha256": "ae7eed703b32f3d6bb0be90a30e717626a430dfb1ff173298d928817e8b8c00c",
+      "omitted_analysis_nodes": [
+        {
+          "line": 95,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 116,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "prepare_weapon_extension_audio.py",
+      "size": 4803,
+      "sha256": "126f8a6dae801bbbefbddc844fc8bcc9ce866e429c47091cf04d2c693546e9d6",
+      "source_sha256": "552307c762366ab100ea266c820395e49d2a4b2acbc0f6ea2d381885dececa2e",
+      "omitted_analysis_nodes": [
+        {
+          "line": 15,
+          "kind": "Assign",
+          "name": "SOURCE"
+        },
+        {
+          "line": 69,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 94,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "render_start_sound.py",
+      "size": 7183,
+      "sha256": "5142aaa78ba9733ad4c847c9ac08dce6b2c5e0667c5ee4b498f965204ad6b4df",
+      "source_sha256": "0ba6da3463c02becacdc4343f72102862b821409e8328adb9ef020744e9f8e73",
+      "omitted_analysis_nodes": [
+        {
+          "line": 112,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 130,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "resolve_start_sound.py",
+      "size": 13303,
+      "sha256": "3ebce47344a8328e99ed7f68c30fe216d67615c9d198e4d59cfad2ce7f473e9f",
+      "source_sha256": "98cfb99484e06805d4fdf20278cf69139601cff532930871f9dc7fd85613f9ee",
+      "omitted_analysis_nodes": [
+        {
+          "line": 283,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "stage_geometry.py",
+      "size": 5431,
+      "sha256": "00152c2a77f7d8c8d65689578902b97a2a487979d6da706e65dd28db65b06671",
+      "source_sha256": "793f38ce1f3fec8ba46eff5c665f4687d3349971b47ad2f154bd231cc64f10a0",
+      "omitted_analysis_nodes": [
+        {
+          "line": 75,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 80,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "stage_scene.py",
+      "size": 11037,
+      "sha256": "fa17eba17d25fdb25c9694f6d25a97d6263b05713a92cd2739d59925244acbc3",
+      "source_sha256": "ccec09543e67f7fdf87284ce55950c72c4d23a1e7ceb2da146e3fd933c232af7",
+      "omitted_analysis_nodes": [
+        {
+          "line": 17,
+          "kind": "Assign",
+          "name": "REFERENCE"
+        },
+        {
+          "line": 239,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 268,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "stage_texture_context.py",
+      "size": 6489,
+      "sha256": "37226d662133143d680c20cfadc19cf2c72505935edc40eb1d97e799a7e1d198",
+      "source_sha256": "0f02f339216e0228903d19f7b13a95a3bbab2b717adec0f38636affe67beedda",
+      "omitted_analysis_nodes": [],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "title_assets.py",
+      "size": 5901,
+      "sha256": "873f6a5ebdd1c3345151fdb142182f2e547598842a31d94522949ba04ba2d3ae",
+      "source_sha256": "5b429ff475d5b4aa747e2388b67de40f02b36a9853ab4db438c001cd879144c0",
+      "omitted_analysis_nodes": [
+        {
+          "line": 86,
+          "kind": "FunctionDef",
+          "name": "main"
+        },
+        {
+          "line": 104,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "weapon_attachment.py",
+      "size": 29413,
+      "sha256": "c493271f86b3d3d7a56c612a2764e888dc6f7f79bc0b27cd426465caaeeafa1f",
+      "source_sha256": "6d3a190bd1105c2d5a0cc97dd6f9e17e60a0218e666eec8396f5a2dd24386e6e",
+      "omitted_analysis_nodes": [
+        {
+          "line": 427,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    },
+    {
+      "file": "weapon_connect_points.py",
+      "size": 5515,
+      "sha256": "da0d9f0b9a9a80f9a91b6deeb20304c7da1e5815f6c808078ca83d3126e9bc68",
+      "source_sha256": "29777c1b0f62795940067a4b48fdee7687e216ff76dd2cf7180d7c3b383561c6",
+      "omitted_analysis_nodes": [
+        {
+          "line": 83,
+          "kind": "If",
+          "name": ""
+        }
+      ],
+      "audit": {
+        "no_absolute_paths": true,
+        "no_network_imports": true,
+        "no_dynamic_original_code": true,
+        "local_decoder_process_lines": []
+      }
+    }
+  ]
+}

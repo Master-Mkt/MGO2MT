@@ -1,6 +1,6 @@
 #include "host_session.h"
 #include <iostream>
-using namespace mgo2win::host;
+using namespace mgo2mt::host;
 void check(bool v,const char*s){if(!v)throw std::runtime_error(s);}
 void be(std::vector<uint8_t>&b,size_t at,uint32_t v,unsigned n=4){while(n){b[at+--n]=uint8_t(v);v>>=8;}}
 std::vector<uint8_t> generation(){std::vector<uint8_t>b(10);b[0]=11;b[8]=8;b[9]=3;return b;}
@@ -31,10 +31,12 @@ int main(){try{
  Machine silent(local,456,profile,0);silent.receive(encode({0,{{0,true,true,false,0,{}}}}),1);silent.receive(helloPacket(1),2);silent.poll(2);silent.receive(app(2,0,{7,0,0,0,0,0,3}),3);check(silent.result().stage==Stage::synchronizing,"roster alone not admission");silent.poll(8003);check(silent.result().stage==Stage::timeout&&silent.result().profile_sent&&!silent.result().was_joined,"sync timeout cleanup needed");
 
  auto object=[](uint8_t slot,uint16_t instance,uint32_t id){std::vector<uint8_t>b(26);b[0]=7;b[1]=19;b[4]=uint8_t(instance);b[5]=uint8_t(instance>>8);b[7]=slot;for(unsigned i=0;i<4;++i)b[8+i]=uint8_t(id>>(8*i));b[24]='P';return b;};
- Machine roster(local,456,profile,0);roster.receive(encode({0,{{0,true,true,false,0,{}}}}),1);roster.receive(helloPacket(1),2);
+ Machine roster(local,456,profile,0);roster.configuration(123);roster.receive(encode({0,{{0,true,true,false,0,{}}}}),1);roster.receive(helloPacket(1),2);
  roster.receive(app(2,0,{7,0,0,2,0,0,3}),3);check(roster.result().stage==Stage::profile,"other object class terminator cannot admit");
  roster.receive(app(3,1,object(3,0x103,123)),4);roster.receive(app(4,2,object(0,0x100,456)),5);roster.receive(app(5,3,{7,0,0,0,0,0,3}),6);roster.receive(app(6,4,generation()),7);
  check(roster.result().stage==Stage::joined&&roster.result().roster.count()==2,"roster propagated through real admission machine");auto revision=roster.result().roster.revision;
+ auto wrongConfiguration=roster;wrongConfiguration.receive(app(7,5,mgo2mt::combat::wire::encode(mgo2mt::combat::wire::Offer{1,{3,0x103,123},124})),8);check(wrongConfiguration.result().stage==Stage::protocol_error&&!wrongConfiguration.result().combat_offer,"wrong gameplay configuration refuses offer");
+ auto sameConfiguration=roster;sameConfiguration.receive(app(7,5,mgo2mt::combat::wire::encode(mgo2mt::combat::wire::Offer{1,{3,0x103,123},123})),8);check(sameConfiguration.result().stage==Stage::joined&&sameConfiguration.result().combat_offer.has_value(),"matching gameplay configuration accepts offer");
  roster.receive(app(7,6,{7,2,0,0,0x22,2,1,0,0}),8);check(roster.result().roster.revision==revision,"out of order removal held");roster.receive(app(8,5,object(8,0x222,777)),9);check(roster.result().roster.count()==2&&roster.result().roster.revision==revision+2,"ordered join and removal within joined stage");
  roster.receive(app(9,7,{7,2,0,0,3,1,2,0,0}),10);check(roster.result().stage==Stage::disconnected&&!roster.result().roster.complete&&roster.result().roster.count()==0,"local removal ends session and clears live data");
  std::cout<<"host profile, admission, ordering, cancellation and failure checks passed\n";return 0;

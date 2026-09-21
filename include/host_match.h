@@ -1,7 +1,7 @@
 #pragma once
 #include "host_protocol.h"
 #include <optional>
-namespace mgo2win::host {
+namespace mgo2mt::host {
 enum class MatchTransition {initial=0,round_restart=1,map_change=2,next_round=3,map_and_round_change=4};
 struct Rotation {uint8_t map=0,rule=0,flags=0;bool operator==(const Rotation&)const=default;};
 struct LoadRequest {

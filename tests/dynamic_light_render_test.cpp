@@ -8,7 +8,7 @@
 #include <iterator>
 #include <limits>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 using Microsoft::WRL::ComPtr;
 namespace {
 void check(bool value,const char* why){if(!value)throw std::runtime_error(why);}

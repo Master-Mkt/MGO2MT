@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <vector>
 #include <functional>
-namespace mgo2win {
+namespace mgo2mt {
 struct Vertex {float x,y,u,v,r,g,b,a;};
 struct Quad {int32_t atlas,blend;uint32_t node;Vertex vertices[4];};
 using Values=std::array<float,30>;

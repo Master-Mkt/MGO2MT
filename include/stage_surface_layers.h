@@ -3,7 +3,7 @@
 #include "character_model.h"
 #include <cstddef>
 
-namespace mgo2win::stage {
+namespace mgo2mt::stage {
 
 struct SurfaceLayerStats {
     std::size_t triangles = 0;

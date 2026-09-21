@@ -48,7 +48,7 @@ def lobby_membership_text(document):
     if not isinstance(rows,list) or len(rows)>256:
         raise ValueError('invalid lobby membership count')
     ids = set()
-    lines = ['MGO2WIN.LOBBIES 1', m['host'], str(len(rows))]
+    lines = ['MGO2MT.LOBBIES 1', m['host'], str(len(rows))]
     for row in rows:
         if not isinstance(row,dict) or set(row) != {'id','port','subtype'}:
             raise ValueError('invalid lobby membership row')
@@ -65,7 +65,7 @@ def load(path):
     if path.suffix.lower() not in ('.gwp', '.gcw') or path.stat().st_size > 1024 * 1024:
         raise ValueError('expected GWP document, maximum 1 MiB')
     d = json.loads(path.read_text(encoding='utf-8'), object_pairs_hook=unique_object)
-    expected_format = {'.gwp':'MGO2WIN.GWP', '.gcw':'MGO2WIN.GCW'}[path.suffix.lower()]
+    expected_format = {'.gwp':'MGO2MT.GWP', '.gcw':'MGO2MT.GCW'}[path.suffix.lower()]
     if d['format'] != expected_format or type(d['version']) is not int or d['version'] != 1:
         raise ValueError('unsupported GWP format/version')
     lobby_membership_text(d)
@@ -155,7 +155,7 @@ def load(path):
         index=resolved['weapon_icons']
         if index.stat().st_size>16384:raise ValueError('Weapon icon index extent')
         lines=index.read_text(encoding='ascii').splitlines()
-        if not lines or lines[0]!='MGO2WIN_WEAPON_ICONS\t1' or not 1<=len(lines)-1<=128:raise ValueError('Weapon icon index contract')
+        if not lines or lines[0]!='MGO2MT_WEAPON_ICONS\t1' or not 1<=len(lines)-1<=128:raise ValueError('Weapon icon index contract')
         seen=set()
         for line in lines[1:]:
             parts=line.split('\t')
@@ -176,7 +176,7 @@ def load(path):
         expected = ['1369 body_impact_1369_v0.wav', '8168 body_impact_8168_v0.wav']
         if 'combat_ak102_shot' in resolved:
             expected.append('10002 ak102_10002_v0.wav')
-        if index.read_text(encoding='ascii').splitlines() != [f'MGO2WIN.COMBAT_AUDIO 1 {len(expected)}', *expected]:
+        if index.read_text(encoding='ascii').splitlines() != [f'MGO2MT.COMBAT_AUDIO 1 {len(expected)}', *expected]:
             raise ValueError('Combat effect index and hashed assets disagree')
     if 'stage_objects20' in resolved:
         for role,name in STAGE_OBJECT_ASSETS.items():
@@ -254,7 +254,7 @@ def main():
     if args.check:
         print(f'GWP v1 and all {len(assets)} asset digests validated')
         return 0
-    exe = ROOT / ('build/package/Release/mgo2win_title_preview.exe' if 'loading' in assets else 'build/Debug/mgo2win_title_preview.exe')
+    exe = ROOT / ('build/package/Release/mgo2mt_title_preview.exe' if 'loading' in assets else 'build/Debug/mgo2mt_title_preview.exe')
     inputs.append({'role': 'executable', **record(exe)})
     began = datetime.datetime.now(datetime.timezone.utc)
     out = ROOT / 'outputs/gwp' / began.strftime('%Y%m%dT%H%M%S%fZ')

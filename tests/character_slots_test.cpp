@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <sstream>
 #include <iostream>
-using namespace mgo2win;
+using namespace mgo2mt;
 void check(bool b){if(!b)throw std::runtime_error("slot UI contract failed");}
 int main(){
  CharacterList l;l.slots=3;l.entries.push_back({101,L"Test"});CharacterSlots s;s.load(l);

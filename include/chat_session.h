@@ -5,7 +5,7 @@
 #include <mutex>
 #include <optional>
 #include <vector>
-namespace mgo2win::chat {
+namespace mgo2mt::chat {
 enum class Delivery {none,queued,awaiting_echo,echo_received,unconfirmed};
 enum class Submit {accepted,not_joined,busy,unsupported_team,unknown_encoding,invalid_text,command_disabled};
 // Explicit deployment knowledge belongs to the authenticated connection. It

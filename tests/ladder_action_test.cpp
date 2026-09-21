@@ -3,7 +3,7 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {
 void check(bool b,const char*why){if(!b)throw std::runtime_error(why);}
 stage::Collision geometry(bool ceiling=false){std::vector<stage::Vec3>v;std::vector<stage::CollisionTriangle>t;

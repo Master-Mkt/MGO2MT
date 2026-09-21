@@ -7,7 +7,7 @@
 #include <stdexcept>
 #include <iostream>
 #include <syncstream>
-namespace mgo2win {
+namespace mgo2mt {
 namespace {
 uint32_t number(std::span<const uint8_t>b,size_t at,unsigned n=4){if(at+n>b.size())throw std::runtime_error("room extent");uint32_t v=0;while(n--)v=(v<<8)|b[at++];return v;}
 std::wstring string(std::span<const uint8_t>b,bool lines=false){auto end=std::find(b.begin(),b.end(),0);int n=int(end-b.begin());if(!n)return {};int count=MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,reinterpret_cast<const char*>(b.data()),n,nullptr,0);if(!count)throw std::runtime_error("room UTF8");std::wstring s(count,0);MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,reinterpret_cast<const char*>(b.data()),n,s.data(),count);for(auto c:s)if((c<32&&!(lines&&(c==10||c==13||c==9)))||c==127)throw std::runtime_error("room text control");return s;}

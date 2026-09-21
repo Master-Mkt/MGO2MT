@@ -3,7 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-using namespace mgo2win;
+using namespace mgo2mt;
 static void require(bool value){if(!value)throw std::runtime_error("Local playtest isolation failed");}
 int main(){
  const auto keyboard=LocalPlaytest::parse(L"--local-playtest-keyboard"),pad=LocalPlaytest::parse(L"--local-playtest-pad-background-3");

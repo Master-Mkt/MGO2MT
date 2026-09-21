@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <utility>
 
-namespace mgo2win {
+namespace mgo2mt {
 namespace {
 constexpr int TabCommon=2000,TabWeapons=2001,Master=2002,AllAllow=2003,AllLock=2004,Accept=IDOK,Cancel=IDCANCEL,CategoryBase=2100,FieldBase=3000,WeaponBase=4000;
 enum class Inspection { apply,cancel,close };
@@ -40,7 +40,7 @@ struct Options {
   SendMessageW(control(Master),BM_SETCHECK,restrictions::enabled(draft.weapon_restrictions)?BST_CHECKED:BST_UNCHECKED,0);
   add(window,L"BUTTON",L"この分類をすべて許可",AllAllow,380,114,185,31,BS_PUSHBUTTON);
   add(window,L"BUTTON",L"この分類をすべて禁止",AllLock,580,114,190,31,BS_PUSHBUTTON);
-  viewport=CreateWindowExW(WS_EX_CONTROLPARENT,L"MGO2HOST.OptionsViewport",L"",WS_CHILD|WS_VISIBLE|WS_VSCROLL,20,76,750,454,window,nullptr,GetModuleHandleW(nullptr),this);
+  viewport=CreateWindowExW(WS_EX_CONTROLPARENT,L"MGO2MTHOST.OptionsViewport",L"",WS_CHILD|WS_VISIBLE|WS_VSCROLL,20,76,750,454,window,nullptr,GetModuleHandleW(nullptr),this);
   if(!viewport)throw std::runtime_error("host option viewport");
   auto label=add(window,L"STATIC",L"",2200,20,548,750,65,SS_LEFT);SetWindowLongPtrW(label,GWL_STYLE,GetWindowLongPtrW(label,GWL_STYLE)&~WS_TABSTOP);
   add(window,L"BUTTON",L"この設定を使用",Accept,380,630,185,40,BS_DEFPUSHBUTTON);
@@ -205,8 +205,8 @@ LRESULT CALLBACK procedure(HWND w,UINT message,WPARAM wp,LPARAM lp){
 }
 bool run(HWND owner,host::Settings&settings,const std::filesystem::path&output,Inspection inspection=Inspection::apply){
  Options p;p.owner=owner;p.draft=settings;p.smoke=!output.empty();p.output=output;p.inspection=inspection;if(p.smoke)std::filesystem::create_directories(output);
- for(auto name:{L"MGO2HOST.Options",L"MGO2HOST.OptionsViewport"}){WNDCLASSW c{};c.lpfnWndProc=procedure;c.hInstance=GetModuleHandleW(nullptr);c.lpszClassName=name;c.hCursor=LoadCursor(nullptr,IDC_ARROW);RegisterClassW(&c);}
- auto w=CreateWindowExW(WS_EX_CONTROLPARENT|WS_EX_DLGMODALFRAME,L"MGO2HOST.Options",L"MGO2HOST — 共通設定 / 武器制限",WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU,CW_USEDEFAULT,CW_USEDEFAULT,810,725,owner,nullptr,GetModuleHandleW(nullptr),&p);
+ for(auto name:{L"MGO2MTHOST.Options",L"MGO2MTHOST.OptionsViewport"}){WNDCLASSW c{};c.lpfnWndProc=procedure;c.hInstance=GetModuleHandleW(nullptr);c.lpszClassName=name;c.hCursor=LoadCursor(nullptr,IDC_ARROW);RegisterClassW(&c);}
+ auto w=CreateWindowExW(WS_EX_CONTROLPARENT|WS_EX_DLGMODALFRAME,L"MGO2MTHOST.Options",L"MGO2MTHOST — 共通設定 / 武器制限",WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU,CW_USEDEFAULT,CW_USEDEFAULT,810,725,owner,nullptr,GetModuleHandleW(nullptr),&p);
  if(!w)throw std::runtime_error(p.failure.empty()?"host options window":p.failure);
  const auto priorFocus=GetFocus();const bool ownerEnabled=owner&&IsWindowEnabled(owner);
  if(ownerEnabled)EnableWindow(owner,FALSE);ShowWindow(w,p.smoke?SW_HIDE:SW_SHOW);UpdateWindow(w);if(!p.smoke)SetFocus(p.control(TabCommon));

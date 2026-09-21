@@ -4,8 +4,8 @@
 #include <iostream>
 #include <stdexcept>
 
-namespace hs = mgo2win::original_headshot_producer;
-namespace hit = mgo2win::original_hit_regions;
+namespace hs = mgo2mt::original_headshot_producer;
+namespace hit = mgo2mt::original_hit_regions;
 static void check(bool value, const char* message) {
     if (!value) throw std::runtime_error(message); // Always active in Release.
 }

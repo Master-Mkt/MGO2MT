@@ -1,10 +1,10 @@
-#include "mgo2win/gcl_lengths.hpp"
+#include "mgo2mt/gcl_lengths.hpp"
 #include <array>
 #include <cstdlib>
 #include <iostream>
 #include <initializer_list>
 #include <vector>
-using namespace mgo2win::gcl;
+using namespace mgo2mt::gcl;
 
 void check(bool value) {
     if (!value) { std::cerr << "GCL contract mismatch\n"; std::exit(1); }

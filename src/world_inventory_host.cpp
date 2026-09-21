@@ -1,5 +1,5 @@
 #include "world_inventory_host.h"
-namespace mgo2win::items {
+namespace mgo2mt::items {
 namespace {
 bool admitted(const combat::Authority&a,combat::Identity id,const wire::Header&h){
  if(id.slot>=24||h.actor.slot!=id.slot||h.actor.instance!=id.instance||h.actor.character!=id.character||!a.active())return false;

@@ -6,7 +6,7 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
-using namespace mgo2win;using Microsoft::WRL::ComPtr;
+using namespace mgo2mt;using Microsoft::WRL::ComPtr;
 namespace {
 void check(bool value,const char* message){if(!value)throw std::runtime_error(message);}
 void ok(HRESULT h){check(SUCCEEDED(h),"WARP operation");}

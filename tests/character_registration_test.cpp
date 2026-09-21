@@ -2,7 +2,7 @@
 #include <stdexcept>
 #include <iostream>
 #include <tuple>
-using namespace mgo2win;
+using namespace mgo2mt;
 void check(bool b,const char*s){if(!b)throw std::runtime_error(s);}
 int main(){try{
  std::array<uint8_t,28> native{};native[2]=11;native[3]=22;native[15]=46;native[17]=57;

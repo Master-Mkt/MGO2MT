@@ -6,7 +6,7 @@
 #include <optional>
 #include <span>
 
-namespace mgo2win::original::camera_speed {
+namespace mgo2mt::original::camera_speed {
 // Current ELF 804E88 clamps expanded camera options; BBF880 displays packed+1.
 inline constexpr unsigned minimum_display = 1, maximum_display = 10, default_display = 5;
 constexpr bool valid_display(unsigned value) { return value >= minimum_display && value <= maximum_display; }

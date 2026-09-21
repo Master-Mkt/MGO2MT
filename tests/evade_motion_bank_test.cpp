@@ -6,7 +6,7 @@
 #include <iterator>
 #include <stdexcept>
 #include <vector>
-using namespace mgo2win;
+using namespace mgo2mt;
 static void require(bool v,const char* text){if(!v)throw std::runtime_error(text);}
 int main(int argc,char**argv){try{
  require(argc==2,"usage: evade_motion_bank_test evade.gwmot");

@@ -1,3 +1,4 @@
+#include "gameplay_fingerprint.h"
 #include "lobby_keepalive.h"
 #include "invitation_lobby.h"
 #include "combat_service.h"
@@ -31,7 +32,24 @@
 #include <chrono>
 #include <iostream>
 #include <syncstream>
-namespace mgo2win {
+#include <map>
+namespace mgo2mt {
+namespace {
+struct ClientConfigurations {std::mutex mutex;std::map<std::filesystem::path,uint64_t> frozen;};
+ClientConfigurations& client_configurations(){static ClientConfigurations state;return state;}
+std::optional<std::filesystem::path> configuration_root(const std::filesystem::path& data){std::error_code error;auto root=std::filesystem::weakly_canonical(data,error);if(error)return {};return root;}
+}
+bool freeze_client_gameplay_configuration(const std::filesystem::path& data,uint64_t expected){
+ auto root=configuration_root(data);if(!root)return false;auto& state=client_configurations();std::lock_guard lock(state.mutex);
+ const auto disk=gameplay::fingerprint(*root);if(!disk||*disk!=expected)return false;
+ auto [entry,inserted]=state.frozen.emplace(*root,expected);return inserted||entry->second==expected;
+}
+std::optional<uint64_t> client_gameplay_configuration(const std::filesystem::path& data){
+ auto root=configuration_root(data);if(!root)return {};auto& state=client_configurations();std::lock_guard lock(state.mutex);
+ const auto disk=gameplay::fingerprint(*root);if(!disk)return {};const auto found=state.frozen.find(*root);
+ if(found==state.frozen.end())return *disk==0?disk:std::nullopt; // Legacy fixtures contain neither JSON file.
+ return found->second==*disk?std::optional<uint64_t>(found->second):std::nullopt;
+}
 namespace {
 constexpr size_t lobby_payload_limit(uint16_t command){return command==notices::reply_opcode?8192u:1023u;}
 const char* stun_status_name(StunStatus status){switch(status){
@@ -348,9 +366,10 @@ void run_game_lobby(const std::filesystem::path&path,const AuthReply&auth,uint32
         if(result.preparation)for(const auto&p:result.preparation->players)if(p&&p->id.character==entry->character)team=p->team;
         chatMembers.push_back({entry->character,requests.nameDirectory->display(entry->character,entry->name),team});}
        requests.chatSession->roster(std::move(chatMembers),result.stage==host::Stage::joined);
-{uint32_t clanId=0;for(const auto&entry:result.roster.slots)if(entry&&entry->character==id){clanId=entry->clanId;break;}requests.clanEmblem->want(clanId);}RoomReply r;r.event=RoomEvent::join;r.requested_room=action->id;r.status=result.stage==host::Stage::joined?RoomStatus::ready:RoomStatus::connecting;r.join_status=room_host_status(result.stage);r.host_roster=std::move(result.roster);r.host_match=std::move(result.match);r.host_placements=std::move(result.placements);r.host_scene=std::move(result.scene);r.scene_status=result.scene_status;r.combat_offer=result.combat_offer;r.combat_state=std::move(result.combat_state);r.combat_sop=result.combat_sop;r.combat_status=result.combat_status;r.combat_events=std::move(result.combat_events);r.preparation=std::move(result.preparation);publish(std::move(r));};
+{uint32_t clanId=0;for(const auto&entry:result.roster.slots)if(entry&&entry->character==id){clanId=entry->clanId;break;}requests.clanEmblem->want(clanId);}RoomReply r;r.event=RoomEvent::join;r.requested_room=action->id;r.status=result.stage==host::Stage::joined?RoomStatus::ready:RoomStatus::connecting;r.join_status=room_host_status(result.stage);r.host_roster=std::move(result.roster);r.host_match=std::move(result.match);r.host_placements=std::move(result.placements);r.host_scene=std::move(result.scene);r.scene_status=result.scene_status;r.combat_offer=result.combat_offer;r.combat_state=std::move(result.combat_state);r.combat_sop=result.combat_sop;r.debug_flights=std::move(result.debug_flights);r.environment=std::move(result.environment);r.combat_status=result.combat_status;r.combat_events=std::move(result.combat_events);r.preparation=std::move(result.preparation);publish(std::move(r));};
       std::vector<stage::ObjectRegistry> registries;for(const auto& stageProfile:stage::runtime_profiles){auto registryPath=stage::asset_path(path.parent_path()/"stage",stageProfile.map,".objects.cfg");if(std::filesystem::exists(registryPath))registries.push_back(stage::load_combat_object_registry(registryPath));}
-       return host::run(local,admission,profile,cancel,requests.cancel_join,progress,pumpSkills,std::nullopt,[&]{return requests.take_combat();},[&]{return requests.take_command();},requests.radioSession,requests.inventorySession,std::move(registries));
+       auto configuration=client_gameplay_configuration(path.parent_path());if(!configuration)throw std::runtime_error("Gameplay configuration changed or was not loaded; restart the client before joining");
+       return host::run(local,admission,profile,cancel,requests.cancel_join,progress,pumpSkills,std::nullopt,[&]{return requests.take_combat();},[&]{return requests.take_command();},requests.radioSession,requests.inventorySession,std::move(registries),*configuration);
      }):HostConnect{});
      game.check_monitor();
      std::vector<uint32_t> nameIds;if(reply.detail)for(const auto&entry:reply.detail->roster)nameIds.push_back(entry.id);requests.nameDirectory->want(nameIds);
@@ -396,6 +415,7 @@ void run_dedicated_lobby(const std::filesystem::path&path,const AuthReply&auth,c
    auto healthPath=path.parent_path()/"combat_health.cfg";if(std::filesystem::exists(healthPath))cycleOptions.health=combat::HealthRules::load(healthPath);
    auto lightsPath=path.parent_path()/"breakable_lights.cfg";if(std::filesystem::exists(lightsPath))cycleOptions.lightDamage=combat::load_breakable_lights(lightsPath);
    auto roundItemsPath=path.parent_path()/"round_items.cfg";if(std::filesystem::exists(roundItemsPath)&&!cycleOptions.roundItems.load(roundItemsPath,itemError))throw std::runtime_error("Invalid round item settings");
+   cycleOptions.environment=settings.nativeEnvironment;
    combat::Cycle combatCycle(cycleOptions,catalog,[]{combat::spawn::Random random;if(BCryptGenRandom(nullptr,reinterpret_cast<PUCHAR>(random.words.data()),ULONG(sizeof(random.words)),BCRYPT_USE_SYSTEM_PREFERRED_RNG)<0)throw std::runtime_error("spawn RNG");return random;});
    if(settings.nativeSpecial)settings.nativeSpecial->reset();
    items::HostSession inventoryHost;

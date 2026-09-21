@@ -3,7 +3,7 @@
 #include "special_pc.h"
 #include <algorithm>
 #include <cmath>
-namespace mgo2win::stage {
+namespace mgo2mt::stage {
 static Vec3 add(Vec3 a,Vec3 b){for(int i=0;i<3;++i)a[i]+=b[i];return a;}
 static Vec3 mul(Vec3 a,float b){for(auto&v:a)v*=b;return a;}
 static float dot(Vec3 a,Vec3 b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];}
@@ -18,10 +18,10 @@ void Navigation::sample_water(const Collision& world){
  waterState_=ready_?water_gameplay::sample(water_.get(),world,feet_,shape_,waterPolicy_):NavigationWaterState{};
 }
 bool Navigation::place(const Collision&world,Vec3 hint,float maximum){
- clear();auto ground=world.ray(hint,{0,-1,0},maximum);if(!ground||ground->normal[1]<.70710678f)return false;
+ clear();auto ground=world.ray(hint,{0,-1,0},maximum,query::floor);if(!ground||ground->normal[1]<.70710678f)return false;
  for(unsigned i=0;i<=10;++i){auto feet=ground->position;feet[1]+=shape_.skin*2+shape_.radius*i/10;
   if(!world.clear(feet,shape_))continue;auto floor=world.sweep(feet,{0,-shape_.radius-shape_.skin*4,0},shape_);
-  if(!floor||floor->normal[1]<.70710678f)continue;feet[1]-=(shape_.radius+shape_.skin*4)*floor->fraction;
+  if(!floor||floor->normal[1]<.70710678f||!attribute::has(world.triangles[floor->triangle].attribute,attribute::floor))continue;feet[1]-=(shape_.radius+shape_.skin*4)*floor->fraction;
   feet_=anchor_=feet;ready_=grounded_=true;sample_water(world);return true;
  }return false;
 }
@@ -30,7 +30,7 @@ Vec3 Navigation::slide(const Collision&world,Vec3 position,Vec3 delta,bool horiz
   position=add(position,mul(delta,hit->fraction));delta=mul(delta,1-hit->fraction);auto normal=hit->normal;
   // Gravity ends at walkable support. Projecting its remaining displacement
   // along that slope would move an idle character sideways on every tick.
-  if(!horizontal&&normal[1]>=.70710678f&&vertical_<=0){grounded_=true;vertical_=0;break;}
+  if(!horizontal&&normal[1]>=.70710678f&&vertical_<=0&&attribute::has(world.triangles[hit->triangle].attribute,attribute::floor)){grounded_=true;vertical_=0;break;}
   if(horizontal&&normal[1]>0&&normal[1]<.70710678f){normal[1]=0;float length=std::sqrt(dot(normal,normal));if(length>.001f)normal=mul(normal,1/length);}
   float into=dot(delta,normal);if(into<0)delta=add(delta,mul(normal,-into));else break;
   if(!horizontal&&hit->normal[1]<-.1f&&vertical_>0)vertical_=0;
@@ -53,8 +53,10 @@ void Navigation::advance(const Collision&world,WalkInput input,float seconds){
   const float movementYaw=input.movementYaw.value_or(yaw_);
   float sine=std::sin(movementYaw),cosine=std::cos(movementYaw),travel=waterTransitionBlocked_?0:input.speed*dt*waterState_.horizontalScale;Vec3 horizontal{(sine*input.forward+source_screen_x*cosine*input.right)*travel,0,(cosine*input.forward-source_screen_x*sine*input.right)*travel};
   if(shape_.height==560&&water_gameplay::sample(water_.get(),world,add(feet_,horizontal),shape_,waterPolicy_).proneBlocked)horizontal={};
-  feet_=slide(world,feet_,horizontal,true);grounded_=false;vertical_=std::max(-15000.f,vertical_-9800*dt);feet_=slide(world,feet_,{0,vertical_*dt,0},false);
-  if(vertical_<=0){auto floor=world.sweep(feet_,{0,-30,0},shape_);if(floor&&floor->normal[1]>=.70710678f){feet_[1]-=30*floor->fraction;grounded_=true;vertical_=0;}}
+  horizontal=mul(horizontal,world.fall_prevention_fraction(feet_,horizontal,shape_));
+  feet_=slide(world,feet_,horizontal,true);
+  grounded_=false;vertical_=std::max(-15000.f,vertical_-9800*dt);feet_=slide(world,feet_,{0,vertical_*dt,0},false);
+  if(vertical_<=0){auto floor=world.sweep(feet_,{0,-30,0},shape_);if(floor&&floor->normal[1]>=.70710678f&&attribute::has(world.triangles[floor->triangle].attribute,attribute::floor)){feet_[1]-=30*floor->fraction;grounded_=true;vertical_=0;}}
   // A sloping triangle can give gravity/settling a horizontal component even
   // with no input. Keep the strict HOST prone contract without relaxing its
   // speed limit: retain vertical settling only when the fixed-XZ body is clear.

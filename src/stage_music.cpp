@@ -8,7 +8,7 @@
 #include <stdexcept>
 #include <sstream>
 #include "pcm_wave.h"
-namespace mgo2win::stage {
+namespace mgo2mt::stage {
 static bool wav(const std::filesystem::path&p){
  std::ifstream in(p,std::ios::binary|std::ios::ate);if(!in)return false;auto size=in.tellg();if(size<44||size>256*1024*1024)return false;in.seekg(0);std::vector<unsigned char>b(static_cast<size_t>(size));if(!in.read(reinterpret_cast<char*>(b.data()),size))return false;read_pcm_wave(b);return true;
 }

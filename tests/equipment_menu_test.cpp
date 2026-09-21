@@ -2,7 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {
 void check(bool value,const char* reason){if(!value)throw std::runtime_error(reason);}
 void bitmap(const void* pixels,const std::filesystem::path& path){BITMAPFILEHEADER h{};BITMAPINFOHEADER i{};h.bfType=0x4d42;h.bfOffBits=sizeof(h)+sizeof(i);h.bfSize=h.bfOffBits+1280*720*4;i.biSize=sizeof(i);i.biWidth=1280;i.biHeight=-720;i.biPlanes=1;i.biBitCount=32;std::ofstream f(path,std::ios::binary);f.write(reinterpret_cast<char*>(&h),sizeof(h));f.write(reinterpret_cast<char*>(&i),sizeof(i));f.write(static_cast<const char*>(pixels),1280*720*4);check(bool(f),"capture");}
@@ -15,7 +15,7 @@ std::shared_ptr<items::ClientSession> ready(bool occupied){auto session=std::mak
  std::vector<std::vector<uint8_t>> incoming{fixture(items::wire::Offer{header,31,{64,64}}),fixture(holdings(occupied)),fixture(page)};check(session->pump(context,1,0,true,incoming).empty()&&session->state().status==items::ClientStatus::ready&&session->state().world,"ready synthetic admitted fixture");return session;}
 }
 int main(int argc,char**argv){try{
- const auto temp=std::filesystem::temp_directory_path()/("MGO2WIN-equipment-menu-test-"+std::to_string(GetCurrentProcessId())+"-"+std::to_string(GetTickCount64()));std::filesystem::create_directory(temp);
+ const auto temp=std::filesystem::temp_directory_path()/("MGO2MT-equipment-menu-test-"+std::to_string(GetCurrentProcessId())+"-"+std::to_string(GetTickCount64()));std::filesystem::create_directory(temp);
  auto input=std::make_shared<ControllerInput>(temp/"input.cfg");auto graphics=std::make_shared<GraphicsSettings>(temp/"graphics.cfg");PlayerMenu menu(temp/"input.cfg",input,graphics);
  auto capture=[&](const char* name){check(menu.draw()!=nullptr,"equipment render");if(argc>1){std::filesystem::create_directories(argv[1]);bitmap(menu.draw(),std::filesystem::path(argv[1])/name);}};
  auto key=[&](unsigned code,LPARAM flags=0){check(menu.message(nullptr,WM_KEYDOWN,code,flags),"menu consumes key");};

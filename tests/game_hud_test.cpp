@@ -7,7 +7,7 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 static void check(bool ok,const char*message){if(!ok)throw std::runtime_error(message);}
 int main(int argc,char**argv){try{
  check(hud::utf8("日本語プレイヤー") == L"日本語プレイヤー","UTF-8 Japanese player name survives conversion");

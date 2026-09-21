@@ -4,11 +4,11 @@
 #include <span>
 #include <memory>
 
-namespace mgo2win::stage {
+namespace mgo2mt::stage {
 struct Collision;
-// Narrow native movement adapter: normal control query requires authored bit0x10.
-// Unknown attribute0 remains conservative native solid; water/decor is excluded.
-// Keep the input collision for bullets/rendering. This is not the original full mask.
+// Immutable Player/Don't Fall view. None, actor-only triggers, Type Through,
+// Recoil and unprotected Cliff bands do not become player walls. Keep the
+// original input for purpose-specific bullets, sight, IK and camera queries.
 std::shared_ptr<const Collision> movement_collision(std::shared_ptr<const Collision>);
 // Current ELF SHA 1a55a41ee5afdebd89075bd205e412c8311f569ba9dc022f629bb63fb4bfd13a.
 // Root-0 world FIELD geometry only (180DE8, 18ABE0). Not a solid plane.

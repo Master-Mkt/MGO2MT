@@ -1,6 +1,6 @@
 #pragma once
 #include "evade_action.h"
-namespace mgo2win::combat::evade_runtime {
+namespace mgo2mt::combat::evade_runtime {
 // Native duration/nominal mean for visually reviewed original snake.mtar
 // clips56+57 (40+45 frames; +4038+854 Z) and61 (45 frames; -1965.71875 Z).
 // Runtime rolling now uses evade_travel_curve.h and stops with recovery.

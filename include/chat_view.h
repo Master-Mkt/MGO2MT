@@ -1,7 +1,7 @@
 #pragma once
 #include "chat_session.h"
 #include <windows.h>
-namespace mgo2win::chat {
+namespace mgo2mt::chat {
 std::wstring wide(std::string_view);
 std::string utf8(std::wstring_view);
 // Bounded two-line rows, newest at bottom; maxAge=0 shows the saved room history.

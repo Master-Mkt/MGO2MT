@@ -3,13 +3,13 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win::weapons;
+using namespace mgo2mt::weapons;
 static void check(bool ok,const char*name){if(!ok)throw std::runtime_error(name);}
 int main(){
- auto path=std::filesystem::temp_directory_path()/("mgo2win-weapon-selection-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count())+".tsv");
+ auto path=std::filesystem::temp_directory_path()/("mgo2mt-weapon-selection-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count())+".tsv");
  struct Cleanup{std::filesystem::path path;~Cleanup(){std::error_code ec;std::filesystem::remove(path,ec);}}cleanup{path};
  try{
-  {std::ofstream f(path);f<<"MGO2WIN_WEAPON_CATALOG\t1\nINITIAL_DP\t1000\n"
+  {std::ofstream f(path);f<<"MGO2MT_WEAPON_CATALOG\t1\nINITIAL_DP\t1000\n"
    "WEAPON\tPRIMARY\t1\tMain A\t600\t1\t1\n"
    "WEAPON\tPRIMARY\t2\tMain B\t800\t0\t2\n"
    "WEAPON\tSECONDARY\t3\tSecondary A\t300\t1\t3\n"

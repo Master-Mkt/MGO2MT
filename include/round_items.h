@@ -3,7 +3,7 @@
 #include "stage_collision.h"
 #include <functional>
 #include <string>
-namespace mgo2win::items {
+namespace mgo2mt::items {
 struct SpawnRule {
  uint8_t map=20;Domain domain=Domain::weapon;uint32_t item=25,count=1;
  // No coordinates means validated floor near actual initial spawn anchors.

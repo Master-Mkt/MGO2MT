@@ -1,7 +1,7 @@
 #pragma once
 #include "bullet_decals.h"
 #include <deque>
-namespace mgo2win::combat::material_effects {
+namespace mgo2mt::combat::material_effects {
 using Vec3=decals::Vec3;
 using Scope=decals::Scope;
 using Impact=decals::Impact;

@@ -10,7 +10,7 @@
 #include <iterator>
 #include <set>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 using Microsoft::WRL::ComPtr;
 namespace {
 void check(bool condition,const char* reason){if(!condition)throw std::runtime_error(reason);}

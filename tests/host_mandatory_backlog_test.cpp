@@ -3,7 +3,7 @@
 #include "dedicated_peer.h"
 #include "combat_wire.h"
 #include <iostream>
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {
 void check(bool v,const char*s){if(!v)throw std::runtime_error(s);}
 const host::Hello sh{100,0x12345678,2,1,{{{192,0,2,1},5740}}},ch{200,0xabcdef01,2,2,{{{192,0,2,2},5730}}};

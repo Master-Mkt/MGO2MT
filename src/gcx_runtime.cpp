@@ -2,12 +2,13 @@
 // Contracts: DEC10 / DF408 / DEFD0, D6928 / D69C0 / D6D90, E3320 / E2AC8.
 // Intentionally rejects unimplemented semantics. External effects remain host requests.
 #include "gcx_runtime.h"
-#include "mgo2win/gcl_lengths.hpp"
+#include "product_identity.h"
+#include "mgo2mt/gcl_lengths.hpp"
 #include <iomanip>
 #include <sstream>
 #include <stdexcept>
 #include <utility>
-namespace mgo2win {
+namespace mgo2mt {
 namespace {
 [[noreturn]] void fail(const char* what,size_t at=0){std::ostringstream s;s<<"GCX "<<what<<" at 0x"<<std::hex<<at;throw std::runtime_error(s.str());}
 int64_t number(const GcxValue& v){if(v.kind!=GcxValue::Kind::integer&&v.kind!=GcxValue::Kind::hash)fail("numeric value required");return v.number;}
@@ -23,11 +24,11 @@ uint32_t GcxRuntime::read(size_t p,size_t n,size_t end)const {
 void GcxRuntime::spend(){if(!budget_)fail("instruction/parse budget exceeded");--budget_;}
 GcxRuntime::GcxRuntime(std::vector<char> bytes):bytes_(std::move(bytes)) {
  if(bytes_.size()>32*1024*1024)fail("file size limit");
- if(std::string_view(bytes_.data(),bytes_.size()).starts_with("MGO2WIN.GWP.RUNTIME ")){
+ if(std::string_view(bytes_.data(),bytes_.size()).starts_with("MGO2MT.GWP.RUNTIME ")||std::string_view(bytes_.data(),bytes_.size()).starts_with("MGO2WIN.GWP.RUNTIME ")){
   if(bytes_.size()>65536)fail("native program size");
   std::istringstream in(std::string(bytes_.begin(),bytes_.end()));std::string tag;unsigned version,count,routes;
-  auto word=[&](const char* expected){if(!(in>>tag)||tag!=expected)fail("native program syntax");};
-  word("MGO2WIN.GWP.RUNTIME");if(!(in>>version>>count>>routes)||version!=1||count!=21||routes!=14)fail("native program header");
+  auto word=[&](const char* expected){if(!(in>>tag)||brand::normalize_format(tag)!=expected)fail("native program syntax");};
+  word("MGO2MT.GWP.RUNTIME");if(!(in>>version>>count>>routes)||version!=1||count!=21||routes!=14)fail("native program header");
   auto val=[&](){GcxValue v;unsigned kind;if(!(in>>kind>>v.number>>std::quoted(v.text))||kind>3||v.text.size()>128)fail("native value");v.kind=GcxValue::Kind(kind);if(kind==3&&v.number!=0)fail("native block must be deferred placeholder");if(kind!=2&&!v.text.empty())fail("native numeric text");return v;};
   for(unsigned i=0;i<routes;++i){NativeRoute route{};unsigned nr;word("route");if(!(in>>route.procedure>>route.argument>>nr)||nr>32)fail("native route");
    if(!((route.procedure==18||route.procedure==5)?route.argument==-1:(route.procedure==19||route.procedure==20)&&route.argument>=0&&route.argument<=5))fail("native route key");
@@ -167,7 +168,7 @@ void GcxRuntime::execute(uint32_t proc,const std::vector<GcxValue>& args){
 }
 std::string GcxRuntime::compile_title_program(){
  if(native_)fail("already compiled");
- std::ostringstream out;out<<"MGO2WIN.GWP.RUNTIME 1 21 14\n";
+ std::ostringstream out;out<<"MGO2MT.GWP.RUNTIME 1 21 14\n";
  auto emit=[&](uint32_t proc,int argument){
   GcxRuntime vm(bytes_);if(vm.procedure_count()!=21)fail("unreviewed title procedure count");vm.bind(0x19000000,0);vm.bind(0x12000006,2);std::vector<GcxValue> args;if(argument>=0)args.push_back({GcxValue::Kind::integer,argument,{}});vm.execute(proc,args);
   unsigned count=0;for(const auto&r:vm.requests())if(r.code!=0x3ab23b)++count;

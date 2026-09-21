@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <cmath>
 #include <set>
-namespace mgo2win::water_audio {
+namespace mgo2mt::water_audio {
 namespace {
 bool finite(stage::Vec3 p){return std::all_of(p.begin(),p.end(),[](float v){return std::isfinite(v)&&std::abs(v)<1e6f;});}
 

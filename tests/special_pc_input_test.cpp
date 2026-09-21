@@ -2,7 +2,7 @@
 #include "special_pc_clock.h"
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 void check(bool value,const char* why){if(!value)throw std::runtime_error(why);}
 int main(){try{
  special_pc::Input input;combat::Identity id{1,4,99};input.scope(10,id,1,special_pc::Kind::gekko);std::array<float,24> v{};

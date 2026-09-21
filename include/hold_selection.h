@@ -5,7 +5,7 @@
 #include <optional>
 #include <vector>
 
-namespace mgo2win::hold_selection {
+namespace mgo2mt::hold_selection {
 enum class Kind {none,weapons,equipment};
 enum class Action {equip,drop};
 // connection, epoch, inventory generation, slot, instance, character, life.

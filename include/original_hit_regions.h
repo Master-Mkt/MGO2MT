@@ -4,7 +4,7 @@
 #include <limits>
 #include <optional>
 
-namespace mgo2win::original_hit_regions {
+namespace mgo2mt::original_hit_regions {
 using Vec3=std::array<float,3>;
 // Current 3F47C0 -> 63F80 -> 19C680 / 17FDA0. Original coordinate units.
 // The parent dot (radius 1000) is a broad-phase parent, not a damage region.

@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <bit>
 
-namespace mgo2win::combat::original {
+namespace mgo2mt::combat::original {
 namespace {
 void put16(std::vector<uint8_t>& b,uint16_t v){b.push_back(uint8_t(v));b.push_back(uint8_t(v>>8));}
 uint16_t get16(std::span<const uint8_t> b,size_t at){return uint16_t(b[at])|uint16_t(uint16_t(b[at+1])<<8);}

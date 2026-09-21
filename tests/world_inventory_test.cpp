@@ -4,7 +4,7 @@
 #include <limits>
 #include <stdexcept>
 #include <thread>
-using namespace mgo2win::items;
+using namespace mgo2mt::items;
 namespace {
 void check(bool b,const char* s){if(!b)throw std::runtime_error(s);}
 void check(const Result& r,const char* s){check(bool(r),s);}
@@ -13,7 +13,7 @@ DropPolicy allow(){DropPolicy p;p.drop=DropOverride::allow;return p;}
 HeldSlot gun(){return {{25,1,17,93,0,Resource::ammunition},1};}
 Request request(Actor actor,uint64_t sequence,bool permitted=true){return {scope,actor,sequence,permitted};}
 std::string entry(std::string suffix=""){return "{\"id\":25,\"domain\":\"weapon\",\"name\":\"AK102\",\"source\":\"test-only\",\"originalKind\":\"unknown\",\"originalDrop\":null,\"originalEmptyDiscard\":null,\"drop\":\"allow\",\"emptyDiscard\":false"+suffix+"}";}
-std::string document(std::string entries){return "{\"schema\":\"MGO2WIN.item_drop_policy\",\"version\":1,\"entries\":["+entries+"]}";}
+std::string document(std::string entries){return "{\"schema\":\"MGO2MT.item_drop_policy\",\"version\":1,\"entries\":["+entries+"]}";}
 }
 int main(int argc,char** argv){try{
  DropPolicies policies;std::string error;check(policies.parse(document(entry()),error),"strict policy parse");check(policies.find(25)&&policies.find(25)->policy.allows_drop()&&!policies.find(25)->policy.discards_empty(),"independent overrides");

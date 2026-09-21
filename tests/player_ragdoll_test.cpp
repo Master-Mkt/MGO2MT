@@ -6,7 +6,7 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
-using namespace mgo2win;using namespace physics;
+using namespace mgo2mt;using namespace physics;
 static void check(bool v,const char*s){if(!v)throw std::runtime_error(s);}
 static std::vector<char> read(const char*p){std::ifstream f(p,std::ios::binary);check(bool(f),"open original fixture");return {(std::istreambuf_iterator<char>(f)),{}};}
 int main(int argc,char**argv){try{

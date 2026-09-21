@@ -8,7 +8,7 @@
 #include <limits>
 #include <stdexcept>
 #include <vector>
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {
 void check(bool ok,const char* why){if(!ok)throw std::runtime_error(why);}
 bool close_float(float a,float b){return std::abs(a-b)<.0001f;}
@@ -28,6 +28,8 @@ void core(){
  check(altered&&close_float(altered->radiusX/altered->radiusY,1.2f)&&altered->centerX==300&&altered->centerY==250,"physical camera aspect is independent from HUD destination aspect and off-center ray is retained");
  for(float x:{-1.f,1280.f,std::numeric_limits<float>::infinity()})check(!reticle::geometry(.03f,x,360,{}),"off-screen/invalid center never clamps into a false target");
  check(!reticle::geometry(.03f,640,720,{})&&!reticle::geometry(.03f,640,360,{0,0,1280,720,0}),"bottom edge and invalid aspect are hidden");
+ for(float fov:{.15f,.4f,1.f,1.5f}){auto zoomed=reticle::geometry(.03f,640,360,{0,0,1280,720,16.f/9,fov});check(zoomed&&close_float(zoomed->radiusY,float(std::tan(.03)/std::tan(double(fov)*.5)*360)),"reticle cone follows active lens");}
+ for(float fov:{0.f,-1.f,3.2f,std::numeric_limits<float>::quiet_NaN()})check(!reticle::geometry(.03f,640,360,{0,0,1280,720,16.f/9,fov}),"invalid lens hides reticle");
  reticle::Presentation independent;check(independent.update(model(),0)==base,"independent presentation has no shared scope");
 }
 void save(const std::filesystem::path& path,const BITMAPINFOHEADER& info,const void* pixels){BITMAPFILEHEADER h{};h.bfType=0x4d42;h.bfOffBits=sizeof(h)+sizeof(info);h.bfSize=h.bfOffBits+1280*720*4;std::ofstream f(path,std::ios::binary);f.write(reinterpret_cast<const char*>(&h),sizeof(h));f.write(reinterpret_cast<const char*>(&info),sizeof(info));f.write(static_cast<const char*>(pixels),1280*720*4);check(bool(f),"reticle BMP saved");}
@@ -47,6 +49,9 @@ void pixels(const std::filesystem::path& out){
  if(!out.empty())save(out/"off_center.bmp",info.bmiHeader,data);
  for(unsigned gate=0;gate<4;++gate){auto m=model();if(gate==0)m.alive=false;if(gate==1)m.menuOpen=true;if(gate==2)m.eligible=false;if(gate==3)m.scope.weapon=0;reticle::Presentation p;std::fill(surface.begin(),surface.end(),background);if(auto g=p.update(m,.016))reticle::paint(surface,1280,720,*g);check(std::all_of(surface.begin(),surface.end(),[](uint32_t x){return x==background;}),"dead/menu/ineligible/unequipped frame leaves no reticle pixels");}
  render(wide);std::vector<uint32_t> unchanged(surface.begin(),surface.end());auto invalid=wide;invalid.radiusX=std::numeric_limits<float>::infinity();reticle::paint(surface,1280,720,invalid);reticle::paint(surface.first(3),1280,720,wide);check(std::equal(surface.begin(),surface.end(),unchanged.begin()),"invalid geometry and short buffer preserve surface");
+ weapon_effect::Reticle style;style.enabled=false;std::fill(surface.begin(),surface.end(),background);reticle::paint(surface,1280,720,wide,style);check(std::all_of(surface.begin(),surface.end(),[](uint32_t x){return x==background;}),"editor disabled reticle leaves surface intact");
+ style.enabled=true;style.centerDot=false;style.color={0,1,0,.5f};style.length=20;style.thickness=4;reticle::paint(surface,1280,720,wide,style);check(surface[360*1280+640]==background&&surface[360*1280+660]!=background,"style changes strokes and hides dot without changing cone");check((surface[360*1280+660]>>24)==255&&((surface[360*1280+660]>>8)&255)>((background>>8)&255),"style alpha blends over opaque HUD correctly");
+ std::fill(surface.begin(),surface.end(),0);style.centerDot=true;style.color={1,0,0,.25f};reticle::paint(surface,1280,720,wide,style);check(surface[360*1280+640]==0x40ff0000,"style straight alpha preserved on transparent HUD");
  SelectObject(dc,old);DeleteObject(dib);DeleteDC(dc);
 }
 }

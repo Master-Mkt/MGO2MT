@@ -1,8 +1,8 @@
 #include "tournament_invitation.h"
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;
-using namespace mgo2win::invitations;
+using namespace mgo2mt;
+using namespace mgo2mt::invitations;
 static void check(bool ok,const char*s){if(!ok)throw std::runtime_error(s);}
 template<class F>void rejects(F f){try{f();}catch(const std::exception&){return;}throw std::runtime_error("malformed accepted");}
 std::vector<uint8_t> notice(uint32_t id=123,uint8_t kind=4,uint8_t state=1,std::string name="DOLL-02"){

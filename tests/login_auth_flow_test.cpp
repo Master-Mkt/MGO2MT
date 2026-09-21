@@ -4,7 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 void require(bool b){if(!b)throw std::runtime_error("Login authentication flow failed");}
 void key(LoginScreen& s,WPARAM k){s.message(nullptr,WM_KEYDOWN,k,0);}
 void text(LoginScreen& s,const wchar_t* t){while(*t)s.message(nullptr,WM_CHAR,*t++,0);}

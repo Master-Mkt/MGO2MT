@@ -4,7 +4,7 @@
 #include <string>
 #include <string_view>
 #include <cstdint>
-namespace mgo2win {
+namespace mgo2mt {
 inline constexpr wchar_t login_url[]=L"https://openmgo2.com/index.php";
 enum class AuthStatus { success,denied,network_error,protocol_error,cancelled };
 struct AuthReply {

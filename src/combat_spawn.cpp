@@ -1,3 +1,4 @@
+#include "product_identity.h"
 #include "combat_spawn.h"
 #include <algorithm>
 #include <cmath>
@@ -6,7 +7,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace mgo2win::combat::spawn {
+namespace mgo2mt::combat::spawn {
 namespace {
 size_t offset(Variant v,Kind k,uint8_t team,uint8_t index){
  if(unsigned(v)>1||unsigned(k)>1||team>1||index>15)throw std::out_of_range("TDM spawn index");
@@ -30,7 +31,7 @@ Profile Profile::read(std::istream&in){
   extent+=line.size()+1;require(line.size()<=1024&&extent<=65536,"TDM spawn extent");
   if(auto at=line.find('#');at!=std::string::npos)line.resize(at);
   std::istringstream row(line);std::string key;if(!(row>>key))continue;
-  if(!magic){unsigned version;require(key=="MGO2WIN_TDM_SPAWNS"&&bool(row>>version)&&version==1,"TDM spawn header");magic=true;}
+  if(!magic){unsigned version;require(key==mgo2mt::brand::Format{"MGO2MT_TDM_SPAWNS"}&&bool(row>>version)&&version==1,"TDM spawn header");magic=true;}
   else if(key=="stage"){std::string name;require(!stage&&bool(row>>name)&&name=="n022a","TDM spawn stage");stage=true;}
   else if(key=="map"){int value;require(!map&&bool(row>>value)&&value==20,"TDM spawn map");map=true;}
   else if(key=="rule"){int value;require(!rule&&bool(row>>value)&&value==1,"TDM spawn rule");rule=true;}

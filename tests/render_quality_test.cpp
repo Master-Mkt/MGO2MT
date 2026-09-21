@@ -2,11 +2,12 @@
 #include "stage_lighting.h"
 #include "enemy_name_tag.h"
 #include "menu_font.h"
+#include <DirectXPackedVector.h>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <set>
-using namespace mgo2win;using Microsoft::WRL::ComPtr;
+using namespace mgo2mt;using Microsoft::WRL::ComPtr;
 namespace {
 void check(bool b,const char* text){if(!b)throw std::runtime_error(text);}
 void ok(HRESULT h){check(SUCCEEDED(h),"D3D11 quality test");}
@@ -31,6 +32,12 @@ void contracts(ID3D11Device*d,ID3D11DeviceContext*c){
  // A grey BC1 diffuse under half illumination: decode once, light, encode once.
  CharacterModel model;model.bounds={-5000,-5000,1500,5000,5000,1500};for(auto p:std::array<std::array<float,2>,4>{{{-5000,-5000},{5000,-5000},{5000,5000},{-5000,5000}}}){ModelVertex v{};v.x=p[0];v.y=p[1];v.z=1500;v.nz=-1;v.lr=v.lg=v.lb=.5f;v.lit=1;model.vertices.push_back(v);}model.indices={0,1,2,0,2,3};model.parts.push_back({0,6,0,0});model.textures.push_back({4,4,9,{0x10,0x84,0x10,0x84,0,0,0,0}});
  CharacterRenderer renderer(d,model);WorldView camera{{0,0,0},{0,0,1}};renderer.render(c,0,false,&camera);auto legacy=pixels(d,c,renderer.view());backend.configure({16,true,true});renderer.render(c,0,false,&camera);auto linear=pixels(d,c,renderer.view());auto at=(196*616+308)*4;check(legacy[at]>=65&&legacy[at]<=67&&linear[at]>=94&&linear[at]<=97,"linear lighting and output transfer");backend.configure({});renderer.render(c,0,false,&camera);check(pixels(d,c,renderer.view())==legacy,"Legacy exact restoration after enhanced path");
+ // HDR retains radiance above1 rather than clipping in an8bit scene target.
+ for(auto&v:model.vertices)v.lr=v.lg=v.lb=8;
+ renderer.update_vertices(c,model.vertices);renderer.resize_target(d,64,64,true,true);camera.aspect=1;renderer.render(c,0,false,&camera);
+ ComPtr<ID3D11Resource> resource;renderer.view()->GetResource(&resource);ComPtr<ID3D11Texture2D> hdrTexture;ok(resource.As(&hdrTexture));D3D11_TEXTURE2D_DESC hd{};hdrTexture->GetDesc(&hd);check(hd.Format==DXGI_FORMAT_R16G16B16A16_FLOAT,"HDR16float scene allocation");
+ hd.Usage=D3D11_USAGE_STAGING;hd.BindFlags=0;hd.CPUAccessFlags=D3D11_CPU_ACCESS_READ;ComPtr<ID3D11Texture2D> readback;ok(d->CreateTexture2D(&hd,nullptr,&readback));c->CopyResource(readback.Get(),hdrTexture.Get());D3D11_MAPPED_SUBRESOURCE mapping{};ok(c->Map(readback.Get(),0,D3D11_MAP_READ,0,&mapping));auto pixel=reinterpret_cast<const uint16_t*>(static_cast<const uint8_t*>(mapping.pData)+32*mapping.RowPitch)+32*4;float radiance=DirectX::PackedVector::XMConvertHalfToFloat(pixel[0]);c->Unmap(readback.Get(),0);check(radiance>1&&radiance<8,"unclipped linear HDR radiance");
+ check(renderer.depth_view()&&renderer.reflection_view(),"readable reverse-depth and reflection mask");renderer.resize_target(d,64,64);check(!renderer.hdr()&&!renderer.reflection_view(),"HDR OFF releases extra targets");
 }
 }
 int main(int argc,char**argv){try{

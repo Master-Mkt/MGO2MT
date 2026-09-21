@@ -3,7 +3,7 @@
 #include <cmath>
 #include <stdexcept>
 
-namespace mgo2win::stage {
+namespace mgo2mt::stage {
 FogRenderConstants decode_fog_values(const FogScriptValues& v) {
     // Deliberate native bounds, not claimed original engine validation.
     if (v.nearDistance < -10000000 || v.nearDistance > 10000000 ||

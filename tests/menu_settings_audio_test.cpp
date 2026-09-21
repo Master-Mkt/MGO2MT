@@ -7,7 +7,7 @@
 #include <iostream>
 #include <stdexcept>
 
-using namespace mgo2win;
+using namespace mgo2mt;
 static void check(bool value,const char* label){if(!value)throw std::runtime_error(label);}
 template<class Screen> static void sounds(Screen& screen,std::initializer_list<unsigned> expected,const char* label){check(screen.cues()==std::vector<unsigned>(expected),label);}
 template<class Screen> static void key(Screen& screen,unsigned value){screen.message(nullptr,WM_KEYDOWN,value,0);}
@@ -17,7 +17,7 @@ int main(){try{
  const auto dir=std::filesystem::current_path()/(L"menu-settings-audio-"+std::to_wstring(GetCurrentProcessId()));
  check(std::filesystem::create_directory(dir),"unique settings test directory");
  struct Cleanup{std::filesystem::path path;~Cleanup(){std::error_code ec;for(const auto* file:{L"input.cfg",L"graphics.cfg",L"player.cfg",L"network.cfg"})std::filesystem::remove(path/file,ec);std::filesystem::remove(path,ec);}} cleanup{dir};
- struct Window{HWND handle=CreateWindowExW(0,L"STATIC",L"MGO2WIN audio routing test",WS_POPUP,0,0,1280,720,nullptr,nullptr,GetModuleHandleW(nullptr),nullptr);~Window(){if(handle)DestroyWindow(handle);}} window;
+ struct Window{HWND handle=CreateWindowExW(0,L"STATIC",L"MGO2MT audio routing test",WS_POPUP,0,0,1280,720,nullptr,nullptr,GetModuleHandleW(nullptr),nullptr);~Window(){if(handle)DestroyWindow(handle);}} window;
  check(window.handle!=nullptr,"hidden mouse-coordinate test window");
  auto input=std::make_shared<ControllerInput>(dir/L"input.cfg");
  const auto confirm=menu_audio::Confirm,cancel=menu_audio::Cancel,cursor=menu_audio::Cursor;

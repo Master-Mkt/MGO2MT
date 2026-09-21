@@ -3,7 +3,7 @@
 #include "player_motion.h"
 #include <map>
 #include <optional>
-namespace mgo2win {
+namespace mgo2mt {
 struct SkinBinding {std::array<uint16_t,4> bones;std::array<float,4> weights;std::array<std::array<float,3>,4> offsets;};
 struct CatalogBone {uint32_t key;int32_t parent;std::array<float,3> position;std::vector<std::array<float,4>> rotation;};
 struct CatalogMesh {uint32_t gender,key;std::vector<ModelVertex> vertices;std::vector<SkinBinding> skin;std::vector<uint32_t> indices;std::vector<ModelPart> parts;};

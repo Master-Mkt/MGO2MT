@@ -1,5 +1,5 @@
 #pragma once
-namespace mgo2win::stage {
+namespace mgo2mt::stage {
 // Key numbers are Windows virtual keys. A held key never triggers another reset.
 struct DebugControls {
  bool enabled=false,reset=false,toggleMusic=false,confirmReset=false,resetYes=false,openMotionBlend=false;int musicStep=0;

@@ -3,7 +3,7 @@
 #include <array>
 #include <algorithm>
 #include <cmath>
-namespace mgo2win::special_pc {
+namespace mgo2mt::special_pc {
 // A/Y have separate meaning only for an admitted special PC. Missing focus,
 // identity or HOST ACK cannot replay an action after returning to a menu.
 class Input {

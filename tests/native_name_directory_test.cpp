@@ -1,7 +1,7 @@
 #include "native_name_directory.h"
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win::names;
+using namespace mgo2mt::names;
 void check(bool ok,const char*message){if(!ok)throw std::runtime_error(message);}
 std::vector<uint8_t> response(uint64_t nonce,std::vector<Record> records){
  std::vector<uint8_t> out{'G','W','N','M',1,0,1,1};detail::put(out,nonce,8);detail::put(out,records.size(),2);out.push_back(16);out.push_back(64);detail::put(out,1,4);

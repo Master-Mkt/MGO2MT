@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <limits>
-using namespace mgo2win::original_current_weapon_drop;
+using namespace mgo2mt::original_current_weapon_drop;
 static void check(bool value,const char* why){if(!value){std::cerr<<why<<'\n';std::exit(1);}}
 int main(){
  unsigned accepted=0,rejected=0;

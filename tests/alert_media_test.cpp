@@ -21,7 +21,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <thread>
-using namespace mgo2win;
+using namespace mgo2mt;
 using Microsoft::WRL::ComPtr;
 namespace {
 void check(bool value,const char* why){if(!value)throw std::runtime_error(why);}
@@ -82,4 +82,4 @@ void run(const std::filesystem::path& dir){
  std::cout<<"fixture_video_bytes="<<media.size<<" fixture_video_sha256="<<media.sha256<<" audio_output_opened=false\n";
 }
 }
-int main(int argc,char** argv){try{std::filesystem::path dir;if(argc==2)dir=argv[1];else dir=std::filesystem::temp_directory_path()/ (L"mgo2win-alert-media-"+std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64()));std::filesystem::create_directories(dir);run(dir);std::cout<<"alert media PASS: real MF H264 decode, immutable SHA paths, independent attachments, expiry/cancel/replay, muted PCM and real pixels\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(int argc,char** argv){try{std::filesystem::path dir;if(argc==2)dir=argv[1];else dir=std::filesystem::temp_directory_path()/ (L"mgo2mt-alert-media-"+std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64()));std::filesystem::create_directories(dir);run(dir);std::cout<<"alert media PASS: real MF H264 decode, immutable SHA paths, independent attachments, expiry/cancel/replay, muted PCM and real pixels\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

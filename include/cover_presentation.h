@@ -1,7 +1,7 @@
 #pragma once
 #include "cover_motion.h"
 #include "cover_policy.h"
-namespace mgo2win::cover {
+namespace mgo2mt::cover {
 // Presentation clock only. All enter/exit/side/stance boundaries use the
 // caller's existing MotionBlend; geometry and shot origin remain HOST-owned.
 class Timeline {

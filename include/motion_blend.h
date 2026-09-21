@@ -1,6 +1,6 @@
 #pragma once
 #include "player_motion.h"
-namespace mgo2win {
+namespace mgo2mt {
 // Native pose-only transition. The caller owns world movement, scope and pause.
 // Input must be a complete, stable skeleton (1..128 nonzero bone keys, rootBone
 // present, finite root within +/-1e6, finite nonzero quaternions). Rotations are

@@ -2,7 +2,7 @@
 #include "dedicated_peer.h"
 #include <algorithm>
 #include <iostream>
-using namespace mgo2win;
+using namespace mgo2mt;
 static void check(bool ok,const char*why){if(!ok)throw std::runtime_error(why);}
 struct Pair {
  host::Hello clientHello,serverHello;host::Machine client;host::DedicatedPeer server;

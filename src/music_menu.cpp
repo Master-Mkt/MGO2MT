@@ -6,7 +6,7 @@
 #include <cstring>
 #include <stdexcept>
 
-namespace mgo2win {
+namespace mgo2mt {
 namespace {constexpr int left=180,top=192,width=920,rowHeight=40,rows=8;}
 MusicMenu::MusicMenu(){
  dc_=CreateCompatibleDC(nullptr);BITMAPINFO info{};info.bmiHeader.biSize=sizeof(BITMAPINFOHEADER);

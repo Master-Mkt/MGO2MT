@@ -1,6 +1,6 @@
 #pragma once
 #include "tournament_invitation.h"
-namespace mgo2win::invitations {
+namespace mgo2mt::invitations {
 constexpr bool asynchronous(uint16_t opcode){return opcode==notification_opcode||opcode==answer_reply_opcode;}
 // A malformed asynchronous notification is consumed, never returned as an RPC
 // reply. The framed transport has already verified its sequence and MAC.

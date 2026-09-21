@@ -1,7 +1,7 @@
 #pragma once
 #include "water_effects.h"
 #include <map>
-namespace mgo2win::stage {
+namespace mgo2mt::stage {
 // Cosmetic finite-surface crossings; no water volume, damage, speed or audio.
 // All counts, trajectory and time limits here are explicit native choices.
 struct WaterSurfaceScope {uint64_t epoch=0,scene=0;bool operator==(const WaterSurfaceScope&)const=default;};

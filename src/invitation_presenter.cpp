@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <limits>
 
-namespace mgo2win::invitation_ui {
+namespace mgo2mt::invitation_ui {
 namespace {
 std::wstring wide(const std::string& s){
  if(s.empty()||s.size()>2048)return {};const int n=MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,s.data(),int(s.size()),nullptr,0);if(n<=0)return {};

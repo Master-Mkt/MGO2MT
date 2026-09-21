@@ -1,7 +1,7 @@
 #pragma once
 #include "motion_blend_settings.h"
 #include <windows.h>
-namespace mgo2win::motion_blend {
+namespace mgo2mt::motion_blend {
 class Dialog {
  HWND window_=nullptr;Settings* settings_=nullptr;std::filesystem::path path_;
  static INT_PTR CALLBACK procedure(HWND,UINT,WPARAM,LPARAM);

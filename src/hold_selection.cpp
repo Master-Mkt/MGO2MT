@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <set>
 
-namespace mgo2win::hold_selection {
+namespace mgo2mt::hold_selection {
 bool State::valid(const Snapshot& value){
  const auto& s=value.scope;
  if(!s[0]||!s[1]||!s[2]||s[3]>=24||!s[4]||s[4]>65535||!s[5]||s[5]>UINT32_MAX||!s[6]||s[6]>UINT32_MAX||value.weapons.size()+value.equipment.size()>255)return false;

@@ -6,7 +6,7 @@
 #include <cmath>
 #include <cstring>
 #include <stdexcept>
-namespace mgo2win::sop {
+namespace mgo2mt::sop {
 namespace {
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
@@ -30,8 +30,8 @@ void capsule(DollMesh& m,Vec3 a,Vec3 b,float radius){
   for(unsigned s=0;s<slices;++s){float angle=2*pi*float(s)/slices;m.vertices.push_back(add(center,add(mul(side,std::cos(angle)*radial),mul(other,std::sin(angle)*radial))));}}
  for(unsigned r=0;r+1<rings;++r)for(unsigned s=0;s<slices;++s){auto x=base+r*slices+s,y=base+r*slices+(s+1)%slices;m.indices.insert(m.indices.end(),{x,y,x+slices,y,y+slices,x+slices});}
 }
-bool camera_valid(const WorldView& c){if(!finite(c.eye)||!finite(c.direction)||!std::isfinite(c.aspect)||c.aspect<=0||c.aspect>32)return false;return length(c.direction)>.032f&&c.direction[0]*c.direction[0]+c.direction[2]*c.direction[2]>.00001f;}
-XMMATRIX vp(const WorldView& c){return XMMatrixLookToLH(XMVectorSet(c.eye[0],c.eye[1],c.eye[2],1),XMVectorSet(c.direction[0],c.direction[1],c.direction[2],0),XMVectorSet(0,1,0,0))*world_projection(c.aspect);}
+bool camera_valid(const WorldView& c){if(!finite(c.eye)||!finite(c.direction)||!std::isfinite(c.aspect)||c.aspect<=0||c.aspect>32||!valid_vertical_fov(c.verticalFov))return false;return length(c.direction)>.032f&&c.direction[0]*c.direction[0]+c.direction[2]*c.direction[2]>.00001f;}
+XMMATRIX vp(const WorldView& c){return XMMatrixLookToLH(XMVectorSet(c.eye[0],c.eye[1],c.eye[2],1),XMVectorSet(c.direction[0],c.direction[1],c.direction[2],0),XMVectorSet(0,1,0,0))*world_projection(c.aspect,c.verticalFov);}
 struct Constants {XMFLOAT4X4 wvp,world;XMFLOAT4 color,scan;XMFLOAT4 center;};
 static_assert(sizeof(Constants)==176);
 }

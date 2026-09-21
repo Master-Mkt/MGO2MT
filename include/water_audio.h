@@ -4,7 +4,7 @@
 #include <map>
 #include <span>
 #include <vector>
-namespace mgo2win::water_audio {
+namespace mgo2mt::water_audio {
 // Explicit native presentation, NOT a recovered original human-water cue.
 inline constexpr const wchar_t* filename=L"native_water_step.wav";
 struct Scope {uint64_t epoch=0,scene=0;bool operator==(const Scope&)const=default;};

@@ -1,7 +1,7 @@
 #include "host_placements.h"
 #include "stage_lighting.h"
 #include <iostream>
-using namespace mgo2win::host;
+using namespace mgo2mt::host;
 static void check(bool ok,const char*s){if(!ok)throw std::runtime_error(s);}
 static void feed(PlacementReceiver&r,uint8_t generation,uint16_t id,uint8_t type=113){
  std::vector<uint8_t>a{0,0x64,uint8_t(id),uint8_t(id>>8),24,0};
@@ -41,7 +41,7 @@ int main(){try{
  late.receive(std::array<uint8_t,4>{0xe0,2,3,5});
  check(first.values()==std::vector<uint8_t>({1,129,2})&&late.values()==first.values(),"late join and live updates reproduce identical heterogeneous object states");
  check(first.initial_values()==std::vector<uint8_t>({0,0,0})&&late.initial_values()==late.values(),"late-join baseline distinguishes restoration from new destruction");
- mgo2win::stage::Lighting lights;mgo2win::stage::PointLight p;p.position={0,2,0};p.color={1,1,1};p.range=p.extendedRange=4;p.flags=0x100;p.identity={0x101,7,123,{-10,-10,-10},{10,10,10}};lights.points.push_back(p);
+ mgo2mt::stage::Lighting lights;mgo2mt::stage::PointLight p;p.position={0,2,0};p.color={1,1,1};p.range=p.extendedRange=4;p.flags=0x100;p.identity={0x101,7,123,{-10,-10,-10},{10,10,10}};lights.points.push_back(p);
  check(lights.sample({0,0,0},{0,1,0}).color[0]==.5f,"fixture is visibly illuminated");
  if(objects.values()[0])lights.enable(123,~0u,false);
  check(lights.sample({0,0,0},{0,1,0}).color[0]==0,"late-join broken state disables its light");

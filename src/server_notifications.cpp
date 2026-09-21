@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <limits>
 #include <stdexcept>
-namespace mgo2win::notifications {
+namespace mgo2mt::notifications {
 namespace {
 bool valid(Scope s){return s.connection&&s.generation&&s.character;}
 bool valid(Kind k){return unsigned(k)<3;}

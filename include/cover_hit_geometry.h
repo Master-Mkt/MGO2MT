@@ -1,7 +1,7 @@
 #pragma once
 #include "host_hit_geometry.h"
 #include <cmath>
-namespace mgo2win::combat::cover {
+namespace mgo2mt::combat::cover {
 // Conservative native exposure proxy: retain the normal body and add displaced
 // upper-body BOX regions. Feet/legs never teleport, and leaning grants no safe
 // hole where the normal torso stood. Original animated region policy is unknown.

@@ -6,7 +6,7 @@
 #include <optional>
 #include <stdexcept>
 
-namespace mgo2win {
+namespace mgo2mt {
 // Original shared block 0x1770F80. These FP logical parameters are NOT
 // serialized MDN P0..7, nor VP transform constants bearing the same numbers.
 // Evidence: color-uniform-followup-20260915/analysis_findings.json.

@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <optional>
-namespace mgo2win::combat::material_audio {
+namespace mgo2mt::combat::material_audio {
 enum class Stage : uint8_t { unknown, n022a, n001a, n004a, n023a };
 Stage stage_for_map(uint8_t map) noexcept;
 // Verified GCX conversion, first value selected by current 0x77028.

@@ -6,7 +6,7 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 void check(bool b,const char*s){if(!b)throw std::runtime_error(s);}
 items::ClientState state(){items::ClientState s;s.connection=9;s.status=items::ClientStatus::ready;s.context={{1,2},{0,7,100,1},{0,4,0,0},true};s.world=items::SnapshotState{{1,2},1,{1024,1024},{}};items::Entity e;e.key={{1,2},1};e.position={0,4,1000,0};e.contents.item=25;e.contents.quantity=1;s.world->entities.push_back(e);return s;}
 int main(int argc,char**argv){try{

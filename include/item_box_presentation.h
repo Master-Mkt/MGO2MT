@@ -5,7 +5,7 @@
 #include "character_renderer.h"
 #include "shadow_renderer.h"
 #include <map>
-namespace mgo2win::item_box {
+namespace mgo2mt::item_box {
 inline constexpr size_t maximum_visible=128;
 enum class Asset:uint8_t {large,medium,smallBox,unavailable};
 // Visual source selection is independent of the unchanged HOST size profile.

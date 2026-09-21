@@ -2,8 +2,9 @@
 #include "enemy_tag_target.h"
 #include "stage_navigation.h"
 #include <iostream>
+#include <limits>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 void check(bool b,const char*m){if(!b)throw std::runtime_error(m);}
 int main(){try{
  using namespace DirectX;
@@ -22,6 +23,12 @@ int main(){try{
  check(left&&left->x<640,"source positive X is screen left when looking positive Z");
  auto nearPoint=XMVector3TransformCoord(XMVectorSet(0,0,10,1),world_projection(1));auto farPoint=XMVector3TransformCoord(XMVectorSet(0,0,500000,1),world_projection(1));
  check(std::abs(XMVectorGetZ(nearPoint)-1)<1e-5&&std::abs(XMVectorGetZ(farPoint))<1e-5,"reverse Z unchanged");
+ for(float fov:{.15f,.4f,1.f,1.5f})for(float aspect:{1.f,16.f/9}){
+  const combat::Vec3 point{20,30,1000};auto p=enemy_tag::project(point,{0,0,0},{0,0,1},0,0,1280,720,aspect,fov);check(p.has_value(),"zoom point remains visible");
+  auto clip=XMVector3TransformCoord(XMVectorSet(20,30,1000,1),world_projection(aspect,fov));check(std::abs((XMVectorGetX(clip)+1)*640-p->x)<1.01f&&std::abs((1-XMVectorGetY(clip))*360-p->y)<1.01f,"GPU and CPU labels follow same lens on both axes");
+  auto depth=XMVector3TransformCoord(XMVectorSet(0,0,1000,1),world_projection(aspect));check(XMVectorGetZ(clip)==XMVectorGetZ(depth),"lens does not alter reverse depth");
+ }
+ for(float fov:{0.f,-1.f,3.2f,std::numeric_limits<float>::quiet_NaN()})check(!enemy_tag::project({0,0,1000},{0,0,0},{0,0,1},0,0,1280,720,16.f/9,fov),"invalid lens cannot project a HUD target");
  combat::cover::State state;state.lean=1;check(combat::cover::eye_offset(state,0)[0]<0,"right lean follows source camera right");
  std::cout<<"Source camera/CPU projection/navigation/lean/depth PASS\n";return 0;
 }catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}

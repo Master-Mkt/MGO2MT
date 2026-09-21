@@ -7,7 +7,7 @@
 #include <fstream>
 #include <iostream>
 #include <thread>
-using namespace mgo2win;using Microsoft::WRL::ComPtr;
+using namespace mgo2mt;using Microsoft::WRL::ComPtr;
 namespace {
 void check(bool x,const char* m){if(!x)throw std::runtime_error(m);}
 void ok(HRESULT h){check(SUCCEEDED(h),"BB D3D11 WARP");}

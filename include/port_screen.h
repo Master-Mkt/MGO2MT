@@ -8,7 +8,7 @@
 #include <functional>
 #include "controller_panel.h"
 #include "graphics_settings.h"
-namespace mgo2win {
+namespace mgo2mt {
 class PortScreen {
  uint16_t fixedPort_=0;
  std::filesystem::path store_;PortSettings settings_;PortReservation reservation_;PortResult result_;

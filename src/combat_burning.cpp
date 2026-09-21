@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
-namespace mgo2win::combat::burning {
+namespace mgo2mt::combat::burning {
 namespace {
 bool finite(Vec3 p){for(float x:p)if(!std::isfinite(x)||std::abs(x)>=1000000)return false;return true;}
 bool capsule(stage::Capsule c){return std::isfinite(c.radius)&&std::isfinite(c.height)&&c.radius>0&&c.radius<=2000&&c.height>=2*c.radius&&c.height<=10000;}
@@ -40,7 +40,7 @@ bool Replay::accept(Source source,uint64_t value){
  for(auto& s:channels)if(!s.serial){s={source,value};return true;}
  return false; // No eviction/replay resurrection on an exhausted epoch ledger.
 }
-bool valid(const Blast& b)noexcept{return valid(b.source.actor)&&b.source.team<=2&&b.serial&&b.source.weapon&&finite(b.position)&&std::isfinite(b.radius)&&b.radius>0&&b.radius<=20000&&b.damage<=1000000&&(b.damage||b.ignite);}
+bool valid(const Blast& b)noexcept{return valid(b.source.actor)&&b.source.team<=2&&b.serial&&b.source.weapon&&finite(b.position)&&std::isfinite(b.radius)&&b.radius>0&&b.radius<=20000&&b.damage<=1000000&&b.staminaDamage<=1000000&&(b.damage||b.ignite||b.staminaDamage);}
 bool exposed(const Blast& b,Vec3 feet,stage::Capsule c,const stage::Collision* world,const stage::Collision* objects){
  if(!valid(b)||!finite(feet)||!capsule(c))return false;
  Vec3 axis=feet;axis[1]=(std::clamp)(b.position[1],feet[1]+c.radius,feet[1]+c.height-c.radius);

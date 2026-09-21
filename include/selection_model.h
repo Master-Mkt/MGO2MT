@@ -1,7 +1,7 @@
 #pragma once
 #include "character_model.h"
 #include "player_motion.h"
-namespace mgo2win {
+namespace mgo2mt {
 // The existing PC catalog subtracts the first original lobby root (Y=1081).
 // Gameplay banks retain raw actor coordinates; only this preview adapter shifts.
 inline float selection_origin_y(const PlayerMotionBank& bank){auto*clip=bank.find(PlayerMotion::SelectionSalute);return clip&&!clip->roots.empty()?clip->roots.front()[1]:0.f;}

@@ -3,11 +3,11 @@
 #include <limits>
 #include <new>
 #include <set>
-namespace mgo2win::items {
+namespace mgo2mt::items {
 namespace {
 bool valid(Actor a){return a.slot<24&&a.instance&&a.character&&a.life;}
 bool same_identity(Actor a,Actor b){return a.slot==b.slot&&a.instance==b.instance&&a.character==b.character;}
-bool valid(Position p){return std::isfinite(p.x)&&std::isfinite(p.y)&&std::isfinite(p.z)&&std::isfinite(p.yaw);}
+bool valid(Position p){const float length=p.nx*p.nx+p.ny*p.ny+p.nz*p.nz;return std::isfinite(p.x)&&std::isfinite(p.y)&&std::isfinite(p.z)&&std::isfinite(p.yaw)&&std::isfinite(length)&&std::abs(length-1.f)<.001f;}
 bool valid(const Contents& c){
  if(!c.item||!c.quantity||c.domain>Domain::world_item)return false;
  switch(c.resource){case Resource::durable:return !c.magazine&&!c.reserve&&!c.charges;
@@ -62,6 +62,24 @@ Result WorldInventory::install(const Request& r,HeldSlot& held,uint64_t revision
  Entity e{{scope_,nextId_},1,PlacementKind::installed,r.actor,contents,position};
  try{entities_.emplace(nextId_,e);}catch(const std::bad_alloc&){return {ResultCode::capacity};}
  ++nextId_;held.contents.quantity-=quantity;if(!held.contents.quantity)held.contents={};++held.revision;++revision_;return {ResultCode::ok,e};
+}
+Result WorldInventory::deploy(Actor actor,HeldSlot& held,uint64_t expected,Position position){
+ std::lock_guard lock(mutex_);auto peer=peers_.find(actor.character);
+ if(!valid(actor)||peer==peers_.end()||peer->second.actor!=actor)return {ResultCode::identity};
+ if(!expected||held.revision!=expected)return {ResultCode::stale};
+ if(!valid(held.contents)||!valid(position)||held.contents.domain!=Domain::weapon||held.contents.resource!=Resource::ammunition||!held.contents.magazine)return {ResultCode::invalid};
+ if(held.contents.item!=64&&held.contents.item!=65&&held.contents.item!=66&&held.contents.item!=67&&held.contents.item!=69)return {ResultCode::policy};
+ if(count(entities_,PlacementKind::installed)>=capacity_.installed)return {ResultCode::capacity};
+ if(revision_==UINT64_MAX||held.revision==UINT64_MAX||!nextId_||nextId_==UINT64_MAX)return {ResultCode::exhausted};
+ auto contents=held.contents;contents.magazine=1;contents.reserve=0;
+ Entity e{{scope_,nextId_},1,PlacementKind::installed,actor,contents,position};
+ try{entities_.emplace(nextId_,e);}catch(const std::bad_alloc&){return {ResultCode::capacity};}
+ ++nextId_;--held.contents.magazine;++held.revision;++revision_;return {ResultCode::ok,e};
+}
+bool WorldInventory::erase_deployed(EntityKey key,uint64_t expected){
+ std::lock_guard lock(mutex_);if(key.scope!=scope_||revision_==UINT64_MAX)return false;
+ auto it=entities_.find(key.id);if(it==entities_.end()||it->second.revision!=expected||it->second.kind!=PlacementKind::installed)return false;
+ entities_.erase(it);++revision_;return true;
 }
 Result WorldInventory::pickup(const Request& r,EntityKey key,uint64_t revision,HeldSlot& destination,uint64_t heldRevision){
  std::lock_guard lock(mutex_);auto code=begin(r);if(code!=ResultCode::ok)return {code};

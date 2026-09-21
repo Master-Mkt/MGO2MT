@@ -10,7 +10,7 @@
 #include <array>
 #include <charconv>
 #include <vector>
-namespace mgo2win::items {
+namespace mgo2mt::items {
 namespace {
 enum {listId=100,dropId,emptyId,droppedId,installedId,recoverId,nameId};
 std::wstring wide(std::string_view s){if(s.empty())return {};int n=MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,s.data(),int(s.size()),nullptr,0);if(n<=0)return L"?";std::wstring out(size_t(n),L'\0');MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,s.data(),int(s.size()),out.data(),n);return out;}

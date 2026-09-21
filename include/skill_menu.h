@@ -3,7 +3,7 @@
 #include "skill_settings.h"
 #include "weapon_icons.h"
 
-namespace mgo2win {
+namespace mgo2mt {
 class SkillMenu {
  HDC dc_=nullptr;HBITMAP bitmap_=nullptr;HGDIOBJ old_=nullptr;HFONT font_=nullptr;void* pixels_=nullptr;
  std::shared_ptr<const skills::Catalog> catalog_;std::unique_ptr<skills::Editor> editor_;weapons::Icons icons_;

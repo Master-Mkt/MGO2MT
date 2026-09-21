@@ -2,11 +2,11 @@
 #include <chrono>
 #include <fstream>
 #include <iostream>
-using namespace mgo2win;
+using namespace mgo2mt;
 static void check(bool ok,const char* what){if(!ok)throw std::runtime_error(what);}
 int main(){try{
  namespace fs=std::filesystem;
- const auto dir=fs::temp_directory_path()/("mgo2win-round-music-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+ const auto dir=fs::temp_directory_path()/("mgo2mt-round-music-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
  fs::create_directory(dir);
  {std::ofstream f(dir/"bgm_mgo_sneak01.wav");f<<"fixture existence only; PCM validated separately";}
  stage::MusicLibrary library;

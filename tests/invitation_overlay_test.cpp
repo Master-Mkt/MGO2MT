@@ -6,7 +6,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <vector>
-using namespace mgo2win::invitation_ui;
+using namespace mgo2mt::invitation_ui;
 namespace {
 void check(bool b,const char*why){if(!b)throw std::runtime_error(why);}
 void bmp(const std::filesystem::path&path,const std::vector<uint32_t>&pixels){

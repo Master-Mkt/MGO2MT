@@ -2,7 +2,7 @@
 #include <cstring>
 #include <cmath>
 #include <stdexcept>
-namespace mgo2win {
+namespace mgo2mt {
 CharacterModel::CharacterModel(std::span<const char> b,ModelExtent extent){
  auto require=[](bool ok){if(!ok)throw std::runtime_error("Invalid GWM1 character model");};
  require(b.size()>=48&&b.size()<=64*1024*1024&&!std::memcmp(b.data(),"GWM1",4));

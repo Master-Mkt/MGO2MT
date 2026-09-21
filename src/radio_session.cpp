@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <limits>
 #include <utility>
-namespace mgo2win::radio {
+namespace mgo2mt::radio {
 void Session::reset_locked(){const auto generation=state_.generation+1;state_={};state_.generation=generation;client_.bind(0,{});queued_.reset();flight_=0;deadline_=lastSend_=lastNow_=0;everSent_=false;events_.clear();}
 void Session::disconnect(){std::lock_guard lock(mutex_);reset_locked();}
 SessionState Session::state()const{std::lock_guard lock(mutex_);return state_;}

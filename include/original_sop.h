@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <optional>
 
-namespace mgo2win::original_sop {
+namespace mgo2mt::original_sop {
 // Current ELF 81A028; original coordinate units, 65536 yaw units/turn.
 enum class Branch { status22, status140 };
 struct Position { float x{}, y{}, z{}; };
@@ -100,4 +100,4 @@ struct Groups {
         }
     }
 };
-} // namespace mgo2win::original_sop
+} // namespace mgo2mt::original_sop

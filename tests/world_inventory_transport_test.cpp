@@ -5,7 +5,7 @@
 #include "combat_initial_profile.h"
 #include <iostream>
 #include <deque>
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {
 void check(bool v,const char*why){if(!v)throw std::runtime_error(why);}
 const host::Hello serverHello{100,0x12345678,2,1,{{{192,0,2,1},5740}}};
@@ -40,8 +40,8 @@ int main(){try{
  const auto pageRevision=p.session.state().world->revision+1;
  items::SnapshotState snapshot{p.context.scope,pageRevision,{4096,4096},{}};
  for(uint64_t i=1;i<=529;++i)snapshot.entities.push_back({{snapshot.scope,i},1,items::PlacementKind::dropped,p.context.actor,{25,1,30,90,0,items::Resource::ammunition},{float(i),2,3,0}});
- auto pages=items::wire::pages(snapshot,held.header);check(pages&&pages->size()==34,"capacity extension requires more pages than inbox and pending limits");
- auto full=*items::wire::encode(pages->front());check(full.size()==1172,"actual maximum page1172");
+ auto pages=items::wire::pages(snapshot,held.header);check(pages&&pages->size()==41,"capacity extension requires more pages than inbox and pending limits");
+ auto full=*items::wire::encode(pages->front());check(full.size()==1124,"actual full 13-row page1124");
  std::deque<std::vector<uint8_t>> outgoing;for(const auto& page:*pages)outgoing.push_back(*items::wire::encode(page));
  unsigned queued=0;while(!outgoing.empty()&&p.server.optional_queue(outgoing.front(),700)){outgoing.pop_front();++queued;}
  check(queued==24&&!outgoing.empty()&&!p.server.closed(),"24optional slots apply backpressure without closing");
@@ -51,7 +51,7 @@ int main(){try{
   p.tick(now,now==700);
  }
  p.tick(now);check(outgoing.empty()&&p.session.state().world&&p.session.state().world->revision==pageRevision&&p.session.state().world->entities.size()==529,"all pages atomically delivered through reliable encrypted queue with packet loss");
- check(p.largestDatagram>1172&&p.largestDatagram<=host::max_datagram,"encrypted1172page fits original2048 datagram limit");
+ check(p.largestDatagram>1124&&p.largestDatagram<=host::max_datagram,"encrypted1124page fits original2048 datagram limit");
  check(p.loss>=1,"deterministic first-page loss exercised reliable retransmission");
  check(p.client.result().stage==host::Stage::joined&&!p.server.closed(),"paging leaves room alive");
  // Same revision and stale identity/token packets are syntactically valid but
@@ -85,7 +85,7 @@ int main(){try{
   check(bool(loaded.authority.item_action(seed,command,2000)),"seed real world entity");check(loaded.authority.leave(seed),"seed actor exits without deleting world item");
  }
  check(loaded.authority.item_state().entities.size()==529,"actual expanded world queue");loaded.inventory.poll(loaded.authority,2000);
- check(loaded.inventory.front(id)&&loaded.inventory.front(id)->size()==1172,"actual paged snapshot pending");
+ check(loaded.inventory.front(id)&&loaded.inventory.front(id)->size()==1124,"actual paged snapshot pending");
  check(loaded.authority.pose(id,7,1,{{0,2,0},0,0},2000,1)==combat::Reject::none,"fresh concurrent command pose");
  check(loaded.session.submit(items::wire::Action::drop,0),"UI command while 34 pages remain pending");
  for(uint64_t at=2000;at<2100;at+=10)loaded.tick(at);
@@ -96,6 +96,6 @@ int main(){try{
  for(uint64_t at=2100;at<4000;at+=10)loaded.tick(at);
  check(loaded.session.state().world&&loaded.session.state().world->entities.size()==530&&loaded.session.state().held->slots[0].contents.item==0,"latest full world converges after priority ACK");
  const auto replica=loaded.client.result().combat_state;check(replica&&replica->players[id.slot]&&replica->players[id.slot]->identity==id&&replica->players[id.slot]->weapon==0&&replica->players[id.slot]->ammo==0&&replica->players[id.slot]->reserve==0,"Machine replica accepts valid unarmed GWCB self after drop");
- std::cout<<"world_inventory_transport_test PASS: encrypted1172pages,34page backpressure/loss/duplicates, held binding, authoritative replay and2000 ceiling; largest="<<p.largestDatagram<<'\n';return 0;
+ std::cout<<"world_inventory_transport_test PASS: encrypted1124pages,41page backpressure/loss/duplicates, held binding, authoritative replay and2000 ceiling; largest="<<p.largestDatagram<<'\n';return 0;
 }catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}
 

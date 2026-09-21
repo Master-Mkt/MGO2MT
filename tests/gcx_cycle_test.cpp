@@ -8,7 +8,7 @@
 #include <sstream>
 #include <stdexcept>
 
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {
 void check(bool value,const char* message){if(!value)throw std::runtime_error(message);}
 template<class F> void rejects(F&& operation,const char* message){bool failed=false;try{operation();}catch(const std::exception&){failed=true;}check(failed,message);}
@@ -121,7 +121,7 @@ int main(int argc,char** argv){const char* phase="fixture";try{
  check(cycle.service().preparation(late,2)&&!cycle.service().preparation(late,2)->players[2]->loaded,"late join must separately load the same scene");
  cycle.poll(1001);check(cycle.service().ended(),"native clock expires");cycle.service().deliveries();
  const auto beforeRequest=cycle.request();const auto beforeScene=scene(cycle,0);const auto beforeItems=cycle.service().authority().item_state();auto beforeWorld=cycle.world();
- write(sidecar,"MGO2WIN.GCX_ROUND_ITEMS 1 20 verified\ngroups 1\ngroup 1 1434838 140 equipment 22 1\nanchor 5561776 6339210 900000 0 900000 0\n");
+ write(sidecar,"MGO2MT.GCX_ROUND_ITEMS 1 20 verified\ngroups 1\ngroup 1 1434838 140 equipment 22 1\nanchor 5561776 6339210 900000 0 900000 0\n");
  rejects([&]{cycle.advance(1002);},"unsupported floor rejects the complete next candidate");
  check(cycle.epoch()==1&&cycle.request()==beforeRequest&&cycle.world()==beforeWorld&&scene(cycle,0)==beforeScene,"failed candidate never publishes removed boxes/new world");
  check(cycle.service().authority().item_state().entities==beforeItems.entities,"failed candidate preserves previous item IDs and positions");
@@ -133,7 +133,7 @@ int main(int argc,char** argv){const char* phase="fixture";try{
  stage::SceneReceiver oldReceiver(cycle.objects()->registry(),1);oldReceiver.begin(beforeRequest);check(!oldReceiver.receive(cycle.request(),*cycle.objects()->snapshot(1)),"old scene identity cannot accept new generation");
  // Missing research stays distinct from an authored empty layout. Explicit
  // edits are never silently discarded while the source is unavailable.
- write(sidecar,"MGO2WIN.GCX_ROUND_ITEMS 1 20 unavailable\ngroups 0\n");
+ write(sidecar,"MGO2MT.GCX_ROUND_ITEMS 1 20 unavailable\ngroups 0\n");
  phase="unavailable and invalid candidate rejection";
  rejects([&]{combat::Cycle bad(options,catalog,random);},"unavailable source rejects explicit replacements");
  auto noEdits=options;noEdits.roundItems.replacements.clear();noEdits.roundItems.enabled=false;

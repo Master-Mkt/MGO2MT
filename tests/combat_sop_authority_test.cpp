@@ -1,7 +1,7 @@
 #include "combat_authority.h"
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;using namespace mgo2win::combat;
+using namespace mgo2mt;using namespace mgo2mt::combat;
 namespace {
 void check(bool p,const char*m){if(!p)throw std::runtime_error(m);}
 constexpr Identity a{0,10,100},b{1,11,101},c{2,12,102},d{3,13,103};

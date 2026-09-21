@@ -2,7 +2,7 @@
 #include <array>
 #include <optional>
 #include <string_view>
-namespace mgo2win::player {
+namespace mgo2mt::player {
 enum class Stance {standing,crouching,prone};
 enum class Motion {idle,walk,run,crouch_idle,crouch_walk,prone_idle,prone_forward,prone_backward,supine_idle,supine_forward,supine_backward,dead_prone,dead_supine,aim,reload,roll,backstep};
 enum class Evade {none,roll,backstep,rollLeft,rollRight};

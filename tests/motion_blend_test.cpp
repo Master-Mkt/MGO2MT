@@ -4,7 +4,7 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 static void check(bool ok,const char* why){if(!ok)throw std::runtime_error(why);}
 static bool close(double a,double b,double epsilon=1e-5){return std::abs(a-b)<=epsilon;}
 static MotionPose sample(float y=0,std::array<float,4> q={0,0,0,1}){

@@ -6,7 +6,7 @@
 #include <span>
 #include <mutex>
 
-namespace mgo2win::clan {
+namespace mgo2mt::clan {
 struct Image {
  static constexpr unsigned width=32,height=32;
  // Native top-down BGRA. Original index zero is transparent; others are opaque.

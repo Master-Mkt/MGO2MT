@@ -1,0 +1,13 @@
+{
+  "format": "MGO2MT.UI_LAYOUT.1",
+  "width": 1280,
+  "height": 720,
+  "elements": [
+    {"id":"demo-panel","kind":"panel","anchor":"bottom-left","x":32,"y":-32,"width":360,"height":96,"color":[15,27,42,220],"z":100},
+    {"id":"demo-accent","kind":"panel","anchor":"bottom-left","x":32,"y":-32,"width":5,"height":96,"color":[58,207,197,255],"z":101},
+    {"id":"demo-heading","kind":"text","anchor":"bottom-left","x":52,"y":-84,"width":320,"height":28,"text":"CUSTOM UI PREVIEW","fontSize":20,"color":[225,242,246,255],"z":102},
+    {"id":"demo-detail","kind":"text","anchor":"bottom-left","x":52,"y":-48,"width":320,"height":28,"text":"Shared game / designer renderer","fontSize":15,"color":[160,188,202,255],"z":102},
+    {"id":"title-prompt","kind":"text","screen":"title","anchor":"bottom-right","x":-40,"y":-44,"width":260,"height":30,"text":"PRESS START","fontSize":24,"color":[235,244,247,255],"z":100},
+    {"id":"player-label","kind":"text","screen":"hud","anchor":"top-left","x":40,"y":30,"width":300,"height":32,"text":"Player","bind":"playerName","fontSize":24,"color":[235,244,247,255],"z":100}
+  ]
+}

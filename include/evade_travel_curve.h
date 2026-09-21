@@ -1,31 +1,74 @@
 #pragma once
 #include <array>
+#include <atomic>
+#include <bit>
 #include <cmath>
 #include <cstddef>
-namespace mgo2win::combat::evade_runtime {
-// Exact root-Z float samples from reviewed evade.gwmot, source56/57.
-// Source archive and bank are unchanged. The native physical curve below caps
-// each frame at 6000 units/s, discards reverse jitter and forces recover35..45
-// stationary. Capped displacement is never carried into a later stopped frame.
-inline constexpr std::array<float,41> roll_source_z{-6.f,-6.f,20.328125f,101.875f,242.5f,446.f,686.5f,931.f,1172.f,1404.f,1621.f,1827.f,2022.f,2204.f,2376.f,2538.f,2686.f,2824.f,2952.f,3068.f,3172.f,3268.f,3350.f,3422.f,3484.f,3534.f,3576.f,3614.f,3648.f,3678.f,3706.f,3736.f,3764.f,3792.f,3820.f,3850.f,3884.f,3920.f,3956.f,3994.f,4032.f};
-inline constexpr std::array<float,46> recover_source_z{4070.f,4070.f,4108.f,4148.f,4188.f,4224.f,4264.f,4304.f,4348.f,4388.f,4432.f,4472.f,4508.f,4548.f,4584.f,4620.f,4652.f,4684.f,4712.f,4736.f,4756.f,4766.f,4776.f,4816.f,4832.f,4844.f,4860.f,4868.f,4876.f,4884.f,4892.f,4900.f,4908.f,4912.f,4920.f,4924.f,4924.f,4928.f,4928.f,4928.f,4924.f,4924.f,4924.f,4924.f,4924.f,4924.f};
+#include <cstdint>
+#include <filesystem>
+#include <fstream>
+#include <memory>
+#include <stdexcept>
+#include <string>
+namespace mgo2mt::combat::evade_runtime {
 inline constexpr float travel_speed_cap=6000.f;
 inline constexpr double travel_fps=60.;
 inline constexpr size_t recover_stop_frame=35;
-inline constexpr auto travel_distances=[] {
- std::array<float,86> out{};size_t k=1;
- auto append=[&](float delta){delta=delta<0?0:delta>100?100:delta;out[k]=out[k-1]+delta;++k;};
- for(size_t i=1;i<roll_source_z.size();++i)append(roll_source_z[i]-roll_source_z[i-1]);
- for(size_t i=1;i<recover_source_z.size();++i)append(i>recover_stop_frame?0:recover_source_z[i]-recover_source_z[i-1]);
- return out;
+struct Curve {
+ std::array<float,41> roll{};
+ std::array<float,46> recover{};
+ std::array<float,86> distances{};
+};
+enum class ResourceStatus:uint8_t {native_fallback,local_resource,invalid_resource};
+inline std::atomic<std::shared_ptr<const Curve>> local_curve{};
+// Authored mathematical substitute, not sampled animation: smooth 3.5m travel
+// over 1.25s, then stationary recovery. Its peak speed is below the HOST cap.
+inline constexpr auto fallback_distances=[] {
+ std::array<float,86> result{};
+ for(size_t i=0;i<result.size();++i){float t=i>=75?1.f:float(i)/75.f;result[i]=3500.f*t*t*(3.f-2.f*t);}
+ return result;
 }();
-// Pure cumulative distance: call differences at action ages, not an integrated
-// per-tick speed. Finite huge times clamp; negative/NaN/infinite input returns0.
-// Exact source phase duration85/60s; caller's1417ms expiry adds no extra travel.
+inline std::shared_ptr<const Curve> source_profile() noexcept{return local_curve.load();}
+inline bool using_local_resource() noexcept{return bool(local_curve.load());}
+// GWEVAD1: 8-byte magic; LE u32 version/roll count/recover count/reserved
+// (1/41/46/0); then 87 LE IEEE float32 root-Z samples. Not a public asset.
+// Missing or invalid resources reset to the authored fallback. Invalid inputs
+// return a diagnostic so callers can reject startup instead of hiding a fault.
+inline ResourceStatus configure(const std::filesystem::path&file,std::string&error) noexcept {
+ error.clear();
+ try {
+  std::error_code ec;const bool exists=std::filesystem::exists(file,ec);
+  if(ec)throw std::runtime_error("Evade travel resource cannot be inspected");
+  if(!exists){local_curve.store({});return ResourceStatus::native_fallback;}
+  constexpr size_t size=24+87*4;
+  if(!std::filesystem::is_regular_file(file,ec)||ec||std::filesystem::file_size(file,ec)!=size||ec)
+   throw std::runtime_error("Invalid evade travel resource size/type");
+  std::array<unsigned char,size> bytes{};std::ifstream in(file,std::ios::binary);
+  if(!in.read(reinterpret_cast<char*>(bytes.data()),bytes.size())||in.peek()!=std::char_traits<char>::eof())
+   throw std::runtime_error("Cannot read complete evade travel resource");
+  constexpr std::array<unsigned char,8> magic{'G','W','E','V','A','D','1',0};
+  for(size_t i=0;i<magic.size();++i)if(bytes[i]!=magic[i])throw std::runtime_error("Invalid evade travel resource magic");
+  size_t at=8;auto word=[&]{uint32_t v=uint32_t(bytes[at])|uint32_t(bytes[at+1])<<8|uint32_t(bytes[at+2])<<16|uint32_t(bytes[at+3])<<24;at+=4;return v;};
+  if(word()!=1||word()!=41||word()!=46||word()!=0)throw std::runtime_error("Unsupported evade travel resource layout");
+  auto curve=std::make_shared<Curve>();
+  auto read=[&](auto&target){for(float&v:target){v=std::bit_cast<float>(word());if(!std::isfinite(v)||std::abs(v)>100000)throw std::runtime_error("Invalid evade travel sample");}};
+  read(curve->roll);read(curve->recover);
+  size_t k=1;auto append=[&](float delta){delta=delta<0?0:delta>100?100:delta;curve->distances[k]=curve->distances[k-1]+delta;++k;};
+  for(size_t i=1;i<curve->roll.size();++i)append(curve->roll[i]-curve->roll[i-1]);
+  for(size_t i=1;i<curve->recover.size();++i)append(i>recover_stop_frame?0:curve->recover[i]-curve->recover[i-1]);
+  if(curve->distances.back()<=0||curve->distances.back()>8500)throw std::runtime_error("Empty or unbounded evade travel curve");
+  local_curve.store(std::move(curve));return ResourceStatus::local_resource;
+ }catch(const std::exception&e){local_curve.store({});try{error=e.what();}catch(...){}return ResourceStatus::invalid_resource;}
+ catch(...){local_curve.store({});try{error="Evade travel resource error";}catch(...){}return ResourceStatus::invalid_resource;}
+}
+// Pure cumulative distance: call differences at action ages. Finite huge times
+// clamp; negative/NaN/infinite input returns zero. Both local and fallback
+// curves respect the same frame duration, speed ceiling and terminal stop.
 inline float distance_seconds(double seconds){
  if(!std::isfinite(seconds)||seconds<0)return 0;
- if(seconds>=85./60)return travel_distances.back();
+ const auto selected=local_curve.load();const auto&distances=selected?selected->distances:fallback_distances;
+ if(seconds>=85./60)return distances.back();
  const double f=seconds*travel_fps;const auto i=static_cast<size_t>(f);
- return float(double(travel_distances[i])+(double(travel_distances[i+1])-travel_distances[i])*(f-double(i)));
+ return float(double(distances[i])+(double(distances[i+1])-distances[i])*(f-double(i)));
 }
 }

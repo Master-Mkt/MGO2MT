@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <cmath>
 #include <set>
-namespace mgo2win::items {
+namespace mgo2mt::items {
 namespace {
 using V=stage::Vec3;
 V add(V a,V b){for(int i=0;i<3;++i)a[i]+=b[i];return a;}

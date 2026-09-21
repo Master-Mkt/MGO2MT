@@ -8,7 +8,7 @@
 #include <span>
 #include <string>
 #include <string_view>
-namespace mgo2win::notifications {
+namespace mgo2mt::notifications {
 enum class Kind:uint8_t {mail,tournament,survival};
 struct Scope {uint64_t connection=0,generation=0;uint32_t character=0;bool operator==(const Scope&)const=default;};
 // id is a stable arrival/message identifier within this scope, not a poll ID.

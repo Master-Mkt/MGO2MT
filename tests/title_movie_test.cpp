@@ -5,8 +5,8 @@
 #include <stdexcept>
 #include <string>
 
-using mgo2win::title_movie::Player;
-using mgo2win::title_movie::Status;
+using mgo2mt::title_movie::Player;
+using mgo2mt::title_movie::Status;
 namespace {
 void require(bool ok,const char* why){if(!ok)throw std::runtime_error(why);}
 struct Window {
@@ -14,7 +14,7 @@ struct Window {
  Window(){
   // Deliberately never shown or activated: tests must not interrupt another
   // app, synthesize input, or defeat the adapter's foreground pause policy.
-  handle=CreateWindowExW(WS_EX_NOACTIVATE,L"STATIC",L"MGO2WIN hidden title movie test",
+  handle=CreateWindowExW(WS_EX_NOACTIVATE,L"STATIC",L"MGO2MT hidden title movie test",
    WS_OVERLAPPEDWINDOW|WS_CLIPCHILDREN,0,0,640,480,nullptr,nullptr,GetModuleHandleW(nullptr),nullptr);
   require(handle!=nullptr,"hidden test parent creation");
  }
@@ -23,7 +23,7 @@ struct Window {
 struct CorruptFile {
  std::filesystem::path path;
  CorruptFile(){
-  path=std::filesystem::temp_directory_path()/(L"mgo2win-title-movie-invalid-"+
+  path=std::filesystem::temp_directory_path()/(L"mgo2mt-title-movie-invalid-"+
    std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64())+L".mp4");
   std::ofstream file(path,std::ios::binary);file<<"not an MP4\n";
   require(bool(file),"invalid local media fixture creation");

@@ -6,7 +6,7 @@
 #include <cstring>
 #include <stdexcept>
 
-namespace mgo2win {
+namespace mgo2mt {
 namespace {
 constexpr int left=138,top=202,listWidth=604,rowHeight=42,rows=8;
 std::wstring wide(const std::string&s){int n=MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,s.data(),int(s.size()),nullptr,0);std::wstring value(size_t(std::max(n,0)),0);if(n)MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,s.data(),int(s.size()),value.data(),n);return value;}

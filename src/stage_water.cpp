@@ -6,14 +6,13 @@
 #include <cstdint>
 #include <stdexcept>
 
-namespace mgo2win::stage {
-// CC5810 / 9FB98 / 19A428 / 18C1B0: normal player query requires attribute0x10.
-// Keep unknown attribute0 as conservative native collision. Full include/exclude
-// and primitive-header exceptions are not reconstructed by this adapter.
+namespace mgo2mt::stage {
+// Preserve raw source geometry; this immutable view contains player surfaces
+// and explicitly marked fall barriers, never None or another actor's triggers.
 std::shared_ptr<const Collision> movement_collision(std::shared_ptr<const Collision> input){
- if(!input||std::none_of(input->triangles.begin(),input->triangles.end(),[](const auto& t){return t.attribute&&!(t.attribute&0x10);}))return input;
+ if(!input||std::all_of(input->triangles.begin(),input->triangles.end(),[](const auto& t){return query::player.matches(t.attribute);}))return input;
  std::vector<CollisionTriangle> triangles;triangles.reserve(input->triangles.size());
- for(const auto& t:input->triangles)if(!t.attribute||(t.attribute&0x10))triangles.push_back(t);
+ for(const auto& t:input->triangles)if(query::player.matches(t.attribute))triangles.push_back(t);
  return std::make_shared<Collision>(Collision::make(input->vertices,std::move(triangles),input->materials));
 }
 namespace {

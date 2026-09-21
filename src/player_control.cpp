@@ -4,7 +4,7 @@
 #include "evade_travel_curve.h"
 #include <algorithm>
 #include <cmath>
-namespace mgo2win::player {
+namespace mgo2mt::player {
 void Control::cancel_evade(){if(evade_!=Evade::none){forward=right=speed=0;running=false;}evade_=Evade::none;evadeElapsed_=evadeDuration_=evadeSpeed_=0;evadeReviewedTravel_=false;evadeRequested=Evade::none;evadeStarted=false;evadeForward=evadeRight=evadeYaw=0;}
 bool Control::begin_evade(Evade kind,float duration,float movementSpeed,float lockedYaw){
  if((!is_roll(kind)&&kind!=Evade::backstep)||kind!=evadeRequested||evade_!=Evade::none||dead||stance!=Stance::standing||hostSpecial_||reloading()||

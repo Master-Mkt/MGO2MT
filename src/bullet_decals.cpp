@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
-namespace mgo2win::combat::decals {
+namespace mgo2mt::combat::decals {
 namespace {
 bool finite(Vec3 v){return std::all_of(v.begin(),v.end(),[](float f){return std::isfinite(f)&&std::abs(f)<1000000.f;});}
 float dot(Vec3 a,Vec3 b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];}

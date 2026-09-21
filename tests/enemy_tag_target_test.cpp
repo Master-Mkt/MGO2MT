@@ -2,18 +2,18 @@
 #include <sstream>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 static void check(bool ok,const char*msg){if(!ok)throw std::runtime_error(msg);}
 int main(){try{
- std::istringstream e("MGO2WIN.STAGE_COLLISION 1 0 0\n");auto empty=stage::Collision::read(e);
- std::istringstream w("MGO2WIN.STAGE_COLLISION 1 3 1\n-3000 -3000 2000\n3000 -3000 2000\n0 4000 2000\n0 1 2 0 1\n");auto wall=stage::Collision::read(w);
+ std::istringstream e("MGO2MT.STAGE_COLLISION 1 0 0\n");auto empty=stage::Collision::read(e);
+ std::istringstream w("MGO2MT.STAGE_COLLISION 1 3 1\n-3000 -3000 2000\n3000 -3000 2000\n0 4000 2000\n0 1 2 8256 1\n");auto wall=stage::Collision::read(w); // Bullet | StopEye
  combat::Snapshot s;s.epoch=7;s.revision=1;host::Roster r;r.complete=true;
  for(unsigned i=0;i<3;++i){combat::Player p;p.identity={uint8_t(i),uint16_t(i+1),100+i};p.alive=true;p.team=i?2:1;p.pose.feet={0,0,float(i*5000)};s.players[i]=p;host::Player row;row.slot=i;row.instance=i+1;row.character=100+i;row.name=i==1?"ENEMY":"OTHER";r.slots[i]=row;}
  auto self=s.players[0]->identity;auto run=[&](const stage::Collision&world,bool enabled=true,unsigned rule=1){return enemy_tag::select(s,r,self,rule,{0,1550,0},{0,0,1},world,enabled);};
  auto t=run(empty);check(t&&t->identity==s.players[1]->identity&&t->distance<5000,"nearest enemy along ray");
  check(!run(wall),"wall blocks target");check(!run(empty,false),"option OFF hides");check(!run(empty,true,7),"unsupported rule cannot establish enemy");
  check(!enemy_tag::select(s,r,self,1,{0,1550,0},{0,0,1},empty,true,&wall),"hit-only object blocks actual firing ray");
- check(!enemy_tag::visible({0,1550,0},{0,1550,5000},wall),"interpolated display pose blocked by camera wall");
+ check(!enemy_tag::visible({0,1550,0},{0,1550,5000},wall),"interpolated display pose blocked by StopEye wall");
  check(!enemy_tag::visible({0,1550,0},{0,1550,5000},empty,&wall),"display pose blocked by hit-only object");
  check(enemy_tag::visible({0,1550,0},{0,1550,1000},wall),"wall behind display position is harmless");
  s.players[1]->team=1;check(!run(empty),"friend blocks farther enemy");check(bool(run(empty,true,0)),"DM does not use team membership");s.players[1]->team=0;check(!run(empty),"unknown team hidden");s.players[1]->team=2;

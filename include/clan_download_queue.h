@@ -5,7 +5,7 @@
 #include <memory>
 #include <stdexcept>
 
-namespace mgo2win::clan {
+namespace mgo2mt::clan {
 // Owned by one authenticated connection thread. UI threads only touch Cache.
 // A pending reply always belongs to the Download that emitted its request.
 class DownloadQueue {

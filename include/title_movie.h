@@ -10,7 +10,7 @@
 #include <memory>
 #include <string>
 
-namespace mgo2win::title_movie {
+namespace mgo2mt::title_movie {
 enum class Status { idle, loading, ready, playing, ended, failed };
 class Player {
  struct Impl;

@@ -11,7 +11,7 @@
 #include <cstring>
 #include <map>
 #include <stdexcept>
-namespace mgo2win::notices {
+namespace mgo2mt::notices {
 namespace {
 void require(bool ok){if(!ok)throw std::runtime_error("Invalid native notification record");}
 bool hex(std::string_view s,size_t n){return s.size()==n&&std::all_of(s.begin(),s.end(),[](char c){return (c>='0'&&c<='9')||(c>='a'&&c<='f');});}

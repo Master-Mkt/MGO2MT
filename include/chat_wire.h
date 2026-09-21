@@ -6,7 +6,7 @@
 #include <string_view>
 #include <vector>
 
-namespace mgo2win::chat {
+namespace mgo2mt::chat {
 inline constexpr uint16_t send_opcode = 0x4400;
 inline constexpr uint16_t receive_opcode = 0x4401;
 inline constexpr uint16_t capability_request_opcode = 0x44e0;

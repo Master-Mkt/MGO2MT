@@ -2,7 +2,7 @@
 #include "host_protocol.h"
 #include <map>
 #include <optional>
-namespace mgo2win::host {
+namespace mgo2mt::host {
 // Retail ELF SHA-256 / PPC evidence: notes/SCENE_REPLICATION_20260912.md.
 // 7285C0 registers 592, 12 slots. 261AB0 adds generation parity at bit 11.
 constexpr uint16_t item_channel=592;

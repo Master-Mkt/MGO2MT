@@ -1,3 +1,4 @@
+#include "product_identity.h"
 #include "stage_cbox.h"
 #include <array>
 #include <bit>
@@ -6,7 +7,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace mgo2win::stage {
+namespace mgo2mt::stage {
 namespace {
 void require(bool ok){if(!ok)throw std::runtime_error("Invalid CBOX placement layout");}
 void validate(const CboxLayout& layout){
@@ -21,7 +22,7 @@ void validate(const CboxLayout& layout){
 CboxLayout CboxLayout::read(std::istream& in){
  CboxLayout layout;std::string magic;unsigned version,n;
  require(bool(in>>magic>>version>>layout.count>>n));
- require(magic=="MGO2WIN.STAGE_CBOX"&&version==1&&n<=64&&layout.count<=n);
+ require(magic==mgo2mt::brand::Format{"MGO2MT.STAGE_CBOX"}&&version==1&&n<=64&&layout.count<=n);
  for(unsigned i=0;i<n;++i){CboxAnchor a;require(bool(in>>a.sourceOffset>>a.key>>a.position[0]>>a.position[1]>>a.position[2]));layout.anchors.push_back(a);}
  std::string tail;require(!(in>>tail));validate(layout);return layout;
 }

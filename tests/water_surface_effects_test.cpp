@@ -4,7 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win::stage;
+using namespace mgo2mt::stage;
 static void check(bool ok,const char* why){if(!ok)throw std::runtime_error(why);}
 int main(int argc,char**argv){try{
  auto surface=WaterSurface::make({{{Vec3{-1000,0,0},Vec3{1000,0,0},Vec3{0,3000,0}}}});
@@ -50,10 +50,10 @@ int main(int argc,char**argv){try{
  check(fx.size()==WaterSurfaceEffects::dropsPerCrossing&&std::abs(nav.feet()[2]-50)<.01f&&!nav.water_state().level,"actual movement crosses water face at full dry speed");
  if(argc>1){std::ifstream in(argv[1],std::ios::binary);auto aa=WaterSurface::read(in);check(aa.triangles().size()==77,"authored AA 77 triangles");
   auto t=aa.triangles()[0];Vec3 center{};for(unsigned k=0;k<3;++k)center[k]=(t.vertices[0][k]+t.vertices[1][k]+t.vertices[2][k])/3;
-  auto u=mgo2win::enemy_tag::sub(t.vertices[1],t.vertices[0]),v=mgo2win::enemy_tag::sub(t.vertices[2],t.vertices[0]);
-  auto normal=mgo2win::enemy_tag::unit(Vec3{u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]});check(bool(normal),"real face normal");
-  actor[0].point=mgo2win::enemy_tag::add(center,mgo2win::enemy_tag::mul(*normal,-10));fx.reset();fx.update(scope,actor,&aa,1000,true);
-  actor[0].point=mgo2win::enemy_tag::add(center,mgo2win::enemy_tag::mul(*normal,10));fx.update(scope,actor,&aa,1016,true);check(fx.size()==WaterSurfaceEffects::dropsPerCrossing,"real AA contact emits through same adapter");
+  auto u=mgo2mt::enemy_tag::sub(t.vertices[1],t.vertices[0]),v=mgo2mt::enemy_tag::sub(t.vertices[2],t.vertices[0]);
+  auto normal=mgo2mt::enemy_tag::unit(Vec3{u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]});check(bool(normal),"real face normal");
+  actor[0].point=mgo2mt::enemy_tag::add(center,mgo2mt::enemy_tag::mul(*normal,-10));fx.reset();fx.update(scope,actor,&aa,1000,true);
+  actor[0].point=mgo2mt::enemy_tag::add(center,mgo2mt::enemy_tag::mul(*normal,10));fx.update(scope,actor,&aa,1016,true);check(fx.size()==WaterSurfaceEffects::dropsPerCrossing,"real AA contact emits through same adapter");
  }
  // Perspective-correct occlusion: a narrow post hides only the middle of a
  // projected stroke even when its endpoints have different camera depths.

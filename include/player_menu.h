@@ -11,7 +11,7 @@
 #include "weapon_icons.h"
 #include "equipment_icons.h"
 #include <memory>
-namespace mgo2win {
+namespace mgo2mt {
 // In-stage menus preserve the admitted room and never run a port probe.
 class PlayerMenu {
  player::Menu kind_=player::Menu::none;unsigned tab_=0,chatChannel_=0;

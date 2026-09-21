@@ -5,7 +5,7 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
-using namespace mgo2win;using Microsoft::WRL::ComPtr;
+using namespace mgo2mt;using Microsoft::WRL::ComPtr;
 namespace {
 void check(bool b,const char*why){if(!b)throw std::runtime_error(why);}
 void ok(HRESULT h){check(SUCCEEDED(h),"SOP WARP test failure");}

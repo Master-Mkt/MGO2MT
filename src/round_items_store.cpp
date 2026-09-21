@@ -8,7 +8,7 @@
 #include <windows.h>
 #include <atomic>
 #include <stdexcept>
-namespace mgo2win::items {
+namespace mgo2mt::items {
 bool RoundItems::save(const std::filesystem::path& path,std::string& error)const{
  if(!valid()){error="Invalid item settings";return false;}
  static std::atomic<uint64_t> serial{0};std::filesystem::path temporary;HANDLE file=INVALID_HANDLE_VALUE;bool created=false;

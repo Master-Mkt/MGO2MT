@@ -4,9 +4,9 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
-using namespace mgo2win::stage;
+using namespace mgo2mt::stage;
 static void check(bool v,const char*s){if(!v)throw std::runtime_error(s);}
-static std::string config(const std::string&record){return "MGO2WIN.STAGE_LIGHTS 4 0\n0 -1 0 0 0 0 0 0 0 0 0 0 0 1 0 1 1 1 -100 -100 -100 100 100 100\nPOINTS 0\nAUTHORED 1\n"+record;}
+static std::string config(const std::string&record){return "MGO2MT.STAGE_LIGHTS 4 0\n0 -1 0 0 0 0 0 0 0 0 0 0 0 1 0 1 1 1 -100 -100 -100 100 100 100\nPOINTS 0\nAUTHORED 1\n"+record;}
 static std::string row="2 -10 -10 -10 10 10 10 0 2 0 0 0 -1 0 0 1 .5 0 .8 .2 4 512 258 1 2 -10 -10 -10 10 10 10\n";
 int main(int argc,char**argv){try{
  std::istringstream input(config(row));auto l=Lighting::read(input);check(l.authored.size()==1&&l.points.empty(),"typed record preserved");auto&a=l.authored.front();

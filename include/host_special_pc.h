@@ -3,7 +3,7 @@
 #include <mutex>
 #include <algorithm>
 #include <vector>
-namespace mgo2win::special_pc {
+namespace mgo2mt::special_pc {
 struct Config {bool allow=false,showNames=true,random=true;bool operator==(const Config&)const=default;};
 struct Assignment {combat::Identity id;uint32_t life=0;Kind desired=Kind::human,current=Kind::human;combat::Reject result=combat::Reject::none;bool operator==(const Assignment&)const=default;};
 struct View {uint64_t epoch=0,revision=0;Config config;std::vector<Assignment> players;};

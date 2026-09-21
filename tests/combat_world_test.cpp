@@ -2,7 +2,7 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
-using namespace mgo2win;
+using namespace mgo2mt;
 void check(bool b,const char*s){if(!b)throw std::runtime_error(s);}
 int main(int argc,char**argv){try{
  check(argc==2||argc==3,"native stage path required");auto root=std::filesystem::path(argv[1]);auto world=combat::World::load(root);auto registry=stage::load_object_registry(root/"n022a.objects.cfg");

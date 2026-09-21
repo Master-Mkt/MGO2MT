@@ -2,7 +2,7 @@
 #include "weapon_catalog.h"
 #include <memory>
 
-namespace mgo2win::weapons {
+namespace mgo2mt::weapons {
 // A selection draft is not an inventory grant, DP charge, or a spawn request.
 // A missing authoritative context is distinct from DP disabled / zero balance.
 class Selection {

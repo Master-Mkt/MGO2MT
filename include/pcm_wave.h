@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <cstring>
 #include <stdexcept>
-namespace mgo2win {
+namespace mgo2mt {
 struct PcmWave {uint32_t rate=0,channels=0,dataAt=0,dataSize=0,loopBegin=0,loopEnd=0;};
 // BGM interchange: standard 16-bit PCM RIFF/WAVE, optional single forward smpl loop.
 // smpl's inclusive end is converted to an exclusive sample-frame boundary.

@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <unordered_map>
 
-using namespace mgo2win::unicode_name_projection;
+using namespace mgo2mt::unicode_name_projection;
 static void check(bool ok, const char* why) { if (!ok) throw std::runtime_error(why); }
 static std::string repeat(std::string_view s, unsigned n) { std::string out; while (n--) out += s; return out; }
 static Projection get(std::string_view s, Termination t, std::string_view prefix="") {
@@ -23,9 +23,9 @@ int main() { try {
         check(b.namePrefix.size()==(n<16?n:16) && b.truncated==(n>16) && b.hasTerminator==(n<16),"full 16-byte policy");
     }
     const auto japanese=repeat("日",16),emoji=repeat("😀",16),mixed=repeat("日😀A",5)+"字";
-    check(bool(mgo2win::unicode_character_name::validate(japanese)) && japanese.size()==48,"16 Japanese scalars are full name");
-    check(bool(mgo2win::unicode_character_name::validate(emoji)) && emoji.size()==64,"16 emoji scalars are full name");
-    check(bool(mgo2win::unicode_character_name::validate(mixed)),"mixed 16 scalar full name");
+    check(bool(mgo2mt::unicode_character_name::validate(japanese)) && japanese.size()==48,"16 Japanese scalars are full name");
+    check(bool(mgo2mt::unicode_character_name::validate(emoji)) && emoji.size()==64,"16 emoji scalars are full name");
+    check(bool(mgo2mt::unicode_character_name::validate(mixed)),"mixed 16 scalar full name");
     for (auto text: {japanese,emoji,mixed}) for (auto t: {nul,full}) for (auto marker: {"","*","主"}) {
         const auto original=text; auto p=get(text,t,marker);
         check(p.truncated && text==original,"projection never mutates authoritative full name");

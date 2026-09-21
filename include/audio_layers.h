@@ -4,7 +4,7 @@
 #include <cmath>
 #include <vector>
 
-namespace mgo2win {
+namespace mgo2mt {
 struct AudioLayerMix {
     float normalGain=1.f, alternateGain=1.f;
     uint32_t fadeInMs=500, fadeOutMs=2000;

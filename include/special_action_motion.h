@@ -5,7 +5,7 @@
 #include <cmath>
 #include <stdexcept>
 
-namespace mgo2win::player {
+namespace mgo2mt::player {
 enum class SpecialPhase : uint8_t {start,hold,end};
 // Original male normal-PC slot 6, indices 0/1/2, distinct from lobby selection.
 // Native caller must not use this bank for female PCs, Instructor/trainer,

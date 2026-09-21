@@ -1,9 +1,10 @@
+#include "product_identity.h"
 #include "controller_input.h"
 #include <fstream>
 #include <stdexcept>
 #include <algorithm>
 #include <cmath>
-namespace mgo2win {
+namespace mgo2mt {
 bool valid_input_key(unsigned k){return (k>=0x30&&k<=0x39)||(k>=0x41&&k<=0x5a)||(k>=VK_NUMPAD0&&k<=VK_DIVIDE)||(k>=VK_F3&&k<=VK_F12)||(k>=VK_OEM_1&&k<=VK_OEM_3)||(k>=VK_OEM_4&&k<=VK_OEM_8)||k==VK_OEM_102||k==VK_BACK||k==VK_RETURN||k==VK_SPACE||k==VK_SHIFT||k==VK_CONTROL||k==VK_INSERT||k==VK_DELETE||k==VK_HOME||k==VK_END||(k>=VK_LEFT&&k<=VK_DOWN);}
 bool valid_input_config(const InputConfig& c){
  if(c.device>1||c.slot>3||c.left_deadzone>90||c.right_deadzone>90||c.run_threshold<10||c.run_threshold>100||c.run_hysteresis>30||c.run_hysteresis>=c.run_threshold)return false;
@@ -12,7 +13,7 @@ bool valid_input_config(const InputConfig& c){
 bool load_input(const std::filesystem::path& p,InputConfig& c){
  if(!std::filesystem::exists(p))return false;if(std::filesystem::file_size(p)>2048)throw std::runtime_error("Input settings too large");
  std::ifstream f(p);std::string tag,extra;unsigned version;InputConfig draft;
- if(!(f>>tag>>version>>draft.device>>draft.slot)||tag!="MGO2WIN.INPUT"||(version!=1&&version!=2))throw std::runtime_error("Invalid input settings");
+ if(!(f>>tag>>version>>draft.device>>draft.slot)||tag!=mgo2mt::brand::Format{"MGO2MT.INPUT"}||(version!=1&&version!=2))throw std::runtime_error("Invalid input settings");
  for(auto& k:draft.keyboard)if(!(f>>k))throw std::runtime_error("Missing key");
  for(auto& k:draft.gamepad)if(!(f>>k))throw std::runtime_error("Missing pad binding");
  if(version==2){if(!(f>>draft.left_deadzone>>draft.right_deadzone>>draft.run_threshold>>draft.run_hysteresis))throw std::runtime_error("Missing analog settings");}
@@ -26,7 +27,7 @@ bool load_input(const std::filesystem::path& p,InputConfig& c){
 }
 void save_input(const std::filesystem::path& p,const InputConfig& c){
  if(!valid_input_config(c))throw std::runtime_error("Invalid input mapping");std::filesystem::create_directories(p.parent_path());auto temp=p;temp+=L"."+std::to_wstring(GetCurrentProcessId())+L".tmp";
- try{{std::ofstream f(temp);f<<"MGO2WIN.INPUT 2\n"<<c.device<<' '<<c.slot<<'\n';for(auto k:c.keyboard)f<<k<<' ';f<<'\n';for(auto k:c.gamepad)f<<k<<' ';f<<'\n';f<<c.left_deadzone<<' '<<c.right_deadzone<<' '<<c.run_threshold<<' '<<c.run_hysteresis<<'\n';f.close();if(!f)throw std::runtime_error("Input settings write failed");}
+ try{{std::ofstream f(temp);f<<"MGO2MT.INPUT 2\n"<<c.device<<' '<<c.slot<<'\n';for(auto k:c.keyboard)f<<k<<' ';f<<'\n';for(auto k:c.gamepad)f<<k<<' ';f<<'\n';f<<c.left_deadzone<<' '<<c.right_deadzone<<' '<<c.run_threshold<<' '<<c.run_hysteresis<<'\n';f.close();if(!f)throw std::runtime_error("Input settings write failed");}
  if(!MoveFileExW(temp.c_str(),p.c_str(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH))throw std::runtime_error("Input settings replace failed");
  }catch(...){std::error_code ec;std::filesystem::remove(temp,ec);throw;}
 }
@@ -34,7 +35,7 @@ void assign_input(InputConfig& c,unsigned action,unsigned code){
  if(action>=input_actions||(c.device?code>=24:!valid_input_key(code)))throw std::runtime_error("Invalid binding");auto& a=c.device?c.gamepad:c.keyboard;
  auto old=a[action];for(unsigned i=0;i<input_actions;++i)if(i!=action&&a[i]==code)a[i]=old;a[action]=code;
 }
-const wchar_t* action_name(unsigned n){static const wchar_t* names[]={L"選択肢 上",L"選択肢 下",L"選択肢 左 / 主観リーン左",L"選択肢 右 / 主観リーン右",L"決定 / リロード",L"キャンセル / 姿勢・回避",L"AUTO AIM 切替",L"壁アクション / 敬礼 / 伏せ姿勢方向",L"主観切替（補助） / 前のタブ",L"視線を戻す / 次のタブ",L"武器を発射",L"武器を構える",L"設定メニュー",L"チャットメニュー",L"武器一覧（長押し・離して決定）",L"装備一覧（長押し・離して決定）",L"移動 前",L"移動 後",L"移動 左",L"移動 右",L"視線 上",L"視線 下",L"視線 左",L"視線 右"};return n<24?names[n]:L"?";}
+const wchar_t* action_name(unsigned n){static const wchar_t* names[]={L"選択肢 上",L"選択肢 下",L"選択肢 左 / 主観リーン左",L"選択肢 右 / 主観リーン右",L"決定 / リロード",L"キャンセル / 姿勢・回避",L"AUTO AIM 切替",L"アクション / 敬礼 / 重武器 / 伏せ姿勢方向",L"主観切替（補助） / 前のタブ",L"視線を戻す / 次のタブ",L"武器を発射",L"武器を構える",L"設定メニュー",L"チャットメニュー",L"武器一覧（長押し・離して決定）",L"装備一覧（長押し・離して決定）",L"移動 前",L"移動 後",L"移動 左",L"移動 右",L"視線 上",L"視線 下",L"視線 左",L"視線 右"};return n<24?names[n]:L"?";}
 std::wstring input_name(unsigned k,bool pad){
  if(pad){static const wchar_t* names[]={L"D-pad ↑",L"D-pad ↓",L"D-pad ←",L"D-pad →",L"A",L"B",L"X",L"Y",L"LB",L"RB",L"START",L"BACK",L"LS 押込",L"RS 押込",L"LT",L"RT",L"LS ↑",L"LS ↓",L"LS ←",L"LS →",L"RS ↑",L"RS ↓",L"RS ←",L"RS →"};return k<24?names[k]:L"?";}
  wchar_t name[80]{};LONG scan=LONG(MapVirtualKeyW(k,MAPVK_VK_TO_VSC)<<16);if((k>=VK_PRIOR&&k<=VK_DOWN)||k==VK_INSERT||k==VK_DELETE)scan|=1<<24;

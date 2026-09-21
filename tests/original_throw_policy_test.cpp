@@ -4,7 +4,7 @@
 #include <iostream>
 #include <source_location>
 #include <stdexcept>
-using namespace mgo2win::original::throwing;
+using namespace mgo2mt::original::throwing;
 void require(bool v,std::source_location at=std::source_location::current()) {
     if(!v) { std::cerr<<"original throw policy failed at line "<<at.line()<<'\n';throw std::runtime_error("original throw policy"); }
 }

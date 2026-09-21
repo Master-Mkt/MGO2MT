@@ -4,8 +4,8 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
-using namespace mgo2win;
-using namespace mgo2win::special_pc;
+using namespace mgo2mt;
+using namespace mgo2mt::special_pc;
 namespace {
 void check(bool v,const char* m){if(!v)throw std::runtime_error(m);}
 std::vector<char> read(const char* p){std::ifstream f(p,std::ios::binary);check(bool(f),"asset missing");return {(std::istreambuf_iterator<char>(f)),{}};}

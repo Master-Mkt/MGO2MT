@@ -1,20 +1,91 @@
-# MGO2WIN / MGO2HOST
+# MGO2MT — MGO2MultiPlatform
 
-Windows client and dedicated HOST experiment, **v0.01-20260915142232**.
+[English](README.md) · [リポジトリ](https://github.com/Master-Mkt/MGO2MT) · [Release](https://github.com/Master-Mkt/MGO2MT/releases)
 
-[Complete client and HOST downloads](https://github.com/Master-Mkt/MGO2WIN/releases/tag/v0.01-20260915142232-full) · [Release notes](docs/RELEASE_NOTES.md) · [導入方法](docs/FULL_README.ja.txt)
+MGO2MTは、MGO2との互換動作を研究・実装するクライアント、専用HOST、ローカル資産変換ツールです。**現在の実装・配布対象はWindows x64のみです。** MultiPlatformは今後の構想を表す名称で、Linux、macOS、ゲーム機、モバイル向けの対応版はありません。
 
-3Dの左右反転と5ステージの法線を修正。半球ライト、AKの手接続/リロード/発射、死亡/再出撃、原UI/日本語フォントを含みます。原作の材質・照明の完全一致は未完です。
+旧名称はMGO2WINです。一部の内部識別子や過去の記録には旧名が残ります。Konamiの公式製品ではなく、原作の権利者や外部サービス運営者による公認・推奨を受けたものではありません。
 
-The source tree excludes runtime resources. Use the complete ZIPs to run the program, with the same build on every client and HOST.
+## 配布物と必要なローカルデータ
 
-Build on Windows with Visual Studio C++ Build Tools, the Windows SDK and CMake:
+公開パッケージは**ソフトウェアのみ**です。実行ファイル、必要なソフトウェア依存物、最小限の独自設定、説明書、適用されるライセンス表記を含みます。原作をプレイできるデータ一式の配布ではありません。
+
+| パッケージ | 実行ファイル | 用途 |
+| --- | --- | --- |
+| CLIENT | `MGO2MT.exe` | Windowsクライアント、描画・入力・対応範囲の通信とゲーム処理 |
+| HOST | `MGO2MTHOST.exe` | 対応する部屋・対戦処理を管理する専用HOST |
+| EXCV | `MGO2MTEXCV.exe` | 利用者が用意したデータをローカルで変換 |
+
+CLIENTとHOSTは同じ版・同じゲーム設定を使用してください。各ソフトウェアフォルダーを展開し、説明書や依存物も保持します。Windows 10/11 x64とWindowsの描画・音声機能が必要で、クライアントはDirect3D 11を使用します。配布EXCVにはPython実行環境が含まれるため、Pythonの別途インストールは不要です。IDA、Noesis、エミュレーターはクライアント／HOSTの実行に必要ありません。
+
+**公開パッケージに含めないもの：** 原作または変換済みのモデル、テクスチャ、モーション、UI画像、音声、ステージ・当たり判定データ、スクリプト、`movie_01.mp4`などの動画、PS3のフォント、`network.gnk`を含む通信定数資産、元実行ファイル・アーカイブ、SDK資料、非公開の解析DB・通信記録、認証情報、個人設定、私的ログ。形式を変換しても除外対象は変わりません。開発者がローカルで用意する完全フォルダーと公開パッケージは別です。
+
+## EXCVでの準備
+
+自身が所有するなど適法に保持し、かつ**予定する処理・利用に必要な権限のあるローカルデータ**だけを使用してください。ディスクの所有、形式変換、ローカル保存という事情だけで、すべての利用が適法になるとは扱いません。[ライセンスと権利の範囲](LICENSE_STATUS.md)を確認してください。
+
+1. `MGO2MTEXCV.exe`を開き、原データの`o`フォルダーと、原データとは別の出力フォルダーを指定します。変換器はゲーム素材をダウンロードせず、原ファイルを書き換えません。
+2. 必要なステージ・画面素材・ゲーム用データの生成を選び、対応する原MGO2 ELFを指定します。暗号化された入力には原ELFが必要です。EXCVはELFを照合して必要な表をメモリへ読み込み、プログラムへ表を内蔵しません。復号済みの入力や独自素材の生成はELFなしでも可能ですが、暗号化された処理は入力不足を明示します。他の入力には任意のローカルフォント、BGM用の`vgmstream-cli.exe`とその依存物、月光用のMGS4 `stage02.dat`があります。これらの入力と外部デコーダーは提供しません。
+3. `conversion-run.json`と各処理の`manifest.json`を確認します。組み立てに成功した場合、実行用の生成結果は`runtime/data`に集約されます。変換成功やハッシュ一致は、完全性、利用許諾、原作との一致を保証するものではありません。
+4. GUIでCLIENT／HOSTのソフトウェアフォルダーを指定し、**「ゲームへ適用」**を選びます。必要に応じ、`network.gnk`と任意の動画の取込み元として、利用権限のある既存のローカル`data`も指定します。EXCVは変換結果の一覧を照合し、既存設定を保持して、変更前の`data`をバックアップします。`data/excv-install.json`で不足を確認してください。コピー完了は、アプリの動作確認済みという意味ではありません。
+5. 接続前に`MGO2MT.exe --check`と`MGO2MTHOST.exe --check`で不足・不整合を確認してください。ソフトのみの配布物で原作リソースの不足が出るのは想定内です。アプリの整合性確認と、実際のゲーム動作確認は別途必要です。
+
+現在の変換対象は対戦21ステージですが、ゲーム側の選択・対戦への組み込みは対応範囲の異なる5ステージが中心です。原GCXの全分岐、配置、材質、動作は再現できていません。月光には別途原データが必要で、直近の変換器検証では原`stage02.dat`そのものからの再抽出を確認していません。`movie_01.mp4`と`network.gnk`は生成しません。動画は任意で、存在しない場合は無操作でもSTART画面を維持します。通信データは利用権限のあるローカルの既存ファイルをEXCVで取り込めますが、通信定数や完成ファイルは本プロジェクトから提供しません。独自の水中足音は変換器で合成します。任意の全ラウンドBGM一式は再生成しません。不足の記録を無視して「起動準備完了」と扱わないでください。
+
+原姿勢・モーション・接続点の数値列は、次の任意のローカル資源へ分離しています。プログラムに内蔵せず、公開配布しません。
+
+- `character/hit_geometry.gwhit`：準備済みの6姿勢の当たり判定。ない場合は自作の簡易人体形状を使用します。
+- `motion/evade_travel.gwet`：ローリングの移動サンプル。ない場合は自作の数学的な移動曲線を使用します。
+- `special/gekko_jump.gwjc`：原月光のルートモーション補正。ない場合はこの補正を省略しますが、独自の物理ジャンプは動作します。
+- `weapon/connection_points.gwcp`：モデルに対応するCNP軸と主観照準線。ない場合は精密なCNP照準・薬莢などの軸を使用できません。既存JSON／GWIによる手への接続・銃口・マガジン設定は維持し、旧2モデル用の簡易処理では独自の汎用点を使います。
+
+EXCVは利用権限のある既存ファイルを`--local-data`から取り込めますが、この新しい4形式を原ファイルから再生成する機能は未対応です。不正ファイルは明示して拒否します。当たり判定と移動資源の有無・内容はCLIENTとHOSTで一致させてください。CNPデータはクライアントの描画用入力です。
+
+コマンド操作例（PowerShell。各パスは利用権限のある手元のものに置き換えます）：
 
 ```powershell
-cmake -S . -B build -A x64 -DMGO2WIN_STATIC_RUNTIME=ON -DMGO2WIN_BUILD_TIMESTAMP=20260915142232
-cmake --build build --config Release --target MGO2WIN MGO2HOST
+.\MGO2MTEXCV.exe --source "D:\LocalData\o" --output "D:\MGO2MT-Converted" --elf "D:\LocalData\MGO2.ELF" --with-ui --report "D:\conversion-result.json"
+.\MGO2MTEXCV.exe --source "D:\LocalData\o" --output "D:\MGO2MT-Runtime" --with-ui --with-runtime --elf "D:\LocalData\MGO2.ELF" --decoder "D:\Tools\vgmstream-cli.exe" --mgs-source "D:\LocalData\stage02.dat"
+.\MGO2MTEXCV.exe --verify "D:\MGO2MT-Converted\stages\n022a" --report "D:\verification.json"
+.\MGO2MTEXCV.exe --install "D:\MGO2MT-Runtime" --client "D:\MGO2MT-CLIENT" --host "D:\MGO2MT-HOST" --local-data "D:\LocalData\data" --report "D:\application-result.json"
 ```
 
-The local runtime build passed 284 Release tests. Tests that use original fixtures require separately prepared local resources. Hardware GPU performance, physical gamepads and live LAN play were not validated in this delivery.
+`--resume`は既存の入力と生成結果を照合して再利用します。入力・変換手順・選択した処理が変わった場合や照合に失敗した場合は、新しい出力先を選んでください。途中結果を正常なデータとして使わず、失敗の記録も保持します。
 
-See [license status](LICENSE_STATUS.md) and [third-party notices](THIRD_PARTY_NOTICES.md).
+## 現在の実装範囲
+
+必要なローカル資産を用意した環境で、Windows側には次の処理を実装しています。
+
+- タイトル、アカウント・キャラクター、ロビー、部屋、出撃準備の画面。キーボード／XInput入力と描画設定。
+- 独自DM／TDMの準備進行、武器選択、HOST管理の発射・装填・ダメージ、死亡・ラグドール表示、リスポーン、撃破イベント。
+- 複数の銃器・投擲物・設置武器、重武器、迫撃砲・カタパルト、試作の月光。武器ごとの対応度、接続点・モーションの再現度には差があります。
+- JSONによる武器・エフェクト設定、着弾出血、爆風による吹き飛び、弾道・パーティクル。WPN Effect EditorとMulti UI Designerは別の開発コンポーネントであり、今回のCLIENT／HOST／EXCV一覧に編集ソフトの実行物が含まれるという意味ではありません。
+- 地形の衝突属性、足IK、ライト・天候設定、半球光・方向光、方向光のカスケードシャドウ、任意のHDR／FXAA／AO／Bloom／SSR、静的地形LOD、GPU時間などのF12診断表示。
+
+一部の数値、演出、モーション制御は独自の近似です。原作の完全移植ではありません。Forward+、原作の全ルール・全ステージ・全actor、PS3の材質・動作・音声との完全一致は達成していません。自動テストやオフライン描画の合格だけで実際の通信対戦全体を検証済みとは扱いません。検証状況は各Releaseの実際の記録を参照し、過去版の結果を別の実行ファイルへ流用しないでください。
+
+## 接続とHOST
+
+クライアントにはOpenMGO2向けのHTTPS認証、ロビー・部屋接続、UDP／STUN診断があります。HOSTには自身のログイン・キャラクター選択、部屋作成・終了、ルールと禁止設定、独自対戦処理・環境設定の同期があります。外部のアカウント／ロビーサービスの代替サーバーではありません。同じ独自通信形式のCLIENT／HOSTが必要で、未改変のPS3クライアントや任意のサーバー版との互換性を保証しません。
+
+実ログインや部屋操作は、利用者が自身のアカウントとサービスの利用権限で行います。キャラクター作成の確定や部屋の作成・終了は実サービスに作用し得ます。オフライン確認はこれらを実行しません。必要なローカル通信データ、サービス稼働、ファイアウォール／NAT、サーバー側の対応は別途必要です。資格情報を保存する設定ではWindowsの現在ユーザー向け保護を使用します。設定保存先はCLIENTが`%LOCALAPPDATA%\MGO2MT`、HOSTが`%LOCALAPPDATA%\MGO2MTHOST`です。旧名のアカウント設定は自動読込み・移行しません。認証情報、保存済みログインファイル、非公開の通信記録をIssueに添付しないでください。
+
+## ビルドと不具合報告
+
+C++実装にはVisual Studio C++ Build Tools、Windows SDK、CMake 3.24以上を使用します。
+
+```powershell
+cmake -S . -B build -A x64
+cmake --build build --config Release
+ctest --test-dir build -C Release --output-on-failure
+```
+
+公開ソースには非公開の研究入力や、一部のテストが必要とする原作リソースを含めません。実行できるテストは公開範囲と手元の入力に依存します。ソフトのビルドだけでゲーム用データがすべて生成されるわけではありません。EXCVのビルドにはPython側のパッケージング依存物も必要です。ビルドが不要な利用者向けには実行環境同梱のEXCVを用意します。
+
+報告にはソフトの版、Windows／GPU情報、再現手順、秘密情報を取り除いたエラーを添えてください。原データ、変換素材、公開できない解析資料は添付しないでください。
+
+## 権利と公開方針
+
+独自コードの統一ライセンスは未選定です。公開されていることは、オープンソースライセンスや改変・再配布の包括的な許諾を意味しません。第三者コンポーネントには各自の条件が適用されます。本プロジェクトは原作コンテンツ、商標、外部サービスの権利を付与せず、クリーンルーム実装の完了や権利非侵害を保証しません。
+
+[LICENSE_STATUS.md](LICENSE_STATUS.md)、[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)、[PUBLICATION.md](PUBLICATION.md)を確認してください。現在の「ソフトウェアのみ」の公開方針は、過去の変換資産同梱を認める説明に優先します。必要な権利のない素材をアップロード・再配布しないでください。

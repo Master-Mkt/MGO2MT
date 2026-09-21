@@ -1,7 +1,7 @@
 #include "host_appearance.h"
 #include <algorithm>
 #include <set>
-namespace mgo2win::host {
+namespace mgo2mt::host {
 namespace {
 void put(std::vector<uint8_t>&b,uint32_t n,unsigned width){while(width--){b.push_back(uint8_t(n));n>>=8;}}
 uint32_t read(std::span<const uint8_t>b,size_t at,unsigned width){uint32_t n=0;for(unsigned i=0;i<width;++i)n|=uint32_t(b[at+i])<<(i*8);return n;}

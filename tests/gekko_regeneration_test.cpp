@@ -3,8 +3,8 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
-using namespace mgo2win::special_pc;
-using namespace mgo2win::special_pc::regeneration;
+using namespace mgo2mt::special_pc;
+using namespace mgo2mt::special_pc::regeneration;
 namespace {void check(bool b,const char*m){if(!b)throw std::runtime_error(m);}}
 int main(){try{
  static_assert(native_gekko.hp==1000&&native_gekko.stamina==5000);

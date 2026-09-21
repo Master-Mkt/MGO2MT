@@ -1,6 +1,6 @@
 #include "host_roster.h"
 #include <iostream>
-using namespace mgo2win::host;
+using namespace mgo2mt::host;
 void check(bool v,const char*s){if(!v)throw std::runtime_error(s);}
 std::vector<uint8_t> player(uint8_t slot,uint16_t instance,uint32_t id,std::string name="Player",std::string clan=""){
  std::vector<uint8_t>b(24);b[0]=7;b[4]=uint8_t(instance);b[5]=uint8_t(instance>>8);b[7]=slot;for(unsigned i=0;i<4;++i)b[8+i]=uint8_t(id>>(8*i));b.insert(b.end(),name.begin(),name.end());b.push_back(0);b.insert(b.end(),clan.begin(),clan.end());b[1]=uint8_t(b.size()-7);return b;

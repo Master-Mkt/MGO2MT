@@ -6,7 +6,7 @@
 #include <cmath>
 #include <limits>
 #include <iostream>
-using namespace mgo2win::combat;
+using namespace mgo2mt::combat;
 using namespace material_effects;
 int main(){Pool p;Scope scope{1,2};Impact hit{scope,1,{0,0,0},{0,0,1},123,decals::Surface::static_solid};
  assert(verified_kind(0x48c4b8)==Kind::unknown);assert(verified_kind(0x189cd4)==Kind::unknown);

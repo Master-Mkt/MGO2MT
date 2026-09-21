@@ -2,7 +2,7 @@
 #include "character_screen.h"
 #include <fstream>
 #include <iostream>
-using namespace mgo2win;
+using namespace mgo2mt;
 void check(bool v,const char*s){if(!v)throw std::runtime_error(s);}
 int main(int argc,char**argv){try{
  std::atomic_uint advance=0,joins=0;std::atomic_bool cancellation=false;

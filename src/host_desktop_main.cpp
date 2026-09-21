@@ -1,4 +1,5 @@
 #include "build_version.h"
+#include <algorithm>
 #include <iostream>
 #include <windows.h>
 #include <shellapi.h>
@@ -7,23 +8,63 @@
 #include "port_settings.h"
 #include "lobby_groups.h"
 #include "host_options.h"
+#include "host_environment_dialog.h"
 #include "item_settings_dialog.h"
 #include "round_items_dialog.h"
 #include "round_items.h"
 #include "combat_health_rules.h"
 #include "breakable_light_settings.h"
+#include "gameplay_config.h"
+#include "host_hit_geometry.h"
+#include "gekko_jump_curve.h"
+#include "evade_travel_curve.h"
+#include "gameplay_fingerprint.h"
+#include "combat_initial_profile.h"
+#include "mounted_weapons.h"
 #include <thread>
 #include <mutex>
 #include <fstream>
 #include <sstream>
+#include <iomanip>
+#include <syncstream>
+#include <set>
 
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {
-enum {Login=100,Start,Stop,Account,Password,Remember,Character,Lobby,RoomName,RoomPassword,Port,Capacity,Briefing,DP,Map,Rule,Status,Players,OptionsButton,PlacementOptions,RoundPlacementOptions,SpecialOptions,AllowSpecial,SpecialNames,RandomSpecial,SpecialPlayer,AssignGekko,AssignHuman};
+enum {Login=100,Start,Stop,Account,Password,Remember,Character,Lobby,RoomName,RoomPassword,Port,Capacity,Briefing,DP,Map,Rule,Status,Players,OptionsButton,PlacementOptions,RoundPlacementOptions,EnvironmentOptions,SpecialOptions,AllowSpecial,SpecialNames,RandomSpecial,SpecialPlayer,AssignGekko,AssignHuman};
 std::filesystem::path executable_folder(){std::wstring s(32768,0);auto n=GetModuleFileNameW(nullptr,s.data(),DWORD(s.size()));if(!n||n==s.size())throw std::runtime_error("module path");s.resize(n);return std::filesystem::path(s).parent_path();}
-std::filesystem::path profile_path(){wchar_t s[32768]{};auto n=GetEnvironmentVariableW(L"LOCALAPPDATA",s,32768);if(!n||n>=32768)throw std::runtime_error("profile path");return std::filesystem::path(s)/L"MGO2HOST"/L"login.dat";}
+std::filesystem::path profile_path(){wchar_t s[32768]{};auto n=GetEnvironmentVariableW(L"LOCALAPPDATA",s,32768);if(!n||n>=32768)throw std::runtime_error("profile path");return std::filesystem::path(s)/L"MGO2MTHOST"/L"login.dat";}
 std::wstring text(HWND w){int n=GetWindowTextLengthW(w);if(n>256)throw std::runtime_error("field length");std::wstring s(size_t(n)+1,0);GetWindowTextW(w,s.data(),n+1);s.resize(n);return s;}
 std::wstring wide(std::string_view s){int n=MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,s.data(),int(s.size()),nullptr,0);if(!n)return L"?";std::wstring out(n,0);MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,s.data(),int(s.size()),out.data(),n);return out;}
+void check_gameplay_configuration(const std::filesystem::path& data){
+ const auto fingerprint=gameplay::fingerprint(data);if(!fingerprint)throw std::runtime_error("Cannot fingerprint gameplay configuration");
+ std::string error;gameplay::Config config;mounted::Registry registry;
+ const bool configured=std::filesystem::exists(data/"gameplay.json");
+ if(configured&&!config.load(data/"gameplay.json",error))throw std::runtime_error(error);
+ if(std::filesystem::exists(data/"mounted_weapons.json")&&!registry.load(data/"mounted_weapons.json",error))throw std::runtime_error(error);
+ const auto profiles=configured?config.profiles(20):combat::initial_profiles(20,1,0);
+ // Exercise the same profile and placement validation as a round, using a
+ // tiny local fixture. HOST verification never requires client mesh assets.
+ const auto geometry=std::make_shared<const stage::Collision>(stage::Collision::make({{0,0,0},{1000,0,0},{0,0,1000}},{{{0,2,1},stage::attribute::native_solid}}));
+ combat::Authority authority;authority.begin(1,geometry,profiles);
+ for(const auto& type:registry.types){
+  const auto found=std::find_if(profiles.begin(),profiles.end(),[&](const auto& profile){return profile.id==type.weapon;});
+  if(type.kind!=mounted::Kind::catapult&&(found==profiles.end()||found->heldOnly||found->meleeAttack||(found->nativeProjectile&&type.kind!=mounted::Kind::mortar)||found->nativePlaced||special_pc::weapon(found->id)))throw std::runtime_error("Mounted type "+type.id+" references an absent or unsupported weapon "+std::to_string(type.weapon));
+ }
+ std::set<uint8_t> maps;for(const auto& placement:registry.placements)maps.insert(placement.map);
+ for(auto map:maps)if(!authority.configure_mounted(registry,map))throw std::runtime_error("Mounted scene rejected for map "+std::to_string(map));
+ if(gameplay::fingerprint(data)!=fingerprint)throw std::runtime_error("Gameplay configuration changed while checking");
+ std::cout<<"Gameplay configuration valid: "<<profiles.size()<<" weapons, "<<registry.types.size()<<" mounted types, "<<registry.placements.size()<<" placements\n";
+}
+struct CombatLog {
+ std::ofstream file;std::streambuf* previous=nullptr;
+ void open(){
+  auto root=profile_path().parent_path()/L"logs";std::filesystem::create_directories(root);
+  SYSTEMTIME t{};GetSystemTime(&t);wchar_t name[96]{};swprintf_s(name,L"combat-%04u%02u%02uT%02u%02u%02u-%u.log",t.wYear,t.wMonth,t.wDay,t.wHour,t.wMinute,t.wSecond,GetCurrentProcessId());
+  file.open(root/name,std::ios::app);if(!file)throw std::runtime_error("combat log");previous=std::clog.rdbuf(file.rdbuf());std::clog<<"MGO2MTHOST "<<build_version<<" combat log UTC\n";
+ }
+ ~CombatLog(){if(previous)std::clog.rdbuf(previous);}
+};
 struct LoginResult {AuthReply auth;CharacterReply characters;CharacterSelectionReply selection;std::wstring error;};
 struct App {
  HWND window=nullptr,specialWindow=nullptr;HFONT font=nullptr;std::filesystem::path keys,specialReport;
@@ -40,7 +81,8 @@ struct App {
  static LRESULT CALLBACK special_proc(HWND w,UINT m,WPARAM a,LPARAM b){auto*self=reinterpret_cast<App*>(GetWindowLongPtrW(w,GWLP_USERDATA));if(m==WM_NCCREATE){self=static_cast<App*>(reinterpret_cast<CREATESTRUCTW*>(b)->lpCreateParams);SetWindowLongPtrW(w,GWLP_USERDATA,LONG_PTR(self));}if(self){if(m==WM_COMMAND)return SendMessageW(self->window,m,a,b);if(m==WM_CLOSE){ShowWindow(w,SW_HIDE);return 0;}}return DefWindowProcW(w,m,a,b);}
  void initialize(){
   font=CreateFontW(-19,0,0,0,FW_NORMAL,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,CLEARTYPE_QUALITY,DEFAULT_PITCH,L"Yu Gothic UI");
-  label(L"MGO2HOST  /  OpenMGO2 専用ホスト",22,15,690);
+  label(L"MGO2MTHOST  /  OpenMGO2 専用ホスト",22,15,455);
+  add(L"BUTTON",L"天候・照明・環境音",EnvironmentOptions,490,10,245,34,BS_PUSHBUTTON);
   label(L"ゲームID",22,58,110);add(L"EDIT",L"",Account,135,54,235,28,ES_AUTOHSCROLL);
   label(L"パスワード",390,58,110);add(L"EDIT",L"",Password,500,54,235,28,ES_PASSWORD|ES_AUTOHSCROLL);
   SendMessageW(control(Account),EM_SETLIMITTEXT,64,0);SendMessageW(control(Password),EM_SETLIMITTEXT,64,0);
@@ -48,7 +90,7 @@ struct App {
   add(L"BUTTON",L"ログイン",Login,530,88,205,34,BS_PUSHBUTTON);
   label(L"ホスト用PC",22,143,110);add(L"COMBOBOX",L"",Character,135,138,250,180,CBS_DROPDOWNLIST|WS_VSCROLL);
   label(L"フリーロビー",405,143,110);add(L"COMBOBOX",L"",Lobby,520,138,215,180,CBS_DROPDOWNLIST|WS_VSCROLL);
-  label(L"部屋名",22,191,110);add(L"EDIT",L"MGO2HOST",RoomName,135,186,250,29,ES_AUTOHSCROLL);SendMessageW(control(RoomName),EM_SETLIMITTEXT,16,0);
+  label(L"部屋名",22,191,110);add(L"EDIT",L"MGO2MTHOST",RoomName,135,186,250,29,ES_AUTOHSCROLL);SendMessageW(control(RoomName),EM_SETLIMITTEXT,16,0);
   label(L"部屋パスワード",405,191,115);add(L"EDIT",L"",RoomPassword,520,186,215,29,ES_PASSWORD|ES_AUTOHSCROLL);SendMessageW(control(RoomPassword),EM_SETLIMITTEXT,15,0);
   label(L"UDPポート",22,239,110);add(L"EDIT",L"5732",Port,135,234,115,29,ES_NUMBER);
   label(L"参加人数",285,239,95);auto cap=add(L"COMBOBOX",L"",Capacity,380,234,90,250,CBS_DROPDOWNLIST|WS_VSCROLL);for(unsigned i=1;i<=16;++i)SendMessageW(cap,CB_ADDSTRING,0,LPARAM(std::to_wstring(i).c_str()));SendMessageW(cap,CB_SETCURSEL,15,0);
@@ -63,8 +105,9 @@ struct App {
   label(L"ローカル試作：TDM / DM。追加ステージの動的オブジェクトは解析中です。",22,394,730);
   add(L"BUTTON",L"部屋を作成",Start,135,430,250,42,BS_PUSHBUTTON);add(L"BUTTON",L"停止・部屋を閉じる",Stop,430,430,305,42,BS_PUSHBUTTON);
   add(L"EDIT",L"ログインしてホスト用のPCを選択してください。",Status,22,490,713,96,ES_MULTILINE|ES_READONLY|ES_AUTOVSCROLL|WS_VSCROLL);
+  if(!smoke)try{commonSettings.nativeEnvironment->configure(environment::load(profile_path().parent_path()/L"environment.cfg"));}catch(...){status(L"環境設定を読み込めません。ステージの設定を使用します。");}
   label(L"参加者",22,601,110);add(L"EDIT",L"なし",Players,135,596,600,105,ES_MULTILINE|ES_READONLY|WS_VSCROLL);
-  WNDCLASSW specialClass{};specialClass.lpfnWndProc=special_proc;specialClass.hInstance=GetModuleHandleW(nullptr);specialClass.lpszClassName=L"MGO2HOST.SpecialPC";specialClass.hCursor=LoadCursor(nullptr,IDC_ARROW);specialClass.hbrBackground=HBRUSH(COLOR_BTNFACE+1);RegisterClassW(&specialClass);
+  WNDCLASSW specialClass{};specialClass.lpfnWndProc=special_proc;specialClass.hInstance=GetModuleHandleW(nullptr);specialClass.lpszClassName=L"MGO2MTHOST.SpecialPC";specialClass.hCursor=LoadCursor(nullptr,IDC_ARROW);specialClass.hbrBackground=HBRUSH(COLOR_BTNFACE+1);RegisterClassW(&specialClass);
   specialWindow=CreateWindowExW(WS_EX_TOOLWINDOW,specialClass.lpszClassName,L"特殊キャラ設定 / HOST",WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU,CW_USEDEFAULT,CW_USEDEFAULT,700,285,window,nullptr,specialClass.hInstance,this);if(!specialWindow)throw std::runtime_error("special settings window");
   add(L"BUTTON",L"特殊キャラを許可",AllowSpecial,18,18,215,28,BS_AUTOCHECKBOX);
   add(L"BUTTON",L"特殊キャラの名前を表示",SpecialNames,235,18,270,28,BS_AUTOCHECKBOX);SendMessageW(control(SpecialNames),BM_SETCHECK,BST_CHECKED,0);
@@ -87,6 +130,7 @@ struct App {
   GdiFlush();BITMAPFILEHEADER file{};file.bfType=0x4d42;file.bfOffBits=sizeof(file)+sizeof(BITMAPINFOHEADER);file.bfSize=file.bfOffBits+r.right*r.bottom*4;std::ofstream out(specialReport/L"special_settings.bmp",std::ios::binary);out.write(reinterpret_cast<char*>(&file),sizeof(file));out.write(reinterpret_cast<char*>(&info.bmiHeader),sizeof(info.bmiHeader));out.write(static_cast<char*>(pixels),r.right*r.bottom*4);SelectObject(mem,old);DeleteObject(bitmap);DeleteDC(mem);ReleaseDC(specialWindow,dc);if(!out)throw std::runtime_error("special capture write");
   std::ofstream(specialReport/L"validation.json")<<"{\"offline\":true,\"network\":false,\"fixture\":\"display-only\",\"mainHeight\":760,\"settingsHeight\":285,\"allowDefault\":false,\"randomDefault\":true}\n";
  }
+ void environment_options(){auto draft=commonSettings.nativeEnvironment->state().config;if(edit_host_environment(window,draft)){environment::save(profile_path().parent_path()/L"environment.cfg",draft);if(!commonSettings.nativeEnvironment->configure(draft))throw std::runtime_error("Environment settings revision");status(hosting?L"環境設定を保存しました。参加中のプレイヤーへ反映します。":L"環境設定を保存しました。次の部屋でも使用します。");}}
  void special_settings(){commonSettings.nativeSpecial->configure({SendMessageW(control(AllowSpecial),BM_GETCHECK,0,0)==BST_CHECKED,SendMessageW(control(SpecialNames),BM_GETCHECK,0,0)==BST_CHECKED,SendMessageW(control(RandomSpecial),BM_GETCHECK,0,0)==BST_CHECKED});}
  void special_assign(special_pc::Kind kind){auto index=SendMessageW(control(SpecialPlayer),CB_GETCURSEL,0,0);if(!busy||!hosting||index<0||size_t(index)>=specialView.players.size())return;const auto& p=specialView.players[size_t(index)];status(commonSettings.nativeSpecial->assign(specialView.epoch,p.id,kind)?L"特殊キャラの変更を要求しました。HOSTの空間・状態確認後に反映します。":L"参加者または部屋が変更されました。選択し直してください。");}
  void special_refresh(){auto view=commonSettings.nativeSpecial->state();if(view.players!=specialView.players||view.epoch!=specialView.epoch){std::optional<combat::Identity> selected;auto index=SendMessageW(control(SpecialPlayer),CB_GETCURSEL,0,0);if(index>=0&&size_t(index)<specialView.players.size())selected=specialView.players[size_t(index)].id;SendMessageW(control(SpecialPlayer),CB_RESETCONTENT,0,0);int chosen=0;for(size_t n=0;n<view.players.size();++n){const auto& p=view.players[n];auto known=std::find_if(latestPlayers.begin(),latestPlayers.end(),[&](const auto& r){return r.slot==p.id.slot&&r.instance==p.id.instance&&r.character==p.id.character;});auto label=known==latestPlayers.end()?L"PC "+std::to_wstring(p.id.character):wide(known->name);label+=p.current==special_pc::Kind::gekko?L" / 月光":L" / 通常";if(p.result!=combat::Reject::none)label+=L" / 変更不可（空間・状態）";SendMessageW(control(SpecialPlayer),CB_ADDSTRING,0,LPARAM(label.c_str()));if(selected==p.id)chosen=int(n);}SendMessageW(control(SpecialPlayer),CB_SETCURSEL,chosen,0);}specialView=std::move(view);SendMessageW(control(RandomSpecial),BM_SETCHECK,specialView.config.random?BST_CHECKED:BST_UNCHECKED,0);const bool ready=busy&&hosting&&!specialView.players.empty();EnableWindow(control(AssignGekko),ready&&specialView.config.allow);EnableWindow(control(AssignHuman),ready);EnableWindow(control(SpecialPlayer),ready);}
@@ -99,7 +143,7 @@ struct App {
   worker=std::jthread([this,credentials]{LoginResult r;
    try{r.auth=authenticate(*credentials,cancel);if(r.auth.status!=AuthStatus::success)r.error=L"ログインできませんでした。ID・パスワードと接続を確認してください。";
     else {r.characters=fetch_characters(keys,r.auth,cancel);if(r.characters.status!=CharacterStatus::success)r.error=L"PC一覧を取得できませんでした。";
-     else if(r.characters.list.entries.empty())r.error=L"ホスト用PCがありません。MGO2WINでPCを作成してください。";
+     else if(r.characters.list.entries.empty())r.error=L"ホスト用PCがありません。MGO2MTでPCを作成してください。";
      else{r.selection=select_character(keys,r.auth,r.characters.list.entries.front().id,cancel,CharacterSelectionContract::channel_snapshot_v1);if(r.selection.status!=CharacterSelectionStatus::success)r.error=L"PCの選択・ロビー取得ができませんでした。";}}
    }catch(...){r.error=L"ログイン処理でエラーが発生しました。";}
    {std::lock_guard lock(mutex);loginResult=std::move(r);}done=true;
@@ -143,28 +187,37 @@ struct App {
      else if(reply->briefing_remaining_ms){auto seconds=(*reply->briefing_remaining_ms+999)/1000;message+=seconds?L"\r\n準備開始まで "+std::to_wstring(seconds/60)+L":"+(seconds%60<10?L"0":L"")+std::to_wstring(seconds%60):L"\r\n参加者へのルーム情報の送信完了を待っています…";}
      else message+=L"\r\n参加者を待っています。";
     }if(reply->error)message+=L"\r\nエラー "+std::to_wstring(reply->error);status(message);std::wstring names;for(auto&p:reply->players){if(!names.empty())names+=L"\r\n";names+=wide(p.name);}SetWindowTextW(control(Players),names.empty()?L"なし":names.c_str());}
-  if(reply)latestPlayers=reply->players;
+  if(reply){for(const auto&p:reply->players){auto old=std::find_if(latestPlayers.begin(),latestPlayers.end(),[&](const auto&o){return o.slot==p.slot&&o.instance==p.instance&&o.character==p.character&&o.name==p.name;});if(old==latestPlayers.end()){auto name=p.name;for(auto&c:name)if(uint8_t(c)<32||c==127)c=' ';std::osyncstream(std::clog)<<"combat_player slot="<<unsigned(p.slot)<<" instance="<<p.instance<<" character="<<p.character<<" name="<<std::quoted(name)<<'\n';}}latestPlayers=reply->players;}
   if(busy&&done){if(worker.joinable())worker.join();busy=false;commonSettings.nativeSpecial->reset();enabled();if(closing)DestroyWindow(window);}
   special_refresh();
  }
  ~App(){cancel=true;if(worker.joinable())worker.join();if(font)DeleteObject(font);}
 };
 LRESULT CALLBACK procedure(HWND window,UINT message,WPARAM w,LPARAM l){auto*a=reinterpret_cast<App*>(GetWindowLongPtrW(window,GWLP_USERDATA));if(message==WM_NCCREATE){a=static_cast<App*>(reinterpret_cast<CREATESTRUCTW*>(l)->lpCreateParams);a->window=window;SetWindowLongPtrW(window,GWLP_USERDATA,LONG_PTR(a));}if(!a)return DefWindowProcW(window,message,w,l);
- try{switch(message){case WM_CREATE:a->initialize();return 0;case WM_COMMAND:if(HIWORD(w)==BN_CLICKED){switch(LOWORD(w)){case SpecialOptions:ShowWindow(a->specialWindow,SW_SHOWNORMAL);SetForegroundWindow(a->specialWindow);break;case AllowSpecial:case SpecialNames:case RandomSpecial:a->special_settings();break;case AssignGekko:a->special_assign(special_pc::Kind::gekko);break;case AssignHuman:a->special_assign(special_pc::Kind::human);break;case RoundPlacementOptions:if(!a->busy)items::edit_round_items(a->window,a->keys.parent_path()/"round_items.cfg",a->keys.parent_path()/"item_drop_policy.json");break;case PlacementOptions:a->placement_options();break;case OptionsButton:a->options();break;case Login:a->login();break;case Start:a->start();break;case Stop:a->cancel=true;a->status(L"停止しています… 部屋を閉じるまでお待ちください。");break;}}return 0;case WM_TIMER:a->tick();return 0;case WM_CLOSE:if(a->busy){a->closing=true;a->cancel=true;a->status(L"部屋を閉じて終了しています…");}else DestroyWindow(window);return 0;case WM_DESTROY:PostQuitMessage(0);return 0;}}
+ try{switch(message){case WM_CREATE:a->initialize();return 0;case WM_COMMAND:if(HIWORD(w)==BN_CLICKED){switch(LOWORD(w)){case EnvironmentOptions:a->environment_options();break;case SpecialOptions:ShowWindow(a->specialWindow,SW_SHOWNORMAL);SetForegroundWindow(a->specialWindow);break;case AllowSpecial:case SpecialNames:case RandomSpecial:a->special_settings();break;case AssignGekko:a->special_assign(special_pc::Kind::gekko);break;case AssignHuman:a->special_assign(special_pc::Kind::human);break;case RoundPlacementOptions:if(!a->busy)items::edit_round_items(a->window,a->keys.parent_path()/"round_items.cfg",a->keys.parent_path()/"item_drop_policy.json");break;case PlacementOptions:a->placement_options();break;case OptionsButton:a->options();break;case Login:a->login();break;case Start:a->start();break;case Stop:a->cancel=true;a->status(L"停止しています… 部屋を閉じるまでお待ちください。");break;}}return 0;case WM_TIMER:a->tick();return 0;case WM_CLOSE:if(a->busy){a->closing=true;a->cancel=true;a->status(L"部屋を閉じて終了しています…");}else DestroyWindow(window);return 0;case WM_DESTROY:PostQuitMessage(0);return 0;}}
  catch(...){a->status(L"処理を完了できませんでした。入力とデータファイルを確認してください。");}return DefWindowProcW(window,message,w,l);
 }
 }
 int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,PWSTR command,int show){
- if(command&&std::wstring_view(command)==L"--version"){std::cout<<"MGO2HOST "<<build_version<<std::endl;return 0;}
- try{auto folder=executable_folder();App app;app.keys=folder/L"data"/L"network.gnk";
-  int argc=0;auto argv=CommandLineToArgvW(GetCommandLineW(),&argc);bool check=false,probe=false,smokeOptions=false,smokeSpecial=false,smokeRound=false;std::filesystem::path report;
-  for(int i=1;i<argc;++i){auto arg=std::wstring_view(argv[i]);if(arg==L"--check")check=true;else if(arg==L"--smoke-ui")app.smoke=true;else if(arg==L"--smoke-options")smokeOptions=true;else if(arg==L"--smoke-special"){smokeSpecial=true;app.smoke=true;}else if(arg==L"--smoke-round-items")smokeRound=true;else if(arg==L"--probe-account")probe=true;else if(arg==L"--report"&&i+1<argc)report=argv[++i];else if(arg==L"--data"&&i+1<argc)app.keys=std::filesystem::path(argv[++i])/L"network.gnk";else{LocalFree(argv);return 2;}}LocalFree(argv);
+ if(command&&std::wstring_view(command)==L"--version"){std::cout<<"MGO2MTHOST "<<build_version<<std::endl;return 0;}
+ bool diagnosticCheck=false;
+ try{auto folder=executable_folder();CombatLog combatLog;App app;app.keys=folder/L"data"/L"network.gnk";
+  int argc=0;auto argv=CommandLineToArgvW(GetCommandLineW(),&argc);bool check=false,probe=false,smokeOptions=false,smokeSpecial=false,smokeRound=false,smokeEnvironment=false;std::filesystem::path report;
+  for(int i=1;i<argc;++i){auto arg=std::wstring_view(argv[i]);if(arg==L"--check")check=true;else if(arg==L"--smoke-ui")app.smoke=true;else if(arg==L"--smoke-options")smokeOptions=true;else if(arg==L"--smoke-special"){smokeSpecial=true;app.smoke=true;}else if(arg==L"--smoke-round-items")smokeRound=true;else if(arg==L"--smoke-environment")smokeEnvironment=true;else if(arg==L"--probe-account")probe=true;else if(arg==L"--report"&&i+1<argc)report=argv[++i];else if(arg==L"--data"&&i+1<argc)app.keys=std::filesystem::path(argv[++i])/L"network.gnk";else{LocalFree(argv);return 2;}}LocalFree(argv);
+  diagnosticCheck=check;
+  if(smokeEnvironment){if(report.empty())return 2;SetProcessDPIAware();inspect_host_environment(report);return 0;}
   if(smokeRound){if(report.empty())return 2;SetProcessDPIAware();std::filesystem::create_directories(report);return items::edit_round_items(nullptr,app.keys.parent_path()/"round_items.cfg",app.keys.parent_path()/"item_drop_policy.json",report/"round_items.bmp")?0:3;}
   if(smokeOptions){if(report.empty())return 2;SetProcessDPIAware();inspect_host_options(report);return 0;}
-  if(smokeSpecial){if(report.empty())return 2;app.specialReport=report;}if(!smokeSpecial){NetworkKeys::load(app.keys);load_lobby_membership(app.keys.parent_path()/L"lobbies.cfg");host::settings_payload(host::Settings{});}if(check){auto lights=app.keys.parent_path()/"breakable_lights.cfg";if(std::filesystem::exists(lights))combat::load_breakable_lights(lights);auto health=app.keys.parent_path()/"combat_health.cfg";if(std::filesystem::exists(health))combat::HealthRules::load(health);auto cfg=app.keys.parent_path()/"round_items.cfg";if(std::filesystem::exists(cfg)){items::RoundItems settings;std::string error;if(!settings.load(cfg,error))return 7;}return 0;}
+  std::string hitGeometryError;const auto hitGeometry=host_hit::configure(app.keys.parent_path()/"character/hit_geometry.gwhit",hitGeometryError);
+  if(hitGeometry==host_hit::ResourceStatus::invalid_resource){std::cerr<<"Hit geometry check failed: "<<hitGeometryError<<std::endl;if(!check)MessageBoxW(nullptr,wide(hitGeometryError).c_str(),L"MGO2MTHOST",MB_OK|MB_ICONERROR);return 9;}
+  if(!special_pc::configure_gekko_jump(app.keys.parent_path()/"special/gekko_jump.gwjc",hitGeometryError)||combat::evade_runtime::configure(app.keys.parent_path()/"motion/evade_travel.gwet",hitGeometryError)==combat::evade_runtime::ResourceStatus::invalid_resource){std::cerr<<hitGeometryError<<std::endl;if(!check)MessageBoxW(nullptr,wide(hitGeometryError).c_str(),L"MGO2MTHOST",MB_OK|MB_ICONERROR);return 9;}
+  if(smokeSpecial){if(report.empty())return 2;app.specialReport=report;}if(!smokeSpecial){NetworkKeys::load(app.keys);load_lobby_membership(app.keys.parent_path()/L"lobbies.cfg");host::settings_payload(host::Settings{});}if(check){auto lights=app.keys.parent_path()/"breakable_lights.cfg";if(std::filesystem::exists(lights))combat::load_breakable_lights(lights);auto health=app.keys.parent_path()/"combat_health.cfg";if(std::filesystem::exists(health))combat::HealthRules::load(health);auto cfg=app.keys.parent_path()/"round_items.cfg";if(std::filesystem::exists(cfg)){items::RoundItems settings;std::string error;if(!settings.load(cfg,error))return 7;}try{check_gameplay_configuration(app.keys.parent_path());}catch(const std::exception& error){std::cerr<<"HOST configuration check failed: "<<error.what()<<std::endl;return 8;}return 0;}
   if(probe){if(report.empty())return 2;LoginForm saved;if(!load_login(profile_path(),saved)||!saved.valid())return 4;AuthCredentials credentials(saved.credential(0),saved.credential(1));std::atomic_bool cancel=false;auto a=authenticate(credentials,cancel);CharacterReply c;if(a.status==AuthStatus::success)c=fetch_characters(app.keys,a,cancel);std::ofstream out(report);out<<"{\"auth_status\":"<<int(a.status)<<",\"http\":"<<a.http<<",\"character_status\":"<<int(c.status)<<",\"characters\":"<<c.list.entries.size()<<",\"error\":"<<c.error<<"}\n";if(!out)return 5;return a.status==AuthStatus::success&&c.status==CharacterStatus::success?0:6;}
-  SetProcessDPIAware();WNDCLASSW type{};type.lpfnWndProc=procedure;type.hInstance=instance;type.lpszClassName=L"MGO2HOST.Window";type.hCursor=LoadCursor(nullptr,IDC_ARROW);type.hbrBackground=HBRUSH(COLOR_BTNFACE+1);RegisterClassW(&type);
-  auto window=CreateWindowW(type.lpszClassName,versioned_title(L"MGO2HOST — OpenMGO2").c_str(),WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX,CW_USEDEFAULT,CW_USEDEFAULT,780,760,nullptr,nullptr,instance,&app);if(!window)return 3;ShowWindow(window,show);UpdateWindow(window);
+  if(!app.smoke)combatLog.open();
+  std::clog<<"Hit geometry: "<<(hitGeometry==host_hit::ResourceStatus::local_resource?"local_resource":"native_fallback")<<std::endl;
+  SetProcessDPIAware();WNDCLASSW type{};type.lpfnWndProc=procedure;type.hInstance=instance;type.lpszClassName=L"MGO2MTHOST.Window";type.hCursor=LoadCursor(nullptr,IDC_ARROW);type.hbrBackground=HBRUSH(COLOR_BTNFACE+1);RegisterClassW(&type);
+  auto window=CreateWindowW(type.lpszClassName,versioned_title(L"MGO2MTHOST — OpenMGO2").c_str(),WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX,CW_USEDEFAULT,CW_USEDEFAULT,780,760,nullptr,nullptr,instance,&app);if(!window)return 3;ShowWindow(window,show);UpdateWindow(window);
   MSG message{};while(GetMessageW(&message,nullptr,0,0)>0){if(!(app.specialWindow&&IsWindowVisible(app.specialWindow)&&IsDialogMessageW(app.specialWindow,&message))&&!IsDialogMessageW(window,&message)){TranslateMessage(&message);DispatchMessageW(&message);}}return 0;
- }catch(...){MessageBoxW(nullptr,L"data/network.gnk と data/lobbies.cfg を確認してください。",L"MGO2HOST",MB_OK|MB_ICONERROR);return 1;}
+ }catch(const std::exception& error){std::cerr<<"MGO2MTHOST: "<<error.what()<<std::endl;if(!diagnosticCheck)MessageBoxW(nullptr,L"必要なローカル資産を確認してください。README.ja.md の EXCV 手順で data を準備できます。",L"MGO2MTHOST",MB_OK|MB_ICONERROR);return 1;}
+ catch(...){std::cerr<<"MGO2MTHOST: initialization failed"<<std::endl;if(!diagnosticCheck)MessageBoxW(nullptr,L"data/network.gnk と data/lobbies.cfg を確認してください。",L"MGO2MTHOST",MB_OK|MB_ICONERROR);return 1;}
 }

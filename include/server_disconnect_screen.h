@@ -2,7 +2,7 @@
 #include "lobby_keepalive.h"
 #include <span>
 #include <string_view>
-namespace mgo2win {
+namespace mgo2mt {
 constexpr std::wstring_view server_disconnect_text(LobbyDisconnectReason reason){
  switch(reason){
  case LobbyDisconnectReason::beacon_timeout:return L"サーバーから30秒間応答がないため、接続を解除しました。\nサーバーや通信の状態を確認してから、STARTで入り直してください。";

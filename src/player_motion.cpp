@@ -4,7 +4,7 @@
 #include <cmath>
 #include <cstring>
 #include <stdexcept>
-namespace mgo2win {
+namespace mgo2mt {
 namespace {
 void require(bool condition){if(!condition)throw std::runtime_error("Invalid GWT1 player motion bank");}
 struct Reader {

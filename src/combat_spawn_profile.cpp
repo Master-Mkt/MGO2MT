@@ -1,9 +1,10 @@
+#include "product_identity.h"
 #include "combat_spawn_profile.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
 #include <sstream>
-namespace mgo2win::combat::spawn {
+namespace mgo2mt::combat::spawn {
 namespace {
 size_t group_index(Variant v,Kind k,uint8_t t){if(unsigned(v)>1||unsigned(k)>1||t>2)throw std::invalid_argument("Spawn group");return (unsigned(v)*2+unsigned(k))*3+t;}
 void require(bool b){if(!b)throw std::runtime_error("Invalid stage spawn profile");}
@@ -11,7 +12,7 @@ void require(bool b){if(!b)throw std::runtime_error("Invalid stage spawn profile
 const std::vector<Entry>& StageProfile::group(Variant v,Kind k,uint8_t t)const{return groups_[group_index(v,k,t)];}
 StageProfile StageProfile::read(std::istream& in){
  StageProfile p;std::string magic;unsigned version,map,rule,count;
- require(bool(in>>magic>>version>>p.stage_>>map>>rule>>count)&&magic=="MGO2WIN_COMBAT_SPAWNS"&&version==1&&map>0&&map<256&&rule<=1&&count>=8&&count<=576);
+ require(bool(in>>magic>>version>>p.stage_>>map>>rule>>count)&&magic==mgo2mt::brand::Format{"MGO2MT_COMBAT_SPAWNS"}&&version==1&&map>0&&map<256&&rule<=1&&count>=8&&count<=576);
  require(p.stage_.size()==5&&p.stage_[0]=='n'&&p.stage_[4]=='a'&&std::all_of(p.stage_.begin()+1,p.stage_.begin()+4,[](char c){return c>='0'&&c<='9';}));
  p.map_=uint8_t(map);p.rule_=uint8_t(rule);
  for(unsigned row=0;row<count;++row){Entry e;unsigned variant,kind,team,index;int yaw;std::string key,hash;

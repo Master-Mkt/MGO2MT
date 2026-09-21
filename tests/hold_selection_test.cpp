@@ -1,7 +1,7 @@
 #include "hold_selection.h"
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win::hold_selection;
+using namespace mgo2mt::hold_selection;
 namespace {
 void check(bool v,const char* why){if(!v)throw std::runtime_error(why);}
 Snapshot fixture(){Snapshot s;s.scope={9,7,2,1,33,101,4};s.eligible=true;s.weapons={{0,25,7,1,24,120,0,true},{1,3,4,1,7,21,0,true},{2,52,1,3,0,0,3,false}};s.selectedWeapon=uint8_t(0);return s;}

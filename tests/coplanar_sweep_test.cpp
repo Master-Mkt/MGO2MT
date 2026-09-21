@@ -2,7 +2,7 @@
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win::stage;
+using namespace mgo2mt::stage;
 void check(bool b,const char*m){if(!b)throw std::runtime_error(m);}
 Collision plane(float size,float y=0){return Collision::make({{-size,y,-size},{-size,y,size},{size,y,size},{size,y,-size}},{{{0,1,2}},{{0,2,3}}});}
 int main(){try{

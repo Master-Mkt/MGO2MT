@@ -15,7 +15,7 @@
 #include <map>
 #include <set>
 #include <string>
-namespace mgo2win::items {namespace {
+namespace mgo2mt::items {namespace {
 enum {mapId=100,envgId,drumId,sourceInfoId,resetId};
 constexpr std::array<uint8_t,5> maps{20,1,4,21,7};
 constexpr std::array<const wchar_t*,5> mapLabels{L"n022a / マップ20",L"Ambush Alley (AA)",L"Midtown Maelstrom (MM)",L"Jade Junction (JJ)",L"Blood Bath (BB)"};
@@ -113,7 +113,7 @@ bool edit_round_items(HWND owner,const std::filesystem::path&path,const std::fil
  }
  std::vector<uint16_t> data(sizeof(DLGTEMPLATE)/2);auto*d=reinterpret_cast<DLGTEMPLATE*>(data.data());d->style=WS_POPUP|WS_CAPTION|WS_SYSMENU|DS_MODALFRAME|DS_SETFONT;d->cx=410;d->cy=322;
  data.push_back(0);data.push_back(0);auto text=[&](const std::wstring&t){for(auto c:t)data.push_back(uint16_t(c));data.push_back(0);};
- text(versioned_title(L"MGO2HOST 標準アイテム"));data.push_back(9);text(L"MS UI Gothic");
+ text(versioned_title(L"MGO2MTHOST 標準アイテム"));data.push_back(9);text(L"MS UI Gothic");
  const auto result=DialogBoxIndirectParamW(GetModuleHandleW(nullptr),reinterpret_cast<DLGTEMPLATE*>(data.data()),owner,procedure,LPARAM(&s));return image.empty()?result==1:s.captured;
  }catch(const std::exception&e){if(image.empty())MessageBoxW(owner,(L"設定を開けません。\n"+wide(e.what())).c_str(),L"標準アイテム",MB_OK|MB_ICONERROR);return false;}
 }

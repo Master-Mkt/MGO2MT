@@ -2,10 +2,11 @@
 #pragma once
 #include "combat_authority.h"
 #include "host_roster.h"
+#include "camera_projection.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
-namespace mgo2win::enemy_tag {
+namespace mgo2mt::enemy_tag {
 using combat::Vec3;
 inline float dot(Vec3 a,Vec3 b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];}
 inline Vec3 sub(Vec3 a,Vec3 b){for(int i=0;i<3;++i)a[i]-=b[i];return a;}
@@ -34,8 +35,10 @@ inline std::optional<Target> select(const combat::Snapshot&s,const host::Roster&
  if(!enabled||!s.epoch||!r.complete||self.slot>=24||!finite(origin))return {};
  const auto&me=s.players[self.slot];if(!me||me->identity!=self||!me->alive||me->stunned||(rule!=0&&rule!=1))return {};
  auto rd=unit(direction);if(!rd)return {};float limit=500000.f;
- if(auto hit=world.ray(origin,*rd,limit))limit=hit->distance;
- if(objects)if(auto hit=objects->ray(origin,*rd,limit))limit=hit->distance;
+ // Native aiming selection follows bullet contacts. Eye visibility below is
+ // independently filtered by StopEye; GEOM camera barriers are not sight walls.
+ if(auto hit=world.ray(origin,*rd,limit,stage::query::bullet))limit=hit->distance;
+ if(objects)if(auto hit=objects->ray(origin,*rd,limit,stage::query::bullet))limit=hit->distance;
  const combat::Player* nearest=nullptr;
  for(const auto&p:s.players)if(p&&p->identity!=self&&p->alive){auto t=capsule(origin,*rd,p->pose);if(t&&*t<limit){limit=*t;nearest=&*p;}}
  if(!nearest||nearest->identity.slot>=24||!nearest->specialPc.nameVisible)return {};
@@ -48,20 +51,23 @@ inline std::optional<Target> select(const combat::Snapshot&s,const host::Roster&
 inline bool visible(Vec3 eye,Vec3 point,const stage::Collision&world,const stage::Collision*objects=nullptr){
  if(!finite(eye)||!finite(point))return false;auto delta=sub(point,eye);auto rd=unit(delta);if(!rd)return false;
  float distance=std::sqrt(dot(delta,delta));
- for(auto collision:{&world,objects})if(collision)if(auto hit=collision->ray(eye,*rd,distance))if(hit->distance<distance)return false;
+ if(auto hit=world.ray(eye,*rd,distance,stage::query::stop_eye);hit&&hit->distance<distance)return false;
+ // GM_HIT-only object proxies are explicitly tagged native Bullet targets;
+ // no original GEOM StopEye bit is manufactured on those separate volumes.
+ if(objects)if(auto hit=objects->ray(eye,*rd,distance,stage::query::bullet);hit&&hit->distance<distance)return false;
  return true;
 }
 struct Point {int x=0,y=0;};
-struct Viewport {int left=620,top=120,width=616,height=392;float aspect=616.f/392.f;
- bool valid()const{return left>=0&&top>=0&&width>0&&height>0&&width<=1280&&height<=720&&left<=1280-width&&top<=720-height&&std::isfinite(aspect)&&aspect>0&&aspect<=32;}
+struct Viewport {int left=620,top=120,width=616,height=392;float aspect=616.f/392.f,verticalFov=default_vertical_fov;
+ bool valid()const{return left>=0&&top>=0&&width>0&&height>0&&width<=1280&&height<=720&&left<=1280-width&&top<=720-height&&std::isfinite(aspect)&&aspect>0&&aspect<=32&&valid_vertical_fov(verticalFov);}
 };
 // Matches the world camera FOV and aspect; the destination UI rectangle is independent.
-inline std::optional<Point> project(Vec3 point,Vec3 eye,Vec3 direction,int left,int top,int width,int height,float aspect=616.f/392.f){
- if(width<=0||height<=0||!std::isfinite(aspect)||aspect<=0||aspect>32||!finite(point)||!finite(eye))return {};auto z=unit(direction);if(!z)return {};
+inline std::optional<Point> project(Vec3 point,Vec3 eye,Vec3 direction,int left,int top,int width,int height,float aspect=616.f/392.f,float verticalFov=default_vertical_fov){
+ if(width<=0||height<=0||!std::isfinite(aspect)||aspect<=0||aspect>32||!valid_vertical_fov(verticalFov)||!finite(point)||!finite(eye))return {};auto z=unit(direction);if(!z)return {};
  auto x=unit(Vec3{(*z)[2],0,-(*z)[0]});if(!x)return {};
  Vec3 y{(*z)[1]*(*x)[2]-(*z)[2]*(*x)[1],(*z)[2]*(*x)[0]-(*z)[0]*(*x)[2],(*z)[0]*(*x)[1]-(*z)[1]*(*x)[0]};
  auto delta=sub(point,eye);float depth=dot(delta,*z);if(depth<10||depth>=500000)return {};
- float nx=source_screen_x*dot(delta,*x)/(depth*std::tan(.5f)*aspect),ny=dot(delta,y)/(depth*std::tan(.5f));
+ float nx=source_screen_x*dot(delta,*x)/(depth*std::tan(verticalFov*.5f)*aspect),ny=dot(delta,y)/(depth*std::tan(verticalFov*.5f));
  if(!std::isfinite(nx)||!std::isfinite(ny)||std::abs(nx)>1||std::abs(ny)>1)return {};
  return Point{left+int((nx+1)*.5f*width),top+int((1-ny)*.5f*height)};
 }

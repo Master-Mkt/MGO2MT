@@ -1,11 +1,11 @@
 #include "combat_authority.h"
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {
 void check(bool b,const char* s){if(!b)throw std::runtime_error(s);}
 const combat::Identity id{1,11,101};
-std::shared_ptr<const stage::Collision> floor(bool wall=false){std::vector<stage::Vec3> v{{-5000,0,-5000},{5000,0,-5000},{5000,0,5000},{-5000,0,5000}};std::vector<stage::CollisionTriangle> t{{{0,1,2}},{{0,2,3}}};if(wall){v.insert(v.end(),{{-1000,0,300},{1000,0,300},{1000,3000,300},{-1000,3000,300}});t.push_back({{4,5,6}});t.push_back({{4,6,7}});}return std::make_shared<const stage::Collision>(stage::Collision::make(v,t));}
+std::shared_ptr<const stage::Collision> floor(bool wall=false){std::vector<stage::Vec3> v{{-5000,0,-5000},{5000,0,-5000},{5000,0,5000},{-5000,0,5000}};std::vector<stage::CollisionTriangle> t{{{0,1,2},stage::attribute::native_solid},{{0,2,3},stage::attribute::native_solid}};if(wall){v.insert(v.end(),{{-1000,0,300},{1000,0,300},{1000,3000,300},{-1000,3000,300}});t.push_back({{4,5,6},stage::attribute::native_solid});t.push_back({{4,6,7},stage::attribute::native_solid});}return std::make_shared<const stage::Collision>(stage::Collision::make(v,t));}
 items::wire::Command command(uint64_t sequence,items::wire::Action action,uint64_t heldRevision=0,uint64_t entity=0,uint64_t entityRevision=0){items::wire::Command c;c.header={{1,1},123,{id.slot,id.instance,id.character,1},sequence};c.action=action;c.heldSlot=0;c.heldRevision=heldRevision;c.entity=entity;c.entityRevision=entityRevision;if(action==items::wire::Action::install)c.amount=1;if(action==items::wire::Action::use){c.heldSlot=255;c.amount=1;c.heldRevision=0;}return c;}
 }
 int main(){try{

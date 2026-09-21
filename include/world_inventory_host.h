@@ -2,7 +2,7 @@
 #include "combat_authority.h"
 #include "world_inventory_wire.h"
 #include <deque>
-namespace mgo2win::items {
+namespace mgo2mt::items {
 // Optional native transport adapter. Authority owns all inventory mutations.
 class HostSession {
  struct Peer {wire::Header header;uint64_t worldRevision=0,nextPublish=0;std::optional<wire::Held> held;std::deque<std::vector<uint8_t>> pending,priority;};

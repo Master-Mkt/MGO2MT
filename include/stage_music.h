@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 #include <optional>
-namespace mgo2win::stage {
+namespace mgo2mt::stage {
 struct Track {std::string id;std::wstring title;std::filesystem::path path;bool additional=false;};
 struct MusicLibrary {
  std::vector<Track> tracks;unsigned rejected=0,overflow=0,playlistErrors=0;

@@ -1,9 +1,9 @@
 #pragma once
 #include <string>
 #include <string_view>
-namespace mgo2win {
-inline constexpr char build_version[] = "v0.01-@MGO2WIN_BUILD_TIMESTAMP@";
-inline constexpr wchar_t build_version_wide[] = L"v0.01-@MGO2WIN_BUILD_TIMESTAMP@";
+namespace mgo2mt {
+inline constexpr char build_version[] = "v0.01-@MGO2MT_BUILD_TIMESTAMP@";
+inline constexpr wchar_t build_version_wide[] = L"v0.01-@MGO2MT_BUILD_TIMESTAMP@";
 inline std::wstring versioned_title(std::wstring_view title) {
     return std::wstring(build_version_wide) + L" | " + std::wstring(title);
 }

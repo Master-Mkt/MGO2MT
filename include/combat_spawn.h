@@ -2,7 +2,7 @@
 #include "combat_authority.h"
 #include <istream>
 
-namespace mgo2win::combat::spawn {
+namespace mgo2mt::combat::spawn {
 enum class Kind : uint8_t { initial, respawn };
 enum class Variant : uint8_t { normal, mini };
 struct Entry {

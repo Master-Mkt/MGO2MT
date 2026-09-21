@@ -3,7 +3,7 @@
 #include <iostream>
 #include <limits>
 #include <fstream>
-using namespace mgo2win::stage;
+using namespace mgo2mt::stage;
 namespace {void check(bool b,const char*s){if(!b)throw std::runtime_error(s);}bool near(float a,float b){return std::abs(a-b)<.0001f;}}
 int main(int argc,char**argv){try{
  // Deliberately unsorted, opposite-facing layers and coincident distinct faces.
@@ -25,8 +25,8 @@ int main(int argc,char**argv){try{
  auto unknown=square.material(0);check(unknown.resistance==1000&&!unknown.resistanceVerified,"unresolved resistance fallback");
  auto g=std::make_shared<const Collision>(c);auto combined=Collision::combine(Collision{},std::array<CollisionInstance,1>{{{73,g,{10,0,0},{0,180,0}}}});
  auto moved=combined.ray_all({10,0,0},{0,0,-1},10);check(moved.size()==3&&moved[0].object==73&&moved[0].frontFace&&moved[0].material.resistance==-5,"instance transform preserves oriented normals and material");
- for(unsigned version:{1u,2u,3u}){std::ostringstream out;out<<"MGO2WIN.STAGE_COLLISION "<<version<<" 3 1 ";if(version>=2)out<<"1 17 .25 .75 1 ";if(version==3)out<<"-2147483648 1 ";out<<"-1 -1 2 1 -1 2 0 1 2 0 1 2 32768 64 ";if(version>=2)out<<"0";std::istringstream in(out.str());auto loaded=Collision::read(in);auto value=loaded.ray_all({0,0,0},{0,0,1},3);check(value.size()==1,"cfg compatibility");check(value[0].material.resistance==(version==3?std::numeric_limits<int32_t>::min():1000)&&value[0].material.resistanceVerified==(version==3),"v1v2 unknown vs v3 signed resistance");}
- for(auto row:{"100 0","2147483648 1","100 2"}){std::istringstream in(std::string("MGO2WIN.STAGE_COLLISION 3 0 0 1 1 .5 .5 1 ")+row);bool refused=false;try{Collision::read(in);}catch(...){refused=true;}check(refused,"reject malformed resistance record");}
+ for(unsigned version:{1u,2u,3u}){std::ostringstream out;out<<"MGO2MT.STAGE_COLLISION "<<version<<" 3 1 ";if(version>=2)out<<"1 17 .25 .75 1 ";if(version==3)out<<"-2147483648 1 ";out<<"-1 -1 2 1 -1 2 0 1 2 0 1 2 32768 64 ";if(version>=2)out<<"0";std::istringstream in(out.str());auto loaded=Collision::read(in);auto value=loaded.ray_all({0,0,0},{0,0,1},3);check(value.size()==1,"cfg compatibility");check(value[0].material.resistance==(version==3?std::numeric_limits<int32_t>::min():1000)&&value[0].material.resistanceVerified==(version==3),"v1v2 unknown vs v3 signed resistance");}
+ for(auto row:{"100 0","2147483648 1","100 2"}){std::istringstream in(std::string("MGO2MT.STAGE_COLLISION 3 0 0 1 1 .5 .5 1 ")+row);bool refused=false;try{Collision::read(in);}catch(...){refused=true;}check(refused,"reject malformed resistance record");}
  // BVH order is deliberately unrelated to range; all 200 surfaces survive.
  v.clear();t.clear();for(int i=200;i>0;--i){unsigned b=unsigned(v.size());v.insert(v.end(),{{-1,-1,float(i)},{1,-1,float(i)},{0,1,float(i)}});t.push_back({{b,b+1,b+2}});}auto many=Collision::make(v,t).ray_all({0,0,0},{0,0,1},200);check(many.size()==200&&many.front().distance==1&&many.back().distance==200,"all BVH hits no arbitrary cap");
  if(argc>1){std::ifstream in(argv[1]);auto actual=Collision::read(in);size_t verified=0;for(auto m:actual.materials)verified+=m.resistanceVerified;check(verified>0,"actual material resistance records recovered");std::cout<<"actual materials="<<actual.materials.size()<<" resistanceVerified="<<verified<<'\n';}

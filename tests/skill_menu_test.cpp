@@ -5,13 +5,13 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 static void check(bool ok,const char*message){if(!ok)throw std::runtime_error(message);}
 int main(int argc,char**argv){
- auto file=std::filesystem::temp_directory_path()/("mgo2win-skill-menu-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count())+".tsv");
+ auto file=std::filesystem::temp_directory_path()/("mgo2mt-skill-menu-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count())+".tsv");
  struct Cleanup{std::filesystem::path path;~Cleanup(){std::error_code ec;std::filesystem::remove(path,ec);}}cleanup{file};
  try{
-  {std::ofstream f(file);f<<"MGO2WIN_SKILLS\t1\n";for(unsigned i=0;i<12;++i)for(unsigned level=1;level<=3;++level)f<<"SKILL\t"<<i<<'\t'<<level<<'\t'<<level<<"\tSynthetic "<<i<<"\t確認スキル "<<i<<'\n';}
+  {std::ofstream f(file);f<<"MGO2MT_SKILLS\t1\n";for(unsigned i=0;i<12;++i)for(unsigned level=1;level<=3;++level)f<<"SKILL\t"<<i<<'\t'<<level<<'\t'<<level<<"\tSynthetic "<<i<<"\t確認スキル "<<i<<'\n';}
   auto catalog=std::make_shared<skills::Catalog>();std::string error;check(catalog->load(file,error),"synthetic menu catalog loads");SkillMenu menu;
   auto key=[&](unsigned k,LPARAM lp=0){menu.message(nullptr,WM_KEYDOWN,k,lp);};auto cue=[&](unsigned expected){check(menu.cues()==std::vector<unsigned>{expected},"one semantic cue per action");};
   menu.open(catalog,{});key(VK_UP);check(menu.focus()==0&&menu.cues().empty(),"clamped focus is silent");

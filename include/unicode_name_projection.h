@@ -6,7 +6,7 @@
 #include <string>
 #include <string_view>
 
-namespace mgo2win::unicode_name_projection {
+namespace mgo2mt::unicode_name_projection {
 inline constexpr std::size_t field_bytes = 16;
 enum class Termination { nul_required, full_field_allowed };
 struct Projection {
@@ -67,4 +67,4 @@ inline std::optional<Projection> project(std::string_view fullNameUtf8,
     result.hasTerminator = result.displayPrefix.size() < field_bytes;
     return result;
 }
-} // namespace mgo2win::unicode_name_projection
+} // namespace mgo2mt::unicode_name_projection

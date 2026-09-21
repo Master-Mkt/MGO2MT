@@ -3,7 +3,7 @@
 #include <atomic>
 #include <cstdint>
 #include <span>
-namespace mgo2win {
+namespace mgo2mt {
 using StunId=std::array<uint8_t,12>;
 enum class StunStatus {unchecked,success,timeout,cancelled,network_error,protocol_error,server_error};
 struct StunResult {StunStatus status=StunStatus::unchecked;uint16_t mapped_port=0;std::array<uint8_t,4> address{};unsigned attempts=0;int error=0;};

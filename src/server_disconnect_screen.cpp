@@ -11,7 +11,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-namespace mgo2win {
+namespace mgo2mt {
 namespace {
 void draw(std::span<uint32_t> target,std::wstring_view text,RECT box,int height,COLORREF color,bool panel){
  if(target.size()!=1280*720||text.empty())return;

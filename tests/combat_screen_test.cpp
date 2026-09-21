@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {void check(bool ok,const char*s){if(!ok)throw std::runtime_error(s);}}
 int main(int argc,char**argv){try{
  check(argc>=2,"catalog argument");std::mutex mutex;std::vector<combat::wire::Command> commands;std::optional<RoomReply> outgoing;std::shared_ptr<clan::Cache> clanCache;

@@ -4,13 +4,13 @@
 #include <limits>
 #include <memory>
 #include <stdexcept>
-using namespace mgo2win;
-using namespace mgo2win::combat;
+using namespace mgo2mt;
+using namespace mgo2mt::combat;
 namespace {
 void check(bool ok,const char* why){if(!ok)throw std::runtime_error(why);}
 std::shared_ptr<const stage::Collision> floor(bool wall=false){
  std::vector<Vec3> v{{-20000,0,-20000},{20000,0,-20000},{20000,0,20000},{-20000,0,20000}};
- std::vector<stage::CollisionTriangle> t{{{0,1,2}},{{0,2,3}}};if(wall){v.insert(v.end(),{{-1000,0,1500},{1000,0,1500},{1000,3000,1500},{-1000,3000,1500}});t.push_back({{4,5,6},0,0,~0u,700});t.push_back({{4,6,7},0,0,~0u,700});}
+ std::vector<stage::CollisionTriangle> t{{{0,1,2}},{{0,2,3}}};if(wall){v.insert(v.end(),{{-1000,0,1500},{1000,0,1500},{1000,3000,1500},{-1000,3000,1500}});t.push_back({{4,5,6},stage::attribute::native_solid,0,~0u,700});t.push_back({{4,6,7},stage::attribute::native_solid,0,~0u,700});}
  return std::make_shared<const stage::Collision>(stage::Collision::make(v,t));
 }
 // Deliberately synthetic independent fixtures, never shipped weapon defaults.

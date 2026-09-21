@@ -6,7 +6,7 @@
 #include "stage_object_sync.h"
 #include <map>
 #include <set>
-namespace mgo2win::host {
+namespace mgo2mt::host {
 // Server half of the existing room-admission protocol. Lobby 4340 must approve
 // a character before the caller publishes roster/global state to this peer.
 struct ProfileNames {std::string name,clan;uint32_t clanId=0;std::array<uint8_t,28> appearance{};uint8_t level=0;};

@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <vector>
 
-namespace mgo2win::combat::original {
+namespace mgo2mt::combat::original {
 // Retail MGO2 8101A0: ten channels per player actor, not per NT object.
 constexpr uint16_t channel_base=64;
 constexpr uint8_t player_limit=24,channel_count=10;

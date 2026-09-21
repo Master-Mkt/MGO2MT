@@ -1,6 +1,6 @@
 #pragma once
 #include "combat_wire.h"
-namespace mgo2win::player {
+namespace mgo2mt::player {
 // Reliable contextual edges share HOST lifetime/identity, never a client pose flag.
 class CoverInput {
  uint64_t epoch_=0,at_=0;combat::Identity identity_;uint32_t life_=0,counter_=0;

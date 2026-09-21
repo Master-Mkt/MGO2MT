@@ -7,7 +7,7 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 static void require(bool b){if(!b)throw std::runtime_error("GCX assertion failed");}
 template<class F> void rejects(F f){bool threw=false;try{f();}catch(const std::exception&){threw=true;}require(threw);}
 static GcxValue arg(int n){return {GcxValue::Kind::integer,n,{}};}

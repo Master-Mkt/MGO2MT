@@ -12,8 +12,8 @@
 #include <string_view>
 
 namespace {
-using namespace mgo2win;
-using namespace mgo2win::stage;
+using namespace mgo2mt;
+using namespace mgo2mt::stage;
 using Point = std::array<float, 3>;
 using Face = std::array<Point, 3>;
 

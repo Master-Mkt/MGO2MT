@@ -1,13 +1,13 @@
 #include "combat_authority.h"
 #include "water_gameplay.h"
 #include <cmath>
-namespace mgo2win::combat {
+namespace mgo2mt::combat {
 bool Authority::release_cover(Identity id){auto s=slot(id);if(!s)return false;if(s->state.cover!=cover::State{}){s->state.cover={};++revision_;}return true;}
 void Authority::advance_cover(){
  for(auto&s:slots_)if(s){auto& p=s->state;if(!p.cover.attached&&!p.cover.lean)continue;
   const auto previous=p.cover;
   const auto wet=water_gameplay::sample(water_.get(),*movement_,p.pose.feet,p.pose.capsule,{waterRatio_,true});
-  if(p.ladderAnchor||p.specialPc.kind!=special_pc::Kind::human||!active_||!p.alive||p.stunned||p.reloadUntil||p.specialPhase!=SpecialPhase::none||p.evadeKind!=EvadeKind::none||wet.foot==stage::WaterFoot::inWater)p.cover={};
+  if(p.mountedId||p.flightId||p.ladderAnchor||p.specialPc.kind!=special_pc::Kind::human||!active_||!p.alive||p.stunned||p.reloadUntil||p.specialPhase!=SpecialPhase::none||p.evadeKind!=EvadeKind::none||wet.foot==stage::WaterFoot::inWater)p.cover={};
   else p.cover=cover::evaluate(*movement_,p.pose.feet,p.pose.capsule,p.pose.yaw,p.cover,p.cover.lean,true);
   if(p.cover!=previous)++revision_;
  }
@@ -24,7 +24,7 @@ Reject Authority::cover(Identity id,uint64_t epoch,uint32_t sequence,const cover
  if(!active_)return Reject::not_active;if(!s->state.alive||s->state.stunned)return Reject::dead;
  if(edge&&i.action==cover::Action::detach){release_cover(id);return Reject::none;}
  auto& p=s->state;
- if(p.ladderAnchor||p.specialPc.kind!=special_pc::Kind::human||p.specialPhase!=SpecialPhase::none||p.evadeKind!=EvadeKind::none||p.reloadUntil){release_cover(id);return Reject::unavailable;}
+ if(p.mountedId||p.flightId||p.ladderAnchor||p.specialPc.kind!=special_pc::Kind::human||p.specialPhase!=SpecialPhase::none||p.evadeKind!=EvadeKind::none||p.reloadUntil){release_cover(id);return Reject::unavailable;}
  const auto wet=water_gameplay::sample(water_.get(),*movement_,p.pose.feet,p.pose.capsule,{waterRatio_,true});
  if(wet.foot==stage::WaterFoot::inWater){release_cover(id);return Reject::unavailable;}
  auto desired=p.cover;

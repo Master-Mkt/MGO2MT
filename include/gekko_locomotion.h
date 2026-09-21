@@ -1,7 +1,7 @@
 #pragma once
 #include <array>
 #include <cstdint>
-namespace mgo2win::gekko_locomotion {
+namespace mgo2mt::gekko_locomotion {
 struct Scope {uint64_t epoch=0,scene=0;uint32_t character=0,life=0;uint16_t instance=0;uint8_t slot=255;bool operator==(const Scope&)const=default;};
 struct Policy {
  float maximumSpeed=4224,acceleration=12000,deceleration=24000,yawRate=6.28318530718f;

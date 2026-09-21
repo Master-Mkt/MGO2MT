@@ -1,8 +1,12 @@
 #pragma once
 #include "combat_authority.h"
 #include <set>
-namespace mgo2win::combat::tracers {
-struct Segment {Vec3 from{},to{};float opacity=1;};
+namespace mgo2mt::combat::tracers {
+struct Segment {Vec3 from{},to{};float opacity=1;
+ // Optional native geometric weather style. Zero keeps the original tracer
+ // renderer's two-layer bullet presentation unchanged.
+ float widthPixels=0;std::array<float,3> color{1,1,1};
+};
 // Native cosmetic timing/length, independent from the instantaneous HOST hit.
 class Pool {
  struct Entry {Event shot;uint64_t born;};

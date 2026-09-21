@@ -2,8 +2,9 @@
 #include "character_screen.h"
 #include "menu_theme.h"
 #include "native_loadout.h"
+#include "gameplay_config.h"
 #include <algorithm>
-namespace mgo2win {
+namespace mgo2mt {
 namespace {
 constexpr int gridX=140,gridY=192,cardW=194,cardH=80,stepX=202,stepY=86;
 constexpr size_t columns=5,pageSize=20;
@@ -23,7 +24,16 @@ const wchar_t* access_notice(weapons::Access a){switch(a){
 void CharacterScreen::weapon_catalog(const std::filesystem::path&path){
  auto catalog=std::make_shared<weapons::Catalog>();std::string error;
  if(catalog->load(path,error))weaponCatalog_=std::move(catalog);else weaponCatalog_.reset();
+ mountedCatalog_={};if(std::filesystem::exists(path.parent_path()/"mounted_weapons.json"))mountedCatalog_.load(path.parent_path()/"mounted_weapons.json",error);
  weaponIcons_.load(path.parent_path()/"weapon-icons/index.tsv",error);
+ if(std::filesystem::exists(path.parent_path()/"gameplay.json")){
+  gameplay::Config config;
+  if(config.load(path.parent_path()/"gameplay.json",error)){
+   std::map<uint16_t,std::string> overrides;
+   for(const auto&d:config.definitions())if(!d.visual.iconPath.empty())overrides.emplace(d.weapon.id,d.visual.iconPath);
+   weaponIcons_.override_paths(path.parent_path(),overrides,error);
+  }
+ }
  weaponSelection_.reset();weaponRequest_.reset();
 }
 void CharacterScreen::update_weapons(){

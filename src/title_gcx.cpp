@@ -1,7 +1,7 @@
 #include "title_gcx.h"
 #include <stdexcept>
 #include <syncstream>
-namespace mgo2win {
+namespace mgo2mt {
 void TitleGcx::trace(const char* event,uint32_t procedure){
  log_<<"{\"gcx_event\":\""<<event<<"\",\"entry_procedure\":"<<procedure<<",\"calls\":[";
  bool first=true;for(auto p:runtime_.calls()){if(!first)log_<<',';first=false;log_<<p;}log_<<"]}"<<std::endl;

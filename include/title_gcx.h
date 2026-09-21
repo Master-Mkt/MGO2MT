@@ -1,7 +1,7 @@
 #pragma once
 #include "gcx_runtime.h"
 #include <ostream>
-namespace mgo2win {
+namespace mgo2mt {
 // Host bridge for the reviewed normal-title/loading route. The renderer signals
 // loading_ready after presentation; remaining unimplemented effects are logged.
 class TitleGcx {

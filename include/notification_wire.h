@@ -5,7 +5,7 @@
 #include <span>
 #include <string>
 #include <vector>
-namespace mgo2win::notices {
+namespace mgo2mt::notices {
 inline constexpr uint16_t request_opcode=0x44f0,reply_opcode=0x44f1;
 inline constexpr uint64_t poll_ms=15000,reply_timeout_ms=8000;
 struct Media {std::string path,sha256;uint32_t size=0;bool operator==(const Media&)const=default;};

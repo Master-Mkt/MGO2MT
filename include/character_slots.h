@@ -1,7 +1,7 @@
 #pragma once
 #include "character_client.h"
 #include <algorithm>
-namespace mgo2win {
+namespace mgo2mt {
 // Windows UI rules supplied by the user, not a decompiled original function.
 class CharacterSlots {
  unsigned count_=0,selected_=0,capacity_=0;std::vector<uint32_t> ids_;

@@ -1,3 +1,4 @@
+#include "product_identity.h"
 #include "menu_font.h"
 #include "round_items.h"
 #include "chat_view.h"
@@ -11,7 +12,7 @@
 #include <stdexcept>
 #include <cstring>
 #include <fstream>
-namespace mgo2win {
+namespace mgo2mt {
 namespace {
 bool save_settings(const std::filesystem::path& path,const std::string& text){
  auto temporary=path;temporary+=L".tmp."+std::to_wstring(GetCurrentProcessId())+L"."+std::to_wstring(GetCurrentThreadId())+L"."+std::to_wstring(GetTickCount64());
@@ -26,7 +27,7 @@ bool save_settings(const std::filesystem::path& path,const std::string& text){
 }
 PlayerMenu::PlayerMenu(std::filesystem::path path,std::shared_ptr<ControllerInput> input,std::shared_ptr<GraphicsSettings> graphics):graphics_(std::move(graphics)),input_(input){
  gameplayPath_=path.parent_path()/L"player.cfg";{std::error_code error;const auto size=std::filesystem::file_size(gameplayPath_,error);if(!error&&size<=128){std::ifstream f(gameplayPath_);std::string magic,extra;unsigned version=0,y=0,tags=1;
-  if(f>>magic>>version>>y&&magic=="MGO2WIN.PLAYER"&&y<=1&&(version==1||(version==2&&f>>tags&&tags<=1))&&!(f>>extra)){yFirstPerson_=y!=0;enemyNameTags_=tags!=0;}
+  if(f>>magic>>version>>y&&magic==mgo2mt::brand::Format{"MGO2MT.PLAYER"}&&y<=1&&(version==1||(version==2&&f>>tags&&tags<=1))&&!(f>>extra)){yFirstPerson_=y!=0;enemyNameTags_=tags!=0;}
  }}
  cameraPath_=path.parent_path()/L"camera.cfg";{std::error_code error;const auto size=std::filesystem::file_size(cameraPath_,error);if(!error&&size<=128){std::ifstream f(cameraPath_,std::ios::binary);std::string text{std::istreambuf_iterator<char>(f),std::istreambuf_iterator<char>()};if(auto loaded=camera::decode(text))cameraSettings_=*loaded;}}
  controls_=std::make_unique<ControllerPanel>(path,std::move(input));controls_->return_label(L"ゲームへ戻る");dc_=CreateCompatibleDC(nullptr);
@@ -54,7 +55,7 @@ bool PlayerMenu::tab_action(unsigned action){
 }
 void PlayerMenu::change_gameplay(bool confirm){
  const bool y=gameplayFocus_==0?!yFirstPerson_:yFirstPerson_,tags=gameplayFocus_==1?!enemyNameTags_:enemyNameTags_;
- const auto text=std::string("MGO2WIN.PLAYER 2 ")+char('0'+y)+' '+char('0'+tags)+'\n';
+ const auto text=std::string("MGO2MT.PLAYER 2 ")+char('0'+y)+' '+char('0'+tags)+'\n';
  if(save_settings(gameplayPath_,text)){yFirstPerson_=y;enemyNameTags_=tags;notice_=L"保存しました。";cue(confirm?menu_audio::Confirm:menu_audio::Cursor);}
  else notice_=L"設定を保存できませんでした。変更前の設定を維持します。";
 }

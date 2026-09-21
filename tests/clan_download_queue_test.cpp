@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <iostream>
 #include <string_view>
-using namespace mgo2win::clan;
+using namespace mgo2mt::clan;
 static void check(bool ok,const char* why){if(!ok)throw std::runtime_error(why);}
 static void put(std::vector<uint8_t>&p,size_t at,uint32_t v,size_t n=4){for(size_t i=0;i<n;++i){p[at+n-i-1]=uint8_t(v);v>>=8;}}
 static uint32_t get(std::span<const uint8_t>p,size_t at){uint32_t v=0;for(size_t i=0;i<4;++i)v=(v<<8)|p[at+i];return v;}

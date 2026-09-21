@@ -1,3 +1,4 @@
+#include "product_identity.h"
 #pragma once
 #include "weapon_icons.h"
 #include <fstream>
@@ -5,7 +6,7 @@
 #include <cmath>
 #include <algorithm>
 #include <stdexcept>
-namespace mgo2win::equipment {
+namespace mgo2mt::equipment {
 struct Extent{double width=0,height=0;};
 // Separate equipment namespace: equipment 22 is ENVG, never weapon 22.
 class Icons {
@@ -17,7 +18,7 @@ public:
    if(!images_.load(folder/"index.tsv",error))return false;
    if(std::filesystem::file_size(folder/"display.tsv")>8192)throw std::runtime_error("Equipment display extent");
    std::ifstream f(folder/"display.tsv");std::string line;
-   if(!std::getline(f,line)||line!="MGO2WIN_EQUIPMENT_DISPLAY 1")throw std::runtime_error("Equipment display version");
+   if(!std::getline(f,line)||line!=mgo2mt::brand::Format{"MGO2MT_EQUIPMENT_DISPLAY 1"})throw std::runtime_error("Equipment display version");
    while(std::getline(f,line)){
     std::istringstream row(line);unsigned id;Extent e;std::string extra;
     if(!(row>>id>>e.width>>e.height)||row>>extra||id>255||!images_.find(uint16_t(id))||

@@ -1,17 +1,18 @@
+#include "product_identity.h"
 #include "combat_health_rules.h"
 #include <fstream>
 #include <locale>
 #include <set>
 #include <sstream>
 #include <stdexcept>
-namespace mgo2win::combat {
+namespace mgo2mt::combat {
 HealthRules HealthRules::read(std::istream& source){
  HealthRules result;std::string line;std::set<std::string> seen;size_t bytes=0;bool header=false;
  auto fail=[](){throw std::runtime_error("Invalid combat_health.cfg");};
  while(std::getline(source,line)){
   bytes+=line.size()+1;if(bytes>4096)fail();line.resize(line.find('#')==std::string::npos?line.size():line.find('#'));
   std::istringstream row(line);row.imbue(std::locale::classic());std::string key,extra;if(!(row>>key))continue;
-  if(!header){unsigned version=0;if(key!="MGO2WIN_HEALTH"||!(row>>version)||version!=1||(row>>extra))fail();header=true;continue;}
+  if(!header){unsigned version=0;if(key!=mgo2mt::brand::Format{"MGO2MT_HEALTH"}||!(row>>version)||version!=1||(row>>extra))fail();header=true;continue;}
   if(!seen.insert(key).second)fail();
   if(key=="fall_safe_height"){if(!(row>>result.falling.safeHeight))fail();}
   else if(key=="fall_severe_height"){if(!(row>>result.falling.severeHeight))fail();}

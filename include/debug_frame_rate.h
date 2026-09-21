@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <optional>
 
-namespace mgo2win {
+namespace mgo2mt {
 
 // Native diagnostic of successful Present completions, not simulation ticks or
 // physical display scanout. Feed monotonic wall-clock seconds after Present.

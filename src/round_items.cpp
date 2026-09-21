@@ -1,3 +1,4 @@
+#include "product_identity.h"
 #include "round_items.h"
 #include "stage_profiles.h"
 #include <algorithm>
@@ -8,7 +9,7 @@
 #include <stdexcept>
 #include <set>
 #include <tuple>
-namespace mgo2win::items {
+namespace mgo2mt::items {
 bool RoundItems::valid()const{
  if(rules.size()>512||replacements.size()>512)return false;std::map<uint8_t,uint32_t> counts;
  for(const auto&r:rules){if(!stage::runtime_stage_supported(r.map)||r.domain>Domain::equipment||!r.item||r.item>65535||!r.count||r.count>4096||(counts[r.map]+=r.count)>4096)return false;
@@ -17,11 +18,11 @@ bool RoundItems::valid()const{
  for(const auto&r:replacements)if(!stage::runtime_stage_supported(r.map)||r.source>GcxSource::cbox||r.domain>Domain::equipment||!r.item||r.item>65535||!sources.emplace(r.map,r.source,r.sourceOffset).second)return false;
  return true;
 }
-std::string RoundItems::serialize()const{std::ostringstream out;out<<std::setprecision(9)<<"MGO2WIN_ROUND_ITEMS 2\nenabled "<<enabled<<"\ngcx "<<useGcx<<'\n';for(const auto&r:rules){out<<"item "<<unsigned(r.map)<<' '<<(r.domain==Domain::weapon?"weapon":"equipment")<<' '<<r.item<<' '<<r.count;if(r.position)out<<" at "<<r.position->x<<' '<<r.position->y<<' '<<r.position->z<<' '<<r.position->yaw;else out<<" spawn";out<<'\n';}for(const auto&r:replacements)out<<"replace "<<unsigned(r.map)<<' '<<(r.source==GcxSource::cbox?"cbox":"pickup")<<' '<<r.sourceOffset<<' '<<(r.domain==Domain::weapon?"weapon":"equipment")<<' '<<r.item<<'\n';return out.str();}
+std::string RoundItems::serialize()const{std::ostringstream out;out<<std::setprecision(9)<<"MGO2MT_ROUND_ITEMS 2\nenabled "<<enabled<<"\ngcx "<<useGcx<<'\n';for(const auto&r:rules){out<<"item "<<unsigned(r.map)<<' '<<(r.domain==Domain::weapon?"weapon":"equipment")<<' '<<r.item<<' '<<r.count;if(r.position)out<<" at "<<r.position->x<<' '<<r.position->y<<' '<<r.position->z<<' '<<r.position->yaw;else out<<" spawn";out<<'\n';}for(const auto&r:replacements)out<<"replace "<<unsigned(r.map)<<' '<<(r.source==GcxSource::cbox?"cbox":"pickup")<<' '<<r.sourceOffset<<' '<<(r.domain==Domain::weapon?"weapon":"equipment")<<' '<<r.item<<'\n';return out.str();}
 bool RoundItems::parse(std::string_view data,std::string& error){try{
  if(data.size()>1048576)throw std::runtime_error("Round item file too large");RoundItems next;std::istringstream in{std::string(data)};std::string line;bool header=false,enabledSeen=false,gcxSeen=false;unsigned version=0;
  while(std::getline(in,line)){if(line.size()>1024)throw std::runtime_error("Round item line too long");std::istringstream row(line);std::string key,extra;if(!(row>>key)||key[0]=='#')continue;
-  if(!header){if(key!="MGO2WIN_ROUND_ITEMS"||!(row>>version)||(version!=1&&version!=2)||(row>>extra))throw std::runtime_error("Round item version");next.useGcx=version==2;header=true;continue;}
+  if(!header){if(key!=mgo2mt::brand::Format{"MGO2MT_ROUND_ITEMS"}||!(row>>version)||(version!=1&&version!=2)||(row>>extra))throw std::runtime_error("Round item version");next.useGcx=version==2;header=true;continue;}
   if(key=="enabled"){unsigned n=0;if(enabledSeen||!(row>>n)||n>1||(row>>extra))throw std::runtime_error("Round item enabled");next.enabled=n!=0;enabledSeen=true;}
   else if(key=="gcx"){unsigned n=0;if(version!=2||gcxSeen||!(row>>n)||n>1||(row>>extra))throw std::runtime_error("Round item GCX switch");next.useGcx=n!=0;gcxSeen=true;}
   else if(key=="replace"){GcxReplacement r;unsigned map=0;std::string source,domain;if(version!=2||!(row>>map>>source>>r.sourceOffset>>domain>>r.item)||map>255||next.replacements.size()>=512||(row>>extra))throw std::runtime_error("Round item GCX replacement");r.map=uint8_t(map);if(source=="pickup")r.source=GcxSource::pickup;else if(source=="cbox")r.source=GcxSource::cbox;else throw std::runtime_error("Round item GCX source");if(domain=="weapon")r.domain=Domain::weapon;else if(domain=="equipment")r.domain=Domain::equipment;else throw std::runtime_error("Round item replacement domain");next.replacements.push_back(r);}
@@ -39,7 +40,7 @@ std::vector<Seed> resolve_round_items(const RoundItems& settings,uint8_t map,con
    for(unsigned attempt=0;attempt<128;++attempt){stage::Vec3 base{};float yaw=0;
     if(r.position){base={r.position->x,r.position->y,r.position->z};yaw=r.position->yaw;}else{if(anchors.empty())throw std::runtime_error("No original spawn anchors for items");base=anchors[(ordinal+attempt)%anchors.size()];}
     const auto k=r.position?i+attempt:ordinal/anchors.size()+attempt/anchors.size();if(k){const float angle=float(k)*2.39996323f;const float radius=400.f*std::sqrt(float(k));base[0]+=std::sin(angle)*radius;base[2]+=std::cos(angle)*radius;}
-    auto from=base;from[1]+=1200;auto hit=collision.ray(from,{0,-1,0},3200);if(!hit||hit->normal[1]<.707f)continue;auto p=hit->position;p[1]+=12;
+    auto from=base;from[1]+=1200;auto hit=collision.ray(from,{0,-1,0},3200,stage::query::floor);if(!hit||hit->normal[1]<.707f)continue;auto p=hit->position;p[1]+=12;
     if(!collision.clear(p,{25,60,2}))continue;if(std::any_of(result.begin(),result.end(),[&](const auto&s){return std::hypot(s.position.x-p[0],s.position.z-p[2])<150&&std::abs(s.position.y-p[1])<200;}))continue;
     selected=Position{p[0],p[1],p[2],yaw};break;
    }

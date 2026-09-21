@@ -5,7 +5,7 @@
 #include <span>
 #include <string_view>
 
-namespace mgo2win::restrictions {
+namespace mgo2mt::restrictions {
 using Bits=std::array<uint8_t,16>;
 enum class Category : uint8_t { primary,secondary,support,custom,items };
 enum class LockState { unlocked,mixed,locked };

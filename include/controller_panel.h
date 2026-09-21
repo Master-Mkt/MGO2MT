@@ -2,7 +2,7 @@
 #include "controller_input.h"
 #include <memory>
 #include <vector>
-namespace mgo2win {
+namespace mgo2mt {
 class ControllerPanel {
  std::filesystem::path path_;std::shared_ptr<ControllerInput> input_;InputConfig draft_;
  int focus_=0,page_=0,capture_=-1;bool armed_=false,dirty_=false,back_=false,connected_=false;

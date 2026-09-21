@@ -4,7 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <set>
-using namespace mgo2win;
+using namespace mgo2mt;
 void check(bool b,const char* s){if(!b)throw std::runtime_error(s);}
 int main(int argc,char**argv){try{
  check(argc==3,"catalog / spawn root");auto catalog=std::make_shared<weapons::Catalog>();std::string error;check(catalog->load(argv[1],error),"catalog");
@@ -36,6 +36,6 @@ int main(int argc,char**argv){try{
    }check(used.size()>1,"repeated respawns vary original GEOM point");
   }
  }
- combat::wire::Input unarmed;unarmed.epoch=1;unarmed.sequence=1;check(std::get<combat::wire::Input>(combat::wire::decode(combat::wire::encode(unarmed)))==unarmed,"unarmed pose valid");bool rejected=false;unarmed.fire=true;try{combat::wire::encode(unarmed);}catch(...){rejected=true;}check(rejected,"unarmed fire invalid");
+ combat::wire::Input unarmed;unarmed.epoch=1;unarmed.sequence=1;check(std::get<combat::wire::Input>(combat::wire::decode(combat::wire::encode(unarmed)))==unarmed,"unarmed pose valid");unarmed.fire=true;check(std::get<combat::wire::Input>(combat::wire::decode(combat::wire::encode(unarmed)))==unarmed,"GWCB25 admits unarmed launcher intent; HOST verifies seat");bool rejected=false;unarmed.fire=false;unarmed.reload=true;try{combat::wire::encode(unarmed);}catch(...){rejected=true;}check(rejected,"unarmed reload remains invalid");
  std::cout<<"DM team0 lifecycle / confirmed individual scores / time expiry / original spawn groups / unarmed codec PASS\n";return 0;
 }catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}

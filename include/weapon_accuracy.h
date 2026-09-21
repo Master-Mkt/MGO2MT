@@ -4,13 +4,18 @@
 #include <cmath>
 #include <cstdint>
 #include <optional>
-namespace mgo2win::weapon_accuracy {
+namespace mgo2mt::weapon_accuracy {
 using Vec3=std::array<float,3>;
 // Native AK policy, not recovered original recoil/stance/skill constants.
 // Cone half angles are integer microradians; recovery is microradians/second.
-struct Policy {uint32_t base=3000,maximum=30000,perShot=4000,recovery=12000;};
+struct Policy {
+ uint32_t base=3000,maximum=30000,perShot=4000,recovery=12000;
+ float movingMultiplier=1,crouchMultiplier=1,proneMultiplier=1;
+ uint8_t pellets=1;
+};
 inline constexpr Policy native_ak{};
-constexpr bool valid(Policy p){return p.base<=p.maximum&&p.maximum<=100000&&p.perShot>0&&p.perShot<=100000&&p.recovery>0&&p.recovery<=1000000;}
+constexpr bool valid(Policy p){return p.base<=p.maximum&&p.maximum<=100000&&p.perShot>0&&p.perShot<=100000&&p.recovery>0&&p.recovery<=1000000&&p.movingMultiplier>=1&&p.movingMultiplier<=8&&p.crouchMultiplier>=.1f&&p.crouchMultiplier<=1&&p.proneMultiplier>=.1f&&p.proneMultiplier<=1&&p.pellets>=1&&p.pellets<=32;}
+inline float posture_scale(Policy p,float capsuleHeight,bool moving){return (moving?p.movingMultiplier:1.f)*(capsuleHeight<=560?p.proneMultiplier:capsuleHeight<=1100?p.crouchMultiplier:1.f);}
 inline uint64_t mix(uint64_t x){x+=0x9e3779b97f4a7c15ull;x=(x^(x>>30))*0xbf58476d1ce4e5b9ull;x=(x^(x>>27))*0x94d049bb133111ebull;return x^(x>>31);}
 class State {
  // excess stores thousandths of a microradian, so integer milliseconds do not
@@ -27,8 +32,8 @@ public:
  std::optional<float> radians(Policy p,uint64_t now)const{
   if(!valid(p)||(clock_&&now<at_))return {};return float(double(p.base)*.000001+double(remaining(p,now))*.000000001);
  }
- std::optional<uint16_t> milliradians(Policy p,uint64_t now)const{
-  if(!valid(p)||(clock_&&now<at_))return {};return uint16_t((uint64_t(p.base)*1000+remaining(p,now)+999999)/1000000);
+ std::optional<uint16_t> milliradians(Policy p,uint64_t now,float scale=1)const{
+  if(!valid(p)||(clock_&&now<at_)||!std::isfinite(scale)||scale<.1f||scale>8)return {};return uint16_t(std::ceil((double(p.base)*1000+remaining(p,now))*double(scale)/1000000));
  }
  bool accepted(Policy p,uint64_t now){
   if(!valid(p)||(clock_&&now<at_)||shots_==UINT64_MAX)return false;
@@ -36,8 +41,8 @@ public:
  }
  // Uniform solid angle within the pre-shot cone. Seed is HOST scope-derived;
  // clients never provide angle, random bits, or accepted shot count.
- std::optional<Vec3> direction(Policy p,uint64_t now,Vec3 aim,uint64_t seed)const{
-  auto angle=radians(p,now);if(!angle)return {};double length=0;for(float x:aim){if(!std::isfinite(x))return {};length+=double(x)*x;}if(std::abs(length-1)>0.002)return {};
+ std::optional<Vec3> direction(Policy p,uint64_t now,Vec3 aim,uint64_t seed,float scale=1)const{
+  auto angle=radians(p,now);if(!angle||!std::isfinite(scale)||scale<.1f||scale>8)return {};*angle*=scale;double length=0;for(float x:aim){if(!std::isfinite(x))return {};length+=double(x)*x;}if(std::abs(length-1)>0.002)return {};
   length=std::sqrt(length);for(auto&x:aim)x=float(x/length);
   const uint64_t a=mix(seed^mix(shots_+1)),b=mix(a);const double u=double(a>>11)*0x1.0p-53,v=double(b>>11)*0x1.0p-53;
   const double cosine=1-u*(1-std::cos(double(*angle))),sine=std::sqrt((std::max)(0.,1-cosine*cosine)),phi=6.2831853071795864769*v;

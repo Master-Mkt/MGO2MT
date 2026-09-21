@@ -3,7 +3,7 @@
 #include "host_briefing.h"
 #include "host_rules.h"
 #include <iostream>
-using namespace mgo2win::host;
+using namespace mgo2mt::host;
 static void check(bool b,const char*s){if(!b)throw std::runtime_error(s);}
 int main(){try{
  Hello host{100,0x12345678,2,1,{{{192,0,2,1},5740}}},client{200,0xabcdef01,2,2,{{{192,0,2,2},5730}}};

@@ -6,7 +6,7 @@
 #include "menu_theme.h"
 #include "name_text_fit.h"
 #include <algorithm>
-namespace mgo2win {
+namespace mgo2mt {
 namespace {void fitted_name(HDC dc,HFONT font,std::wstring_view name,RECT rect,COLORREF color){NameTextFit fit(dc,font,name,rect.right-rect.left);SetTextColor(dc,color);SetBkMode(dc,TRANSPARENT);DrawTextW(dc,name.data(),int(name.size()),&rect,DT_LEFT|DT_SINGLELINE|DT_NOPREFIX);}}
 bool CharacterScreen::room_loading()const{
  if(!detailVisible_)return false;
@@ -90,7 +90,7 @@ void CharacterScreen::draw_room_detail(){
    if(detailReply_.host_match&&detailReply_.host_match->request)model.rule=detailReply_.host_match->request->rotation.rule;
    if(detailReply_.preparation){model.ended=detailReply_.preparation->phase==combat::wire::RoundPhase::ended;model.respawnWaiting=detailReply_.preparation->respawnWaiting;model.respawnRemainingMs=detailReply_.preparation->respawnRemainingMs;model.dpKnown=detailReply_.preparation->dpEnabled;model.dp=detailReply_.preparation->dpBalance;if(detailReply_.preparation->roundClock)model.remainingMs=detailReply_.preparation->roundRemainingMs;}
    if(detailReply_.preparation){auto rows=combat::standings(*detailReply_.preparation);for(const auto&r:rows)if(r.id==offer.self){model.kills=r.kills;model.deaths=r.deaths;model.rank=r.rank;model.tied=std::count_if(rows.begin(),rows.end(),[&](const auto&x){return x.rank==r.rank;})>1;}}
-   model.weapon=self->weapon?L"WEAPON "+std::to_wstring(self->weapon):L"装備なし";if(weaponCatalog_)for(const auto&e:weaponCatalog_->entries())if(e.id==self->weapon){model.weapon=hud::utf8(e.display_name);break;}
+   model.weapon=self->weapon?L"WEAPON "+std::to_wstring(self->weapon):L"装備なし";if(weaponCatalog_&&!weaponCatalog_->name(self->weapon).empty())model.weapon=hud::utf8(std::string(weaponCatalog_->name(self->weapon)));
    auto emblem=roomRequests_.clanEmblem->state();if(emblem.serial!=clanSerial_){clanBitmap_.reset();clanSerial_=emblem.serial;if(emblem.image)clanBitmap_=std::make_unique<clan::Bitmap>(*emblem.image);}drawClanImage_=bool(clanBitmap_);
    model.skills=skill_hud_labels();
    if(model.skills.empty())model.skills.push_back(L"登録済みスキルなし");
@@ -99,6 +99,7 @@ void CharacterScreen::draw_room_detail(){
    if(delivery==items::Delivery::pending)model.actionNotice=L"装備の変更を確認しています…";
    else if(delivery==items::Delivery::unconfirmed)model.actionNotice=L"変更結果を確認できません。部屋へ入り直してください。";
    else if(weapons::native_loadout::held_only(self->weapon))model.actionNotice=L"この武器は所持・切替に対応しています。使用動作は準備中です。";
+   if(self->mountedId)if(auto request=stage_load_request())if(auto*i=mountedCatalog_.find(request->rotation.map,self->mountedId))if(auto*t=mountedCatalog_.find(i->type)){model.infiniteAmmo=t->infiniteAmmo;model.actionNotice=L"設置重火器 / Yで降りる";}
    if(self->specialPc.kind==special_pc::Kind::gekko){model.infiniteAmmo=true;model.weapon=self->weapon==128?L"GEKKO VULCAN":self->weapon==129?L"GEKKO MISSILE":self->weapon==130?L"GEKKO KICK":L"GEKKO STOMP";model.actionNotice=L"特殊キャラクター：月光";model.skills.clear();}
    hud::draw(dc_,fonts_,model,roundIntro_.opacity(clock_()));chat::draw_history(dc_,fonts_[3],roomRequests_.chatSession->state(),{40,535,900,673},GetTickCount64(),12000);return;
   }
@@ -336,7 +337,7 @@ void CharacterScreen::draw_room_match(){
    menu_section(dc_,fonts_[3],L"PLAYER",140,275,450);
    text(L"HP  "+std::to_wstring(p->hp)+L" / "+std::to_wstring(p->maxHp),155,313,430,36,1,light);
    std::wstring weaponName=L"WEAPON "+std::to_wstring(p->weapon);
-   if(weaponCatalog_)for(const auto&e:weaponCatalog_->entries())if(e.id==p->weapon){weaponName.assign(e.display_name.begin(),e.display_name.end());break;}
+   if(weaponCatalog_&&!weaponCatalog_->name(p->weapon).empty())weaponName=hud::utf8(std::string(weaponCatalog_->name(p->weapon)));
    text(weaponName+L"   "+std::to_wstring(p->ammo)+L" / "+std::to_wstring(p->reserve),155,352,430,36,1,light);
    text(!p->alive?L"戦闘不能（再出撃は未対応）":p->reloadUntil?L"リロード中":L"移動・構え・射撃：操作設定に従います。",155,395,430,62,1,orange);
    text(L"他PCの外見・銃声は復旧中です。",155,465,430,40,3,light);return;

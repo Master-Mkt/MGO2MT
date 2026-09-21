@@ -3,7 +3,7 @@
 #include <filesystem>
 #include <optional>
 #include <span>
-namespace mgo2win::radio_audio {
+namespace mgo2mt::radio_audio {
 struct CuePair { uint32_t self{}, remote{}; friend bool operator==(const CuePair&,const CuePair&)=default; };
 struct AppearanceVoice { unsigned type{}, pitchByte{}; };
 // Original B1A348 ordinary actor branch; only the 16 native default presets.

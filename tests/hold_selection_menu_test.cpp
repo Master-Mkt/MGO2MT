@@ -5,14 +5,14 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {
 void check(bool value,const char* reason){if(!value)throw std::runtime_error(reason);}
 void bitmap(const void* pixels,const std::filesystem::path& path){BITMAPFILEHEADER h{};BITMAPINFOHEADER i{};h.bfType=0x4d42;h.bfOffBits=sizeof(h)+sizeof(i);h.bfSize=h.bfOffBits+1280*720*4;i.biSize=sizeof(i);i.biWidth=1280;i.biHeight=-720;i.biPlanes=1;i.biBitCount=32;std::ofstream f(path,std::ios::binary);f.write(reinterpret_cast<char*>(&h),sizeof(h));f.write(reinterpret_cast<char*>(&i),sizeof(i));f.write(static_cast<const char*>(pixels),1280*720*4);check(bool(f),"capture");}
 hold_selection::Snapshot fixture(){hold_selection::Snapshot s;s.scope={9,7,2,1,33,101,4};s.eligible=true;s.weapons={{0,25,7,1,24,120,0,true},{1,3,4,1,7,21,0,true},{2,52,1,3,0,0,3,false}};s.selectedWeapon=uint8_t(0);return s;}
 }
 int main(int argc,char**argv){try{
- const auto temp=std::filesystem::temp_directory_path()/("MGO2WIN-hold-menu-test-"+std::to_string(GetCurrentProcessId())+"-"+std::to_string(GetTickCount64()));check(std::filesystem::create_directory(temp),"isolated temp");
+ const auto temp=std::filesystem::temp_directory_path()/("MGO2MT-hold-menu-test-"+std::to_string(GetCurrentProcessId())+"-"+std::to_string(GetTickCount64()));check(std::filesystem::create_directory(temp),"isolated temp");
  auto input=std::make_shared<ControllerInput>(temp/"input.cfg");input->config.device=1;auto graphics=std::make_shared<GraphicsSettings>(temp/"graphics.cfg");PlayerMenu menu(temp/"input.cfg",input,graphics);if(argc>1)menu.hold_assets(argv[1]);
  auto capture=[&](const char* name){Sleep(165);const auto* pixels=menu.draw();check(pixels,"hold render");size_t lit=0;for(size_t n=0;n<1280*720;++n)lit+=(static_cast<const uint32_t*>(pixels)[n]&0xffffff)!=0;check(lit>10000,"visible GDI panel");if(menu.hold_visible()){const auto* p=static_cast<const uint32_t*>(pixels);check((p[100*1280+20]>>24)==112,"hold selection dims the scene beyond the old central panel");const bool weapon=menu.hold_selection_state().kind()==hold_selection::Kind::weapons;check((p[630*1280+(weapon?1240:30)]&0xffffff)==0xffbb53,"outer yellow strip is on the selected inventory side");check((p[630*1280+(weapon?30:1240)]&0xffffff)==0,"opposite inventory side stays unobscured");}if(argc>2){std::filesystem::create_directories(argv[2]);bitmap(pixels,std::filesystem::path(argv[2])/name);}};
  for(bool weapon:{false,true})for(size_t selected=0;selected<4;++selected){const auto at=hold_selection::card_position(weapon,4,selected,selected);check(at.x==(weapon?1000:70)&&at.y==598,"selected held item keeps the video lower corner across selection changes");bool above=false,inward=false;for(size_t i=0;i<4;++i){const auto p=hold_selection::card_position(weapon,4,selected,i);check(p.x>=0&&p.x+210<=1280&&p.y>=0&&p.y+78<=720,"all authoritative held slots remain within the UI canvas");above|=p.x==at.x&&p.y<at.y;inward|=p.y==at.y&&(weapon?p.x<at.x:p.x>at.x);}check(above&&inward,"four held choices occupy both L arms");}

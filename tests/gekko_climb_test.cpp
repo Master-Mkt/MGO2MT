@@ -3,12 +3,12 @@
 #include "combat_authority.h"
 #include <iostream>
 #include <limits>
-using namespace mgo2win;using namespace special_pc;
+using namespace mgo2mt;using namespace special_pc;
 namespace {
 void check(bool b,const char*m){if(!b)throw std::runtime_error(m);}
 stage::Collision scene(float height=7000,float topDepth=5000,bool roof=false){
  std::vector<stage::Vec3> v;std::vector<stage::CollisionTriangle> t;
- auto quad=[&](stage::Vec3 a,stage::Vec3 b,stage::Vec3 c,stage::Vec3 d){auto n=unsigned(v.size());v.insert(v.end(),{a,b,c,d});t.push_back({{n,n+1,n+2}});t.push_back({{n,n+2,n+3}});};
+ auto quad=[&](stage::Vec3 a,stage::Vec3 b,stage::Vec3 c,stage::Vec3 d){auto n=unsigned(v.size());v.insert(v.end(),{a,b,c,d});t.push_back({{n,n+1,n+2},stage::attribute::native_solid});t.push_back({{n,n+2,n+3},stage::attribute::native_solid});};
  quad({-20000,0,-20000},{-20000,0,20000},{20000,0,20000},{20000,0,-20000});
  quad({-5000,0,1500},{5000,0,1500},{5000,height,1500},{-5000,height,1500});
  quad({-5000,height,1500},{-5000,height,1500+topDepth},{5000,height,1500+topDepth},{5000,height,1500});

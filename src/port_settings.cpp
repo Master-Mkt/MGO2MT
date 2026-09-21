@@ -1,10 +1,11 @@
+#include "product_identity.h"
 #include <winsock2.h>
 #include <windows.h>
 #include "port_settings.h"
 #include <fstream>
 #include <string>
 #include <stdexcept>
-namespace mgo2win {
+namespace mgo2mt {
 bool parse_port(std::wstring_view s,uint16_t& result){
  if(s.empty()||s.size()>5)return false;unsigned n=0;
  for(auto c:s){if(c<L'0'||c>L'9')return false;n=n*10+unsigned(c-L'0');}
@@ -14,7 +15,7 @@ bool load_ports(const std::filesystem::path& path,PortSettings& settings){
  if(!std::filesystem::exists(path))return false;
  if(std::filesystem::file_size(path)>128)throw std::runtime_error("Oversized port settings");
  std::ifstream f(path,std::ios::binary);std::string tag,version,automatic,port,bandwidth,extra;
- if(!(f>>tag>>version>>automatic>>port)||tag!="MGO2WIN.NETWORK"||(version!="1"&&version!="2")||(automatic!="0"&&automatic!="1"))throw std::runtime_error("Invalid port settings");
+ if(!(f>>tag>>version>>automatic>>port)||tag!=mgo2mt::brand::Format{"MGO2MT.NETWORK"}||(version!="1"&&version!="2")||(automatic!="0"&&automatic!="1"))throw std::runtime_error("Invalid port settings");
  unsigned speed=512;
  if(version=="2"){
   if(!(f>>bandwidth)||bandwidth.size()>4)throw std::runtime_error("Invalid bandwidth");
@@ -29,7 +30,7 @@ void save_ports(const std::filesystem::path& path,const PortSettings& s){
  if(s.port<1024||!valid_bandwidth(s.bandwidth_kbps))throw std::runtime_error("Invalid network settings");
  std::filesystem::create_directories(path.parent_path());auto temp=path;temp+=L"."+std::to_wstring(GetCurrentProcessId())+L".tmp";
  try{
-  {std::ofstream f(temp,std::ios::binary|std::ios::trunc);f<<"MGO2WIN.NETWORK 2\n"<<unsigned(s.automatic)<<' '<<s.port<<' '<<s.bandwidth_kbps<<'\n';f.close();if(!f)throw std::runtime_error("Port settings write failure");}
+  {std::ofstream f(temp,std::ios::binary|std::ios::trunc);f<<"MGO2MT.NETWORK 2\n"<<unsigned(s.automatic)<<' '<<s.port<<' '<<s.bandwidth_kbps<<'\n';f.close();if(!f)throw std::runtime_error("Port settings write failure");}
   if(!MoveFileExW(temp.c_str(),path.c_str(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH))throw std::runtime_error("Port settings replace failure");
  }catch(...){std::error_code ec;std::filesystem::remove(temp,ec);throw;}
 }

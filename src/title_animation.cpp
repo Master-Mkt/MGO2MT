@@ -7,7 +7,7 @@
 #include <cmath>
 #include <cstring>
 #include <stdexcept>
-namespace mgo2win {
+namespace mgo2mt {
 namespace {
 struct Reader {
  const std::vector<char>& b;size_t p=4;

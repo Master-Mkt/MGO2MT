@@ -4,7 +4,7 @@
 #include <array>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {
 void check(bool b,const char*why){if(!b)throw std::runtime_error(why);}
 std::array<uint8_t,32> notification(uint32_t id,uint8_t kind=4){std::array<uint8_t,32>b{};b[1]=7;for(unsigned i=0;i<4;++i)b[2+i]=uint8_t(id>>(24-i*8));b[10]=1;b[11]=kind;const std::string name="日本の隊長";std::copy(name.begin(),name.end(),b.begin()+16);return b;}

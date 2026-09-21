@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <optional>
 
-namespace mgo2win::combat::original_object_audio {
+namespace mgo2mt::combat::original_object_audio {
 // Current ELF 7B7098 projectile response only. This is NOT a generic rigid-body,
 // AK102 drop, box, glass, or human collision sound policy.
 struct ProjectileContact {

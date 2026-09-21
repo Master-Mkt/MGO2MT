@@ -2,7 +2,7 @@
 #include "player_control.h"
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 void check(bool value,const char* why){if(!value)throw std::runtime_error(why);}
 int main(){try{
  std::array<float,24> v{};player::Control c;c.step(v,.01f,true,false);c.cover_context(true,false);v[7]=1;c.step(v,.01f,true,false);check(c.coverRequested&&!c.specialRequested&&!c.specialHeld,"Wall Y is contextual attachment, not salute");

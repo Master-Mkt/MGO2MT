@@ -2,7 +2,7 @@
 #include <iostream>
 #include <stdexcept>
 
-using namespace mgo2win::host;
+using namespace mgo2mt::host;
 namespace {
 void require(bool pass) { if (!pass) throw std::runtime_error("briefing phase check failed"); }
 template<class F> void reject(F fn) {

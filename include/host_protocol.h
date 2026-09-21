@@ -4,7 +4,7 @@
 #include <span>
 #include <vector>
 #include <stdexcept>
-namespace mgo2win::host {
+namespace mgo2mt::host {
 // Recovered from retail PPC 264C78/2666C8, not the lobby TCP cipher.
 constexpr uint32_t initial_cipher=0x87103c2f,initial_mac=0x2b58de69,version=0x4d258ab7;
 constexpr size_t max_datagram=2048;

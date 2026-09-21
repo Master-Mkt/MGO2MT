@@ -2,8 +2,8 @@
 #include <array>
 #include <cstdint>
 #include <cmath>
-namespace mgo2win {struct WorldView;}
-namespace mgo2win::shadows {
+namespace mgo2mt {struct WorldView;}
+namespace mgo2mt::shadows {
 struct Settings {
  bool enabled=false;unsigned cascades=4,resolution=2048,pcfRadius=1;
  float depthBias=.0003f,normalBias=20,slopeBias=2,distance=60000;

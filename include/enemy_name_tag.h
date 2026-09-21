@@ -6,7 +6,7 @@
 #include <string_view>
 #include <optional>
 
-namespace mgo2win::hud {
+namespace mgo2mt::hud {
 struct EnemyVitals {std::optional<uint8_t> level;uint32_t hp=0,maxHp=0;};
 // Presentation only. The caller selects an eligible enemy and supplies its
 // projected head position. Paint after menu color-key/alpha finalization.

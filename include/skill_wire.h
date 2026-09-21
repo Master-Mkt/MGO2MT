@@ -4,7 +4,7 @@
 #include <mutex>
 #include <optional>
 #include <span>
-namespace mgo2win::skills {
+namespace mgo2mt::skills {
 // Native candidate server contract; never use these opcodes as original MGO2.
 struct RemoteProfile {uint32_t character=0,revision=0;unsigned capacity=4,used=0;uint8_t set=0,status=0;uint32_t token=0;Loadout loadout;};
 struct RemoteRequest {uint32_t token=0,revision=0;uint8_t set=0;bool write=false;Loadout loadout;};

@@ -6,7 +6,7 @@
 #include <utility>
 #include <map>
 
-namespace mgo2win::combat {
+namespace mgo2mt::combat {
 // A native host lifecycle using reviewed content. It does not invent an
 // original START opcode, spawn placement, weapon profile or DP balance.
 class RoundCoordinator {

@@ -8,7 +8,7 @@
 #include <limits>
 #include <stdexcept>
 
-using namespace mgo2win;
+using namespace mgo2mt;
 using player::Evade;
 static void check(bool value,const char* message){if(!value)throw std::runtime_error(message);}
 static bool approximately(float a,float b){return std::abs(a-b)<1e-5f;}

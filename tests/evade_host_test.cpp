@@ -3,7 +3,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <limits>
-using namespace mgo2win;using namespace mgo2win::combat;
+using namespace mgo2mt;using namespace mgo2mt::combat;
 namespace {
 void check(bool value,const char*message){if(!value)throw std::runtime_error(message);}
 Identity id(unsigned i){return {uint8_t(i),uint16_t(i+10),i+100};}

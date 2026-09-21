@@ -3,7 +3,7 @@
 #include "character_client.h"
 #include <algorithm>
 #include <stdexcept>
-namespace mgo2win::host {
+namespace mgo2mt::host {
 namespace {
 void put(std::span<uint8_t>b,size_t at,uint32_t v,unsigned n=4){if(at+n>b.size())throw std::logic_error("host room extent");while(n){b[at+--n]=uint8_t(v);v>>=8;}}
 uint32_t number(std::span<const uint8_t>b,size_t at){if(at+4>b.size())throw std::runtime_error("host room response extent");uint32_t v=0;for(unsigned i=0;i<4;++i)v=v*256+b[at+i];return v;}

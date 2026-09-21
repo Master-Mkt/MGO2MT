@@ -8,7 +8,7 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {
 void check(bool v,const char*why){if(!v)throw std::runtime_error(why);}
 void u(std::vector<char>&b,uint32_t v){for(unsigned i=0;i<4;++i)b.push_back(char(v>>(8*i)));}

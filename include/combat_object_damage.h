@@ -2,7 +2,7 @@
 #include "combat_world.h"
 #include "combat_authority.h"
 #include <set>
-namespace mgo2win::combat {
+namespace mgo2mt::combat {
 // Reviewed n022a drums plus explicitly bound n007a breakable lights.
 // Durability is a native accepted-impact count, not an original HP threshold.
 class ObjectDamage {

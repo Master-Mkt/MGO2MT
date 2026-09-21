@@ -2,7 +2,7 @@
 #include "combat_cycle.h"
 #include <iostream>
 #include <limits>
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace cw=combat::wire;
 void check(bool b,const char*s){if(!b)throw std::runtime_error(s);}
 std::shared_ptr<const stage::Collision> floor_world(){return std::make_shared<stage::Collision>(stage::Collision::make({{-10000,0,-10000},{-10000,0,10000},{10000,0,10000},{10000,0,-10000}},{{{0,1,2}},{{0,2,3}}}));}

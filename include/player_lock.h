@@ -3,7 +3,7 @@
 #include "original_lock_policy.h"
 #include <tuple>
 
-namespace mgo2win::player_lock {
+namespace mgo2mt::player_lock {
 using combat::Identity;
 using combat::Vec3;
 

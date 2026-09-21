@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <limits>
 #include <stdexcept>
-namespace mgo2win::invitations {
+namespace mgo2mt::invitations {
 namespace {
 [[noreturn]]void invalid(){throw std::invalid_argument("invalid invitation payload");}
 uint32_t u(std::span<const uint8_t>b,size_t at,unsigned n){uint32_t v=0;for(unsigned i=0;i<n;++i)v=(v<<8)|b[at+i];return v;}

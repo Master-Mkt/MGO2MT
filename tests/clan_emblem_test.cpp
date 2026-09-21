@@ -3,7 +3,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <vector>
-using namespace mgo2win::clan;
+using namespace mgo2mt::clan;
 static void check(bool ok,const char*message){if(!ok)throw std::runtime_error(message);}
 template<class F>static void rejects(F action,const char*message){try{action();}catch(const std::runtime_error&){return;}throw std::runtime_error(message);}
 int main(){try{

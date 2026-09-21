@@ -6,8 +6,8 @@ namespace combat_test {
 struct Budget {size_t capacity=0,baseBytes=0,eventBytes=0,fullBytes=0;};
 // Homogeneous-event fixture only: capacity is for repetitions of the first kind.
 // Service streams with mixed kinds must use check_batches below.
-inline Budget budget(mgo2win::combat::wire::Frame frame){
- using namespace mgo2win::combat;Event event;if(!frame.events.empty())event=frame.events.front();else{for(const auto&p:frame.snapshot.players)if(p){event.source=p->identity;event.sourceLife=p->life;break;}event.weapon=25;event.kind=EventKind::impact;}
+inline Budget budget(mgo2mt::combat::wire::Frame frame){
+ using namespace mgo2mt::combat;Event event;if(!frame.events.empty())event=frame.events.front();else{for(const auto&p:frame.snapshot.players)if(p){event.source=p->identity;event.sourceLife=p->life;break;}event.weapon=25;event.kind=EventKind::impact;}
  event.epoch=frame.snapshot.epoch;event.id=1;frame.events.clear();frame.snapshot.eventWatermark=(std::max)(frame.snapshot.eventWatermark,uint64_t(5));
  const size_t base=wire::encode(frame).size();frame.events={event};const size_t stride=wire::encode(frame).size()-base;
  if(!stride||base+stride>2000)throw std::runtime_error("one full-roster event must fit");
@@ -21,9 +21,9 @@ struct BatchBudget {size_t chunks=0,maximumBytes=0,conservativeCapacity=4;};
 // Reconstruct each complete producer batch from actual ordered deliveries, then
 // measure its individual event kinds against the same roster/footer. The oracle
 // sums measured bytes; it does not copy Service's encode-and-shrink loop.
-inline BatchBudget check_batches(std::span<const mgo2win::combat::wire::Frame> frames,
+inline BatchBudget check_batches(std::span<const mgo2mt::combat::wire::Frame> frames,
                                  size_t eventsPerBatch,size_t expectedBatches){
- using namespace mgo2win::combat;
+ using namespace mgo2mt::combat;
  if(!eventsPerBatch||!expectedBatches)throw std::runtime_error("empty batch fixture");
  BatchBudget result;size_t index=0;
  for(size_t batch=0;batch<expectedBatches;++batch){

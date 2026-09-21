@@ -4,7 +4,7 @@
 #include <fstream>
 #include <set>
 #include <stdexcept>
-namespace mgo2win::item_box {
+namespace mgo2mt::item_box {
 namespace {
 bool finite(stage::Vec3 p){for(float v:p)if(!std::isfinite(v)||std::abs(v)>=1000000)return false;return true;}
 bool valid(items::Position p){return finite({p.x,p.y,p.z})&&std::isfinite(p.yaw);}

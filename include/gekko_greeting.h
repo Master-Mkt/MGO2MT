@@ -1,6 +1,6 @@
 #pragma once
 #include "gekko_motion.h"
-namespace mgo2win::special_pc {
+namespace mgo2mt::special_pc {
 // Original pose samples, native greeting selection; no original salute label.
 class GekkoGreeting {
  PlayerMotionBank bank_;

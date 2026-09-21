@@ -2,7 +2,7 @@
 #include "original_bullet_penetration.h"
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 using namespace original_hit_regions;
 void check(bool value,const char* label){if(!value)throw std::runtime_error(label);}
 int main(){try{

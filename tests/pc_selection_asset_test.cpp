@@ -4,7 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {
 void check(bool value,const char* why){if(!value)throw std::runtime_error(why);}
 std::vector<char> read(const char* path){std::ifstream in(path,std::ios::binary);check(bool(in),"Missing selection fixture");return {(std::istreambuf_iterator<char>(in)),{}};}

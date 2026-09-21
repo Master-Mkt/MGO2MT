@@ -2,7 +2,7 @@
 #include "combat_sop_view.h"
 #include <algorithm>
 #include <optional>
-namespace mgo2win::sop {
+namespace mgo2mt::sop {
 // Native presentation policy. The original activation shader and duration have
 // not been recovered: one expanding shell is explicitly a Windows prototype.
 struct Pulse {combat::Vec3 origin;float radius=0,width=700,opacity=.4f;};

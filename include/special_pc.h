@@ -2,7 +2,7 @@
 #include "stage_collision.h"
 #include "gekko_jump_curve.h"
 #include <cstdint>
-namespace mgo2win::special_pc {
+namespace mgo2mt::special_pc {
 enum class Kind:uint8_t {human,gekko};
 constexpr bool weapon(uint16_t id){return id>=128&&id<=131;}
 enum class Action:uint8_t {none,jump,kick,salute,climb};

@@ -4,7 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <chrono>
-using namespace mgo2win;
+using namespace mgo2mt;
 static void check(bool b,const char*s){if(!b)throw std::runtime_error(s);}
 static std::vector<unsigned char> wave(unsigned identity,bool loop=true){
  std::vector<unsigned char>b;auto str=[&](const char*s){b.insert(b.end(),s,s+4);};auto u=[&](uint32_t x){for(int i=0;i<4;++i)b.push_back(static_cast<unsigned char>(x>>(8*i)));};
@@ -16,7 +16,7 @@ int main(int argc,char**argv){try{
  if(argc>1){auto lib=stage::MusicLibrary::scan(argv[1]);check(!lib.tracks.empty()&&!lib.rejected&&!lib.overflow,"prepared library PCM validation");std::cout<<"prepared WAV tracks="<<lib.tracks.size()<<"\n";}
  auto b=wave(1);auto w=read_pcm_wave(b);check(w.channels==2&&w.rate==48000&&w.loopBegin==1&&w.loopEnd==4,"smpl end inclusive conversion");
  for(unsigned mode=0;mode<4;++mode){auto bad=b;if(mode==0)bad.pop_back();if(mode==1)bad[96]=1;if(mode==2)bad[92]=4;if(mode==3)bad[20]=3;bool caught=false;try{read_pcm_wave(bad);}catch(...){caught=true;}check(caught,"malformed PCM / fractional loop / out of bounds / float rejected");}
- auto dir=std::filesystem::temp_directory_path()/("mgo2win-music-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));std::filesystem::create_directories(dir/"additional");
+ auto dir=std::filesystem::temp_directory_path()/("mgo2mt-music-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));std::filesystem::create_directories(dir/"additional");
  auto write=[&](auto p,unsigned id){auto bytes=wave(id);std::ofstream f(p,std::ios::binary);f.write(reinterpret_cast<const char*>(bytes.data()),bytes.size());};
  write(dir/"bgm_mgo_action01.wav",1);for(unsigned i=0;i<34;++i)write(dir/"additional"/(std::to_string(100+i)+".wav"),100+i);
  auto lib=stage::MusicLibrary::scan(dir);check(lib.tracks.size()==33&&lib.overflow==2,"32 additional, original separate");

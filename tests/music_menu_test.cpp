@@ -4,7 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 static void check(bool ok,const char*message){if(!ok)throw std::runtime_error(message);}
 int main(int argc,char**argv){try{
  check(menu_audio::asset(92)==L"92.gwa"&&menu_audio::asset(93)==L"93.gwa"&&menu_audio::asset(94)==L"94.gwa","three distinct reviewed assets");

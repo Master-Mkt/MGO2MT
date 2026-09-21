@@ -4,7 +4,7 @@
 #include <cmath>
 #include <string_view>
 
-namespace mgo2win {
+namespace mgo2mt {
 struct MaterialRestoreDecision { uint32_t rules=0; std::string reason; };
 namespace original_material_detail {
 inline constexpr std::string_view basePackage="9f0e7152f8316058e5610d2b0b1ebfcb8aa34adeb1066d19540f02a41cd98dd2";

@@ -3,7 +3,7 @@
 #include <limits>
 #include <stdexcept>
 
-namespace mgo2win::host {
+namespace mgo2mt::host {
 RoundRules::RoundRules(RoundPolicy policy):policy_(policy){
  if(!policy.minimum_players||policy.minimum_players>participants_.size())throw std::invalid_argument("minimum players");
 }

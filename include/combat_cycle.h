@@ -5,8 +5,10 @@
 #include "item_settings.h"
 #include "combat_object_damage.h"
 #include "round_items.h"
+#include "gameplay_config.h"
+#include "mounted_weapons.h"
 #include <utility>
-namespace mgo2win::combat {
+namespace mgo2mt::combat {
 // Windows-only bounded continuation. No score, tickets, team swap, DB writes,
 // rotation skipping or original round-count interpretation is performed here.
 std::optional<host::LoadRequest> next_cycle_request(const host::LoadRequest&);
@@ -16,10 +18,13 @@ public:
   std::filesystem::path stageRoot;std::vector<host::Rotation> rotations;
   uint8_t capacity=17;Policy combat;RoundCoordinator::Policy round;
   uint32_t endedDisplayMs=3000;items::Settings items;items::DropPolicies itemFacts;items::RoundItems roundItems;HealthRules health;ObjectDamage::Policy lightDamage;
+  std::shared_ptr<environment::Control> environment;
  };
  using Random=std::function<spawn::Random()>;
 private:
  Options options_;Random random_;std::shared_ptr<const weapons::Catalog> catalog_;
+ std::optional<gameplay::Config> gameplay_;
+ mounted::Registry mounted_;uint64_t configuration_=0;
  std::optional<stage::ObjectRegistry> registry_;
  struct Content {std::shared_ptr<stage::SceneAuthority> objects;std::shared_ptr<World> world;std::shared_ptr<spawn::StageSelector> selector;std::unique_ptr<Service> service;std::shared_ptr<std::vector<std::vector<uint8_t>>> objectRecords;};
  Content content_;host::LoadRequest request_;uint64_t epoch_=1;bool repeat_=false;

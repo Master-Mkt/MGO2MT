@@ -3,14 +3,14 @@
 #include <sstream>
 #include <stdexcept>
 #include <type_traits>
-using namespace mgo2win;
+using namespace mgo2mt;
 using player_lock::Lock;
 using player_lock::Policy;
 static_assert(!std::is_default_constructible_v<Lock>);
 static_assert(!std::is_default_constructible_v<Policy>);
 static void check(bool value,const char*label){if(!value)throw std::runtime_error(label);}
 static stage::Collision wall(float z){
- std::ostringstream out;out<<"MGO2WIN.STAGE_COLLISION 1 3 1\n-5000 -5000 "<<z<<"\n5000 -5000 "<<z<<"\n0 5000 "<<z<<"\n0 1 2 0 1\n";
+ std::ostringstream out;out<<"MGO2MT.STAGE_COLLISION 1 3 1\n-5000 -5000 "<<z<<"\n5000 -5000 "<<z<<"\n0 5000 "<<z<<"\n0 1 2 "<<(stage::attribute::bullet|stage::attribute::stop_eye)<<" 1\n";
  std::istringstream in(out.str());return stage::Collision::read(in);
 }
 struct Fixture {

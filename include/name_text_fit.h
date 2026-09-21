@@ -5,7 +5,7 @@
 #include <limits>
 #include <string_view>
 
-namespace mgo2win {
+namespace mgo2mt {
 // Scoped GDI font selection for a fixed-height name field. Short names use the
 // original font object unchanged. Width fitting does not prove glyph coverage.
 class NameTextFit {

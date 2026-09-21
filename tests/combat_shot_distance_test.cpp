@@ -6,14 +6,14 @@
 #include <iostream>
 #include <limits>
 #include <memory>
-using namespace mgo2win;using namespace mgo2win::combat;
+using namespace mgo2mt;using namespace mgo2mt::combat;
 namespace {
 void check(bool v,const char* m){if(!v)throw std::runtime_error(m);}
 constexpr Identity self{0,10,100},enemy{1,11,101};
 auto empty(){return std::make_shared<const stage::Collision>(stage::Collision::make({},{}));}
 auto walls(bool penetrableFirst=false){
  std::vector<stage::Vec3> v;std::vector<stage::CollisionTriangle> t;std::vector<stage::CollisionMaterial> m;
- for(unsigned i=0;i<(penetrableFirst?2u:1u);++i){const float z=penetrableFirst?(i?3000.f:1000.f):2000.f;const auto base=unsigned(v.size());v.insert(v.end(),{{-100000,-100000,z},{100000,-100000,z},{100000,100000,z},{-100000,100000,z}});m.push_back({i+1,.5f,.5f,true,i==0&&penetrableFirst?100:1000,true});t.push_back({{base,base+2,base+1},0,0,i,i+20});t.push_back({{base,base+3,base+2},0,0,i,i+20});}
+ for(unsigned i=0;i<(penetrableFirst?2u:1u);++i){const float z=penetrableFirst?(i?3000.f:1000.f):2000.f;const auto base=unsigned(v.size());v.insert(v.end(),{{-100000,-100000,z},{100000,-100000,z},{100000,100000,z},{-100000,100000,z}});m.push_back({i+1,.5f,.5f,true,i==0&&penetrableFirst?100:1000,true});t.push_back({{base,base+2,base+1},stage::attribute::native_solid,0,i,i+20});t.push_back({{base,base+3,base+2},stage::attribute::native_solid,0,i,i+20});}
  return std::make_shared<const stage::Collision>(stage::Collision::make(std::move(v),std::move(t),std::move(m)));
 }
 const Event& shot(const Decision& d){auto i=std::find_if(d.events.begin(),d.events.end(),[](const auto&e){return e.kind==EventKind::shot;});check(i!=d.events.end(),"accepted shot event exists");return *i;}
@@ -32,12 +32,12 @@ void host_distance(){
  for(uint16_t weapon:{uint16_t(50),uint16_t(53)})check(shot(fire(empty(),false,false,weapon)).shotDistance==0,"RPG/WP projectile launch does not create instantaneous tracer");
  auto mk2=fire(walls(),false,false,2);check(shot(mk2).shotDistance==0,"MK2 trace ends at its actual nonpenetrating hit");
  for(const auto* d:{&miss,&hit,&body,&stopped,&through,&akMiss,&mk2})for(const auto&e:d->events)if(e.kind!=EventKind::shot)check(e.shotDistance==0,"non-shot events retain zero distance");
- auto denied=std::make_unique<Authority>();auto profiles=initial_profiles(20,1,0);denied->begin(8,empty(),profiles);check(denied->join(self,1,{},1000,1000,std::array<uint16_t,1>{3},0),"held-only fixture");denied->active(true);check(denied->fire(self,{8,1,3,{0,0,1}},0).events.empty(),"held-only/rejected fire never creates tracer event");
+ auto denied=std::make_unique<Authority>();auto profiles=initial_profiles(20,1,0);denied->begin(8,empty(),profiles);check(denied->join(self,1,{},1000,1000,std::array<uint16_t,1>{3},0),"operator fixture");denied->active(true);auto operatorShot=denied->fire(self,{8,1,3,{0,0,1}},0);check(bool(operatorShot)&&shot(operatorShot).shotDistance==0,"working handgun does not produce AR/MG tracer");
 }
 void wire_distance(){
  wire::Frame f;f.snapshot.epoch=7;f.snapshot.revision=1;f.snapshot.eventWatermark=1;f.status=wire::Status::active;Event e;e.epoch=7;e.id=1;e.source=self;e.weapon=25;e.normal={0,0,1};f.events={e};
  auto rejects=[](const auto& value){try{wire::encode(value);return false;}catch(const wire::Invalid&){return true;}};
- for(float distance:{0.f,.01f,200000.f,1000000.f}){f.events[0].shotDistance=distance;auto bytes=wire::encode(f);check(bytes[5]==19&&std::get<wire::Frame>(wire::decode(bytes))==f,"finite distance including inclusive maximum round trips through GWCB19");}
+ for(float distance:{0.f,.01f,200000.f,1000000.f}){f.events[0].shotDistance=distance;auto bytes=wire::encode(f);check(bytes[5]==wire::version&&std::get<wire::Frame>(wire::decode(bytes))==f,"finite distance including inclusive maximum round trips through GWCB22");}
  f.events[0].shotDistance=1234.5f;auto bytes=wire::encode(f);auto old=bytes;old[5]=15;check(!wire::recognized(old),"GWCB15 mixed peer is unrecognized");bool refused=false;try{wire::decode(old);}catch(const wire::Invalid&){refused=true;}check(refused,"old version cannot decode new shot layout");
  const auto distanceAt=bytes.size()-5;auto bits=std::bit_cast<uint32_t>(1234.5f);for(unsigned i=0;i<4;++i)check(bytes[distanceAt+i]==uint8_t(bits>>(8*i)),"shot-only extension is little-endian float32 after life fields");
  auto shortRecord=bytes;shortRecord.erase(shortRecord.begin()+distanceAt,shortRecord.begin()+distanceAt+4);refused=false;try{wire::decode(shortRecord);}catch(const wire::Invalid&){refused=true;}check(refused,"missing shot extension is rejected even with current version");
@@ -53,7 +53,7 @@ void wire_distance(){
  // Rich action snapshots use the same adaptive byte budget as Service.
  f.events.clear();f.snapshot.eventWatermark=4;for(auto& p:f.snapshot.players){p->evadeKind=EvadeKind::rollRight;p->evadeSerial=1;p->evadeElapsedMs=1;}f.sop.recipient=f.snapshot.players[0]->identity;f.sop.life=1;
  size_t richFit=0,largest=0;for(unsigned n=1;n<=4;++n){auto event=e;event.id=n;event.shotDistance=10000;f.events.push_back(event);if(rejects(f))break;richFit=n;const auto packet=wire::encode(f);largest=packet.size();check(packet.size()<=2000&&std::get<wire::Frame>(wire::decode(packet))==f,"full side-roll roster and recipient footer preserve strict event framing");}check(richFit>=1,"full action roster plus recipient footer fits a shot");
- std::cout<<"GWCB19 shot extension bytes=4 full24_fit="<<fit<<" action24_fit="<<richFit<<" action24_bytes="<<largest<<'\n';
+ std::cout<<"GWCB22 shot extension bytes=4 full24_fit="<<fit<<" action24_fit="<<richFit<<" action24_bytes="<<largest<<'\n';
 }
 }
 int main(){try{host_distance();wire_distance();std::cout<<"HOST miss/wall/body/AK final ray, no projectile tracer, strict shot distance wire/Replica PASS\n";return 0;}catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}

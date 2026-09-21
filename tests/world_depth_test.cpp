@@ -56,9 +56,9 @@ void requireOracle(float distance, float actual) {
 }
 
 void clippingAndMonotonicity() {
-    require(mgo2win::world_near_plane == Near && mgo2win::world_far_plane == Far,
+    require(mgo2mt::world_near_plane == Near && mgo2mt::world_far_plane == Far,
             "Physical near/far clipping distances changed");
-    const auto matrix = mgo2win::world_projection(16.f / 9.f);
+    const auto matrix = mgo2mt::world_projection(16.f / 9.f);
     const auto near = project(matrix, 0, 0, float(Near));
     const auto far = project(matrix, 0, 0, float(Far));
     require(std::abs(near.depth - 1.f) < 1e-6f, "Near plane must map to reverse depth 1");
@@ -85,10 +85,10 @@ void clippingAndMonotonicity() {
 void aspectAndFieldOfView() {
     constexpr std::array aspects{.5625f, 1.f, 4.f / 3.f, 16.f / 9.f, 2.4f};
     constexpr std::array distances{10.f, 1000.f, 50000.f, 200000.f, 500000.f};
-    const auto square = mgo2win::world_projection(1.f);
+    const auto square = mgo2mt::world_projection(1.f);
     const double tangent = std::tan(VerticalFov / 2.0);
     for (float aspect : aspects) {
-        const auto matrix = mgo2win::world_projection(aspect);
+        const auto matrix = mgo2mt::world_projection(aspect);
         const auto legacy = XMMatrixPerspectiveFovLH(float(VerticalFov), aspect, float(Near), float(Far));
         for (float distance : distances) {
             const float x = float(.6 * distance * tangent * aspect);
@@ -119,7 +119,7 @@ std::uint32_t quantizeD24(double depth) {
 }
 
 void distantAdjacentSurfaces() {
-    const auto matrix = mgo2win::world_projection(16.f / 9.f);
+    const auto matrix = mgo2mt::world_projection(16.f / 9.f);
     constexpr std::array distances{50000.f, 75000.f, 100000.f, 125000.f,
                                    150000.f, 175000.f, 200000.f};
     for (float distance : distances) {

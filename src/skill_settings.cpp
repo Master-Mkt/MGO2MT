@@ -1,3 +1,4 @@
+#include "product_identity.h"
 #include "skill_settings.h"
 #include <windows.h>
 #include <algorithm>
@@ -8,7 +9,7 @@
 #include <sstream>
 #include <stdexcept>
 
-namespace mgo2win::skills {
+namespace mgo2mt::skills {
 namespace {
 template<class T>T number(std::string_view value){
  unsigned long long n=0;auto [end,ec]=std::from_chars(value.data(),value.data()+value.size(),n);
@@ -29,7 +30,7 @@ std::filesystem::path record_path(const std::filesystem::path&directory,uint64_t
 }
 bool Catalog::load(const std::filesystem::path&path,std::string&error){try{
  std::istringstream in(read_file(path,65536));std::string line;auto get=[&]{if(!std::getline(in,line))return false;if(!line.empty()&&line.back()=='\r')line.pop_back();return true;};
- if(!get()||line!="MGO2WIN_SKILLS\t1")throw std::runtime_error("Skill catalog version");
+ if(!get()||line!=mgo2mt::brand::Format{"MGO2MT_SKILLS\t1"})throw std::runtime_error("Skill catalog version");
  std::vector<Entry> draft;std::set<std::pair<uint16_t,uint8_t>> keys;std::set<uint16_t> ids;
  while(get()){
   auto f=fields(line);if(f.size()!=6||f[0]!="SKILL")throw std::runtime_error("Skill catalog row");
@@ -65,7 +66,7 @@ Check Editor::set(uint16_t id,uint8_t level){auto next=draft_;auto it=std::find_
 }
 bool save(const std::filesystem::path&directory,uint64_t characterId,const Catalog&catalog,const Loadout&loadout,unsigned capacity,std::string&error){std::filesystem::path temporary;try{
  if(!validate(catalog,loadout,capacity))throw std::runtime_error("Invalid skill loadout");
- auto path=record_path(directory,characterId);std::string body="MGO2WIN_SKILL_LOADOUT\t1\nCHARACTER\t"+std::to_string(characterId)+"\n";
+ auto path=record_path(directory,characterId);std::string body="MGO2MT_SKILL_LOADOUT\t1\nCHARACTER\t"+std::to_string(characterId)+"\n";
  for(auto entry:loadout.entries)body+="SKILL\t"+std::to_string(entry.id)+"\t"+std::to_string(entry.level)+"\n";
  body+="CHECKSUM\t"+hash(body)+"\n";std::filesystem::create_directories(directory);
  temporary=path;temporary+=L".tmp."+std::to_wstring(GetCurrentProcessId())+L"."+std::to_wstring(GetCurrentThreadId());
@@ -78,7 +79,7 @@ std::optional<Loadout> load(const std::filesystem::path&directory,uint64_t chara
  auto contents=read_file(path,4096);auto checksum=contents.rfind("CHECKSUM\t");
  if(checksum==contents.npos||contents.substr(checksum)!="CHECKSUM\t"+hash(contents.substr(0,checksum))+"\n")throw std::runtime_error("Skill loadout checksum");
  std::istringstream in(contents.substr(0,checksum));std::string line;
- if(!std::getline(in,line)||line!="MGO2WIN_SKILL_LOADOUT\t1"||!std::getline(in,line))throw std::runtime_error("Skill loadout version");
+ if(!std::getline(in,line)||line!=mgo2mt::brand::Format{"MGO2MT_SKILL_LOADOUT\t1"}||!std::getline(in,line))throw std::runtime_error("Skill loadout version");
  auto identity=fields(line);if(identity.size()!=2||identity[0]!="CHARACTER"||number<uint64_t>(identity[1])!=characterId)throw std::runtime_error("Skill loadout character mismatch");
  Loadout result;while(std::getline(in,line)){auto f=fields(line);if(f.size()!=3||f[0]!="SKILL")throw std::runtime_error("Skill loadout row");result.entries.push_back({number<uint16_t>(f[1]),number<uint8_t>(f[2])});if(result.entries.size()>maximum_capacity)throw std::runtime_error("Skill loadout count");}
  if(!validate(catalog,result,capacity))throw std::runtime_error("Skill loadout exceeds current entitlement or catalog");error.clear();return result;

@@ -1,10 +1,10 @@
 #include "footstep_presentation.h"
 #include "combat_audio.h"
 #include <iostream>
-using namespace mgo2win;
+using namespace mgo2mt;
 void check(bool v,const char* why){if(!v)throw std::runtime_error(why);}
 int main(int argc,char** argv){try{
- auto floor=stage::Collision::make({{-1000,0,-1000},{1000,0,-1000},{1000,0,1000},{-1000,0,1000}},{{{0,2,1},0x10,0,0},{{0,3,2},0x10,0,0}},{{0x15bccc,.5f,.5f,true}});
+ auto floor=stage::Collision::make({{-1000,0,-1000},{1000,0,-1000},{1000,0,1000},{-1000,0,1000}},{{{0,2,1},stage::attribute::player|stage::attribute::floor,0,0},{{0,3,2},stage::attribute::player|stage::attribute::floor,0,0}},{{0x15bccc,.5f,.5f,true}});
  auto material=combat::footsteps::dry_floor(floor,{0,2,0});check(material&&material->id==0x15bccc,"actual material from dry floor");
  check(!combat::footsteps::dry_floor(floor,{0,300,0}),"airborne rejected");
  auto water=stage::Water::make({{{0,0,0},{1000,100,1000}}});check(!combat::footsteps::dry_floor(floor,{0,2,0},&water),"wet floor does not play a dry material step");

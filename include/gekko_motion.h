@@ -6,7 +6,7 @@
 #include <cmath>
 #include <cstring>
 #include <stdexcept>
-namespace mgo2win::special_pc {
+namespace mgo2mt::special_pc {
 // Native action selection from inspected original poses. These are not original
 // dispatcher IDs or ordinary human PlayerMotion IDs.
 enum class GekkoMotion:uint32_t {idle,walk,run,jump,kick};

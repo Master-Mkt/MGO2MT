@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <optional>
-namespace mgo2win::combat::falling {
+namespace mgo2mt::combat::falling {
 struct Scope {uint64_t epoch=0;uint8_t slot=255;uint16_t instance=0;uint32_t character=0,life=0;bool operator==(const Scope&)const=default;};
 // User-requested native thresholds in existing world units (1000 = one metre).
 // No claim that these values restore original MGO2 fall damage.

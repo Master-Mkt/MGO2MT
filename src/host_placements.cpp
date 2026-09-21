@@ -1,7 +1,7 @@
 #include "host_placements.h"
 #include <algorithm>
 #include <bit>
-namespace mgo2win::host {
+namespace mgo2mt::host {
 static uint16_t le(std::span<const uint8_t>b,size_t at){return uint16_t(b[at]|unsigned(b[at+1])<<8);}
 std::array<float,3> ItemPlacement::position()const{return {coordinates[0]*10.f,coordinates[1]*1.f,coordinates[2]*10.f};}
 std::array<float,3> ItemPlacement::degrees()const{return {angles[0]*(360.f/256),angles[1]*(360.f/256),angles[2]*(360.f/256)};}

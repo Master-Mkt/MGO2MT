@@ -6,7 +6,7 @@
 #include <span>
 #include <vector>
 
-namespace mgo2win::radio {
+namespace mgo2mt::radio {
 using Identity = combat::Identity;
 using Body = std::array<uint8_t,44>;
 inline constexpr uint8_t marker = 0xed;

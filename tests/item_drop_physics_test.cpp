@@ -1,7 +1,7 @@
 #include "item_drop_physics.h"
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;using namespace mgo2win::items;
+using namespace mgo2mt;using namespace mgo2mt::items;
 namespace {void check(bool b,const char*s){if(!b)throw std::runtime_error(s);}stage::Collision floor(float y=0){return stage::Collision::make({{-10000,y,-10000},{10000,y,-10000},{10000,y,10000},{-10000,y,10000}},{{{0,1,2}},{{0,2,3}}});}}
 int main(){try{
  Scope scope{1,1};Actor owner{0,1,10,1},other{1,1,20,1};WorldInventory inv({4,1});check(inv.reset(scope)&&inv.admit(owner)&&inv.admit(other),"admit");HeldSlot held{{25,1,30,90,0,Resource::ammunition},1};DropPolicy allow;allow.drop=DropOverride::allow;

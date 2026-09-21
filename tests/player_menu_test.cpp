@@ -3,24 +3,24 @@
 #include <fstream>
 #include <stdexcept>
 #include <iostream>
-using namespace mgo2win;
+using namespace mgo2mt;
 static void check(bool v,const char*s){if(!v)throw std::runtime_error(s);}
 static void bitmap(const void*p,const std::filesystem::path&path){BITMAPFILEHEADER h{};BITMAPINFOHEADER i{};h.bfType=0x4d42;h.bfOffBits=sizeof(h)+sizeof(i);h.bfSize=h.bfOffBits+1280*720*4;i.biSize=sizeof(i);i.biWidth=1280;i.biHeight=-720;i.biPlanes=1;i.biBitCount=32;std::ofstream f(path,std::ios::binary);f.write(reinterpret_cast<char*>(&h),sizeof(h));f.write(reinterpret_cast<char*>(&i),sizeof(i));f.write(static_cast<const char*>(p),1280*720*4);check(bool(f),"menu capture");}
 static std::string read(const std::filesystem::path&path){std::ifstream f(path,std::ios::binary);return {std::istreambuf_iterator<char>(f),std::istreambuf_iterator<char>()};}
 static void write(const std::filesystem::path&path,const std::string&text){std::ofstream f(path,std::ios::binary|std::ios::trunc);f<<text;f.close();check(bool(f),"fixture write");}
 int main(int argc,char**argv){try{
- auto path=std::filesystem::temp_directory_path()/("MGO2WIN-player-menu-test-"+std::to_string(GetCurrentProcessId())+"-"+std::to_string(GetTickCount64()));std::filesystem::create_directories(path);
+ auto path=std::filesystem::temp_directory_path()/("MGO2MT-player-menu-test-"+std::to_string(GetCurrentProcessId())+"-"+std::to_string(GetTickCount64()));std::filesystem::create_directories(path);
  auto input=std::make_shared<ControllerInput>(path/"input.cfg");auto graphics=std::make_shared<GraphicsSettings>(path/"graphics.cfg");PlayerMenu menu(path/"input.cfg",input,graphics);
  auto key=[&](unsigned k){menu.message(nullptr,WM_KEYDOWN,k,0);};
  check(menu.enemy_name_tags()&&!std::filesystem::exists(path/"player.cfg"),"new personal enemy tags default ON without startup write");
  check(menu.camera_settings()==camera::Settings{}&&!std::filesystem::exists(path/"camera.cfg"),"camera defaults retain native directions without startup write");
  graphics->draft.width=1920;menu.close();check(graphics->draft.width==1920,"closed overlay must not reset another screen draft");
  menu.open(player::Menu::settings);check(menu.visible(),"START opens settings");key(VK_F3);key(VK_RIGHT);check(menu.prone_y_first_person(),"prone Y policy selectable and saved");
- check(menu.enemy_name_tags()&&read(path/"player.cfg")=="MGO2WIN.PLAYER 2 1 1\n","Y save preserves enemy preference in version 2");
+ check(menu.enemy_name_tags()&&read(path/"player.cfg")=="MGO2MT.PLAYER 2 1 1\n","Y save preserves enemy preference in version 2");
  if(argc>1){std::filesystem::create_directories(argv[1]);bitmap(menu.draw(),std::filesystem::path(argv[1])/"gameplay_settings.bmp");}
  key(VK_DOWN);key(VK_RIGHT);check(!menu.enemy_name_tags()&&menu.prone_y_first_person(),"enemy OFF changes no prone-Y preference");
- check(read(path/"player.cfg")=="MGO2WIN.PLAYER 2 1 0\n","enemy OFF persisted");
- menu.message(nullptr,WM_KEYDOWN,VK_RETURN,1LL<<30);check(!menu.enemy_name_tags()&&read(path/"player.cfg")=="MGO2WIN.PLAYER 2 1 0\n","held confirm cannot repeat enemy toggle");
+ check(read(path/"player.cfg")=="MGO2MT.PLAYER 2 1 0\n","enemy OFF persisted");
+ menu.message(nullptr,WM_KEYDOWN,VK_RETURN,1LL<<30);check(!menu.enemy_name_tags()&&read(path/"player.cfg")=="MGO2MT.PLAYER 2 1 0\n","held confirm cannot repeat enemy toggle");
  if(argc>1)bitmap(menu.draw(),std::filesystem::path(argv[1])/"enemy_name_tags_off.bmp");
  key(VK_ESCAPE);check(!menu.visible(),"cancel returns to stage");PlayerMenu restored(path/"input.cfg",input,graphics);check(restored.prone_y_first_person()&&!restored.enemy_name_tags(),"both gameplay preferences persisted");
  menu.open(player::Menu::settings);key(VK_F3);
@@ -66,16 +66,16 @@ int main(int argc,char**argv){try{
  if(argc>1)bitmap(menu.draw(),std::filesystem::path(argv[1])/"chat_menu.bmp");key(VK_ESCAPE);check(!menu.visible(),"chat cancel");
  menu.open(player::Menu::equipment);key(VK_RETURN);if(argc>1)bitmap(menu.draw(),std::filesystem::path(argv[1])/"equipment_empty.bmp");key(VK_ESCAPE);check(!menu.visible(),"empty equipment cancel");
  // Version 1 is read without migration writes; its new preference defaults ON.
- write(path/"player.cfg","MGO2WIN.PLAYER 1 1\n");
+ write(path/"player.cfg","MGO2MT.PLAYER 1 1\n");
  {PlayerMenu legacy(path/"input.cfg",input,graphics);check(legacy.prone_y_first_person()&&legacy.enemy_name_tags(),"version 1 preserves Y and defaults enemy tags ON");
-  check(read(path/"player.cfg")=="MGO2WIN.PLAYER 1 1\n","reading legacy settings does not rewrite them");
+  check(read(path/"player.cfg")=="MGO2MT.PLAYER 1 1\n","reading legacy settings does not rewrite them");
   legacy.open(player::Menu::settings);legacy.message(nullptr,WM_KEYDOWN,VK_F3,0);legacy.message(nullptr,WM_KEYDOWN,VK_DOWN,0);legacy.message(nullptr,WM_KEYDOWN,VK_RETURN,0);
-  check(!legacy.enemy_name_tags()&&legacy.prone_y_first_person()&&read(path/"player.cfg")=="MGO2WIN.PLAYER 2 1 0\n","explicit legacy edit migrates both values");}
- for(const auto&invalid:std::vector<std::string>{"MGO2WIN.PLAYER 2 1","MGO2WIN.PLAYER 2 1 2","MGO2WIN.PLAYER 2 2 0","MGO2WIN.PLAYER 1 1 extra","MGO2WIN.PLAYER 3 1 0","MGO2WIN.PLAYER 2 1 0 extra",std::string(129,'x')}){
+  check(!legacy.enemy_name_tags()&&legacy.prone_y_first_person()&&read(path/"player.cfg")=="MGO2MT.PLAYER 2 1 0\n","explicit legacy edit migrates both values");}
+ for(const auto&invalid:std::vector<std::string>{"MGO2MT.PLAYER 2 1","MGO2MT.PLAYER 2 1 2","MGO2MT.PLAYER 2 2 0","MGO2MT.PLAYER 1 1 extra","MGO2MT.PLAYER 3 1 0","MGO2MT.PLAYER 2 1 0 extra",std::string(129,'x')}){
   write(path/"player.cfg",invalid);PlayerMenu rejected(path/"input.cfg",input,graphics);
   check(!rejected.prone_y_first_person()&&rejected.enemy_name_tags(),"invalid gameplay settings retain complete defaults");check(read(path/"player.cfg")==invalid,"rejected settings not overwritten on load");
  }
- for(const auto&invalid:std::vector<std::string>{"MGO2WIN.CAMERA 1 1 0 0 0 0\n","MGO2WIN.CAMERA 2 1 0 0 0 0 0\n","MGO2WIN.CAMERA 1 1 0 0 0 0 2\n","MGO2WIN.CAMERA 1 1 0 0 0 0 0\nextra",std::string(129,'x')}){
+ for(const auto&invalid:std::vector<std::string>{"MGO2MT.CAMERA 1 1 0 0 0 0\n","MGO2MT.CAMERA 2 1 0 0 0 0 0\n","MGO2MT.CAMERA 1 1 0 0 0 0 2\n","MGO2MT.CAMERA 1 1 0 0 0 0 0\nextra",std::string(129,'x')}){
   write(path/"camera.cfg",invalid);PlayerMenu rejected(path/"input.cfg",input,graphics);check(rejected.camera_settings()==camera::Settings{},"malformed camera file rejected without partial choices");check(read(path/"camera.cfg")==invalid,"invalid camera file preserved");
  }
  {PlayerMenu speedMenu(path/"input.cfg",input,graphics);speedMenu.open(player::Menu::settings,true);auto speedKey=[&](unsigned k){speedMenu.message(nullptr,WM_KEYDOWN,k,0);};speedKey(VK_F4);speedKey(VK_DOWN);speedKey(VK_DOWN);speedKey(VK_RIGHT);

@@ -1,6 +1,6 @@
-#include "mgo2win/gcl_lengths.hpp"
+#include "mgo2mt/gcl_lengths.hpp"
 
-namespace mgo2win::gcl {
+namespace mgo2mt::gcl {
 // Recovered from MGO2 PPU 0x000D6928. See outputs/focused/000D6928.txt.
 std::optional<Length> block_length(std::span<const std::uint8_t> bytes) {
     if (bytes.empty()) return std::nullopt;

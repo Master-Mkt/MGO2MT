@@ -3,7 +3,7 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
-using namespace mgo2win;using namespace physics;
+using namespace mgo2mt;using namespace physics;
 static void check(bool v,const char*s){if(!v)throw std::runtime_error(s);}
 static stage::Collision floor(float friction=.5f,float restitution=.5f){return stage::Collision::make({{-100000,0,-100000},{100000,0,-100000},{100000,0,100000},{-100000,0,100000}},{{{0,1,2},0,0,0},{{0,2,3},0,0,0}},{{7,friction,restitution,true}});}
 int main(){try{

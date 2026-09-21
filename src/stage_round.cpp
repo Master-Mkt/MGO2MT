@@ -1,13 +1,14 @@
+#include "product_identity.h"
 #include "stage_round.h"
 #include <algorithm>
 #include <cmath>
 #include <set>
 #include <string>
 #include <stdexcept>
-namespace mgo2win::stage {
+namespace mgo2mt::stage {
 Round Round::read(std::istream&in){
  auto check=[](bool ok){if(!ok)throw std::runtime_error("Invalid stage placements");};
- Round r;std::string magic;unsigned version,count;check(bool(in>>magic>>version>>count));check(magic=="MGO2WIN.STAGE_PLACEMENTS"&&version==1&&count<=4096);std::set<uint32_t>keys;
+ Round r;std::string magic;unsigned version,count;check(bool(in>>magic>>version>>count));check(magic==mgo2mt::brand::Format{"MGO2MT.STAGE_PLACEMENTS"}&&version==1&&count<=4096);std::set<uint32_t>keys;
  for(unsigned i=0;i<count;++i){Placement p;check(bool(in>>p.key>>p.model>>p.group>>p.position[0]>>p.position[1]>>p.position[2]>>p.yaw));check(p.key&&keys.insert(p.key).second&&p.model<6&&p.group<=1&&(!p.group||p.model<2));for(float x:p.position)check(std::isfinite(x)&&std::abs(x)<1000000);check(std::isfinite(p.yaw)&&std::abs(p.yaw)<=360);r.objects.push_back(p);}
  std::string tail;check(!(in>>tail));return r;
 }

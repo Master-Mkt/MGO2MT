@@ -7,13 +7,13 @@
 #include <memory>
 #include <sstream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {
 void check(bool ok,const char* message){if(!ok)throw std::runtime_error(message);}
 template<class F> void rejects(F f,const char* message){bool caught=false;try{f();}catch(const std::exception&){caught=true;}check(caught,message);}
 items::GcxItemLayout read(const std::string& text){std::istringstream in(text);return items::GcxItemLayout::read(in);}
 const std::string fixture=
- "MGO2WIN.GCX_ROUND_ITEMS 1 20 verified\n"
+ "MGO2MT.GCX_ROUND_ITEMS 1 20 verified\n"
  "groups 2\n"
  "group 0 100 140 equipment 22 3\n"
  "anchor 1000 10 0 250 0 0.25\n"
@@ -30,22 +30,22 @@ std::optional<items::Contents> lookup(items::Domain domain,uint32_t item){
 int main(int argc,char** argv){try{
  auto layout=read(fixture);check(layout.verified&&layout.map==20&&layout.groups.size()==2,"verified source parser");
  check(layout.groups[0].anchors.size()==3&&layout.groups[0].anchors[0].position==layout.groups[0].anchors[1].position,"equal positions retain separate weighted candidates");
- check(!read("MGO2WIN.GCX_ROUND_ITEMS 1 4 unavailable\ngroups 0\n").verified,"unavailable is not empty verified layout");
- check(read("MGO2WIN.GCX_ROUND_ITEMS 1 4 verified\ngroups 0\n").verified,"explicit verified empty retained");
+ check(!read("MGO2MT.GCX_ROUND_ITEMS 1 4 unavailable\ngroups 0\n").verified,"unavailable is not empty verified layout");
+ check(read("MGO2MT.GCX_ROUND_ITEMS 1 4 verified\ngroups 0\n").verified,"explicit verified empty retained");
  for(const auto& bad:std::vector<std::string>{
-  "MGO2WIN.GCX_ROUND_ITEMS 2 20 verified\ngroups 0\n",
-  "MGO2WIN.GCX_ROUND_ITEMS 1 255 verified\ngroups 0\n",
-  "MGO2WIN.GCX_ROUND_ITEMS 1 20 guessed\ngroups 0\n",
-  "MGO2WIN.GCX_ROUND_ITEMS 1 20 verified\ngroups 513\n",
-  "MGO2WIN.GCX_ROUND_ITEMS 1 20 verified\ngroups 0\nextra\n",
-  "MGO2WIN.GCX_ROUND_ITEMS 1 20 verified\ngroups 1\ngroup 0 1 140 equipment 22 0\n",
-  "MGO2WIN.GCX_ROUND_ITEMS 1 20 verified\ngroups 1\ngroup 0 1 140 weapon 140 1\nanchor 1 2 0 0 0 0\n",
-  "MGO2WIN.GCX_ROUND_ITEMS 1 20 verified\ngroups 1\ngroup 0 1 113 equipment 22 1\nanchor 1 2 0 0 0 0\n",
-  "MGO2WIN.GCX_ROUND_ITEMS 1 20 unavailable\ngroups 1\ngroup 0 1 140 equipment 22 1\nanchor 1 2 0 0 0 0\n",
-  "MGO2WIN.GCX_ROUND_ITEMS 1 20 verified\ngroups 1\ngroup 0 1 140 equipment 22 1\nanchor -1 2 0 0 0 0\n",
-  "MGO2WIN.GCX_ROUND_ITEMS 1 20 verified\ngroups 1\ngroup 0 1 140 equipment 22 1\nanchor 1 2 nan 0 0 0\n",
-  "MGO2WIN.GCX_ROUND_ITEMS 1 20 verified\ngroups 1\ngroup 0 1 140 equipment 22 1\nanchor 1 2 0 0 0\n",
-  "MGO2WIN.GCX_ROUND_ITEMS 1 20 verified\ngroups 1\ngroup 0 1 140 equipment 22 2\nanchor 1 2 0 0 0 0\nanchor 1 3 3 0 0 0\n"
+  "MGO2MT.GCX_ROUND_ITEMS 2 20 verified\ngroups 0\n",
+  "MGO2MT.GCX_ROUND_ITEMS 1 255 verified\ngroups 0\n",
+  "MGO2MT.GCX_ROUND_ITEMS 1 20 guessed\ngroups 0\n",
+  "MGO2MT.GCX_ROUND_ITEMS 1 20 verified\ngroups 513\n",
+  "MGO2MT.GCX_ROUND_ITEMS 1 20 verified\ngroups 0\nextra\n",
+  "MGO2MT.GCX_ROUND_ITEMS 1 20 verified\ngroups 1\ngroup 0 1 140 equipment 22 0\n",
+  "MGO2MT.GCX_ROUND_ITEMS 1 20 verified\ngroups 1\ngroup 0 1 140 weapon 140 1\nanchor 1 2 0 0 0 0\n",
+  "MGO2MT.GCX_ROUND_ITEMS 1 20 verified\ngroups 1\ngroup 0 1 113 equipment 22 1\nanchor 1 2 0 0 0 0\n",
+  "MGO2MT.GCX_ROUND_ITEMS 1 20 unavailable\ngroups 1\ngroup 0 1 140 equipment 22 1\nanchor 1 2 0 0 0 0\n",
+  "MGO2MT.GCX_ROUND_ITEMS 1 20 verified\ngroups 1\ngroup 0 1 140 equipment 22 1\nanchor -1 2 0 0 0 0\n",
+  "MGO2MT.GCX_ROUND_ITEMS 1 20 verified\ngroups 1\ngroup 0 1 140 equipment 22 1\nanchor 1 2 nan 0 0 0\n",
+  "MGO2MT.GCX_ROUND_ITEMS 1 20 verified\ngroups 1\ngroup 0 1 140 equipment 22 1\nanchor 1 2 0 0 0\n",
+  "MGO2MT.GCX_ROUND_ITEMS 1 20 verified\ngroups 1\ngroup 0 1 140 equipment 22 2\nanchor 1 2 0 0 0 0\nanchor 1 3 3 0 0 0\n"
  })rejects([&]{read(bad);},"malformed/unresolved source rejected");
  rejects([&]{read(fixture+std::string(1025,' '));},"oversized source row rejected");
  stage::CboxLayout cbox;cbox.count=2;cbox.anchors={
@@ -58,7 +58,7 @@ int main(int argc,char** argv){try{
  auto tdm=items::plan_gcx_round_items(config,&layout,cbox,20,1,9);
  check(tdm.items.size()==1&&tdm.items[0].item==10,"rule-specific group selected");
  check(!items::plan_gcx_round_items(config,nullptr,cbox,20,0,9).verified,"missing source unavailable");
- auto unavailable=read("MGO2WIN.GCX_ROUND_ITEMS 1 20 unavailable\ngroups 0\n");
+ auto unavailable=read("MGO2MT.GCX_ROUND_ITEMS 1 20 unavailable\ngroups 0\n");
  check(!items::plan_gcx_round_items(config,&unavailable,cbox,20,0,9).verified,"unverified source unavailable");
  auto off=config;off.useGcx=false;auto disabled=items::plan_gcx_round_items(off,nullptr,cbox,20,0,9);
  check(disabled.verified&&disabled.items.empty(),"explicit GCX off needs no sidecar");

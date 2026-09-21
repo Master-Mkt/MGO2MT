@@ -3,7 +3,7 @@
 #include <cmath>
 #include <limits>
 #include <stdexcept>
-namespace mgo2win::combat::falling {
+namespace mgo2mt::combat::falling {
 namespace {bool valid(Scope s){return s.epoch&&s.slot<24&&s.instance&&s.character&&s.life;}}
 bool valid(Policy p)noexcept{return std::isfinite(p.safeHeight)&&std::isfinite(p.severeHeight)&&std::isfinite(p.fatalHeight)&&p.safeHeight>=0&&p.safeHeight<p.severeHeight&&p.severeHeight<p.fatalHeight&&p.fatalHeight<1000000&&p.severePermille>0&&p.severePermille<1000;}
 std::optional<uint32_t> damage(float height,uint32_t maxHp,Policy p)noexcept{

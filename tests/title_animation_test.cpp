@@ -4,7 +4,7 @@
 #include <iterator>
 #include <stdexcept>
 #include <cstring>
-using mgo2win::TitleAnimation;
+using mgo2mt::TitleAnimation;
 void require(bool value){if(!value)throw std::runtime_error("Animation contract check failed");}
 int main(int argc,char**argv){try{
  require(argc==2);std::ifstream f(argv[1],std::ios::binary);require(bool(f));std::vector<char>b((std::istreambuf_iterator<char>(f)),{});

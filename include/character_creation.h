@@ -7,7 +7,7 @@
 #include <optional>
 #include <cmath>
 #include <stdexcept>
-namespace mgo2win {
+namespace mgo2mt {
 // PPC 7F74D0: pow(1.095f, (storedPitch-15)/15), clamped to reciprocal/1.095.
 // Native pow is an approximation of the original math library, not bit-identical DSP.
 struct CharacterVoicePreview {unsigned gender=0,voice=0;int pitch=0;};

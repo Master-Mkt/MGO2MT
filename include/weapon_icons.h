@@ -5,7 +5,7 @@
 #include <span>
 #include <string>
 #include <vector>
-namespace mgo2win::weapons {
+namespace mgo2mt::weapons {
 // Local presentation data. An icon never grants permission to equip a weapon.
 std::map<uint16_t,std::string> read_icon_index(const std::filesystem::path&);
 struct Icon {unsigned width=0,height=0;std::vector<uint32_t> bgra;};
@@ -13,6 +13,9 @@ class Icons {
  std::map<uint16_t,Icon> images_;
 public:
  bool load(const std::filesystem::path&,std::string& error);
+ // Optional JSON icon overrides are applied atomically; existing index icons
+ // remain available for all IDs without an override.
+ bool override_paths(const std::filesystem::path& dataRoot,const std::map<uint16_t,std::string>&,std::string& error);
  const Icon* find(uint16_t id)const;
  size_t size()const{return images_.size();}
 };

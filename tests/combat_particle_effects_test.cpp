@@ -3,23 +3,30 @@
 #include <algorithm>
 #include <stdexcept>
 #include <limits>
-using namespace mgo2win::combat;
+using namespace mgo2mt::combat;
 void check(bool ok,const char* message){if(!ok)throw std::runtime_error(message);}
 int main(){try{
- particles::Pool pool({4,1600,900});Snapshot state;state.epoch=7;state.eventWatermark=10;Player p;p.identity={0,2,101};p.life=3;p.alive=true;state.players[0]=p;
+ Snapshot s;s.epoch=7;s.eventWatermark=10;Player p;p.identity={0,2,101};p.life=3;p.alive=true;s.players[0]=p;
  Event e;e.epoch=7;e.id=10;e.kind=EventKind::shot;e.source=p.identity;e.sourceLife=3;e.weapon=3;e.position={0,1500,0};e.normal={0,0,1};
- pool.synchronize(7,1,10,0);pool.dispatch({&e,1},state,0);check(pool.size()==0,"join history baseline");
- state.eventWatermark=14;e.id=12;pool.dispatch({&e,1},state,10);e.id=11;pool.dispatch({&e,1},state,10);pool.dispatch({&e,1},state,10);check(pool.size()==2,"delayed out-of-order chunk accepted once");
- auto first=pool.sample(state,10);check(first.size()==2&&first[0].kind==particles::Kind::casing&&first[0].rgba[0]>first[0].rgba[2],"native brass casing");auto later=pool.sample(state,300);check(later.size()==2&&later[0].from!=first[0].from&&later[0].rgba[3]<first[0].rgba[3],"ballistic motion and fade");
- e.id=13;e.weapon=50;pool.dispatch({&e,1},state,300);e.id=14;e.weapon=53;pool.dispatch({&e,1},state,300);check(pool.size()==2,"no RPG or grenade casings");
- e.id=15;e.weapon=50;e.kind=EventKind::projectileTrail;state.eventWatermark=15;pool.dispatch({&e,1},state,300);auto smoke=pool.sample(state,300);check(smoke.size()==3&&smoke.back().kind==particles::Kind::smoke&&smoke.back().rgba[0]==smoke.back().rgba[1],"RPG trail has grey smoke");
- check(pool.sample(state,910).size()==1,"casing exact lifetime");check(pool.sample(state,1900).empty(),"smoke exact lifetime");
- e.kind=EventKind::shot;e.weapon=2;e.id=16;state.eventWatermark=16;pool.dispatch({&e,1},state,2000);check(pool.size()==1,"MK2 accepted shot casing");state.players[0]->life=4;check(pool.sample(state,2001).empty(),"respawn discards old life visuals");e.id=17;state.eventWatermark=17;pool.dispatch({&e,1},state,2001);check(pool.size()==0,"old life event rejected");e.sourceLife=4;
- e.id=18;state.eventWatermark=18;e.position[0]=std::numeric_limits<float>::quiet_NaN();pool.dispatch({&e,1},state,2010);check(pool.size()==0,"malformed position rejected");e.position[0]=0;
- e.id=19;state.eventWatermark=19;e.source.instance=3;pool.dispatch({&e,1},state,2010);check(pool.size()==0,"full identity checked");e.source=p.identity;
- for(uint64_t id=20;id<35;++id){e.id=id;state.eventWatermark=id;pool.dispatch({&e,1},state,2020);}check(pool.size()==4,"bounded pool evicts oldest");check(pool.sample(state,2019).empty(),"clock rollback clears active particles");pool.dispatch({&e,1},state,2021);check(pool.size()==0,"rollback cannot replay old event");
- e.id=35;state.eventWatermark=35;e.weapon=3;pool.dispatch({&e,1},state,2030);check(pool.size()==1,"OPERATOR accepted event only");state.players[0]->alive=false;check(pool.sample(state,2031).empty(),"dead owner clears");state.players[0]->alive=true;
- pool.synchronize(7,2,35,2040);pool.dispatch({&e,1},state,2040);check(pool.size()==0,"scene resets historical baseline");pool.clear();pool.dispatch({&e,1},state,2050);check(pool.size()==0,"leave unavailable");
- particles::Pool ak;state.players[0]->alive=true;ak.synchronize(7,1,35,2100);e.id=36;e.weapon=25;e.sourceLife=4;state.eventWatermark=36;ak.dispatch({&e,1},state,2100);auto flash=ak.sample(state,2100);check(ak.size()==3&&std::count_if(flash.begin(),flash.end(),[](const auto&v){return v.kind==particles::Kind::flash;})==3,"AK accepted shot emits muzzle flash smoke and casing");ak.dispatch({&e,1},state,2101);check(ak.size()==3,"AK repeated event cannot emit again");check(ak.sample(state,2180).size()==2,"AK muzzle flash expires at 80ms");
- bool invalid=false;try{particles::Pool bad({4097,1,1});}catch(...){invalid=true;}check(invalid,"invalid policy refused");std::cout<<"native casing/smoke accepted event, full identity, late chunks, expiry, reset, capacity PASS\n";return 0;
+ particles::Pool pool;pool.synchronize(7,1,10,0);pool.dispatch({&e,1},s,0);check(pool.size()==0,"join historical baseline");
+ e.id=12;s.eventWatermark=12;pool.dispatch({&e,1},s,10);e.id=11;pool.dispatch({&e,1},s,10);pool.dispatch({&e,1},s,10);check(pool.size()==6,"late chunk emitted once");check(pool.sprites(s,10).size()==4,"OP flash and smoke original sprites");
+ check(pool.sprites(s,90).size()==2,"flash exact 80ms expiry");check(pool.sample(s,910).size()==2,"casing exact 900ms expiry");check(pool.sprites(s,1610).empty(),"smoke exact expiry");
+ for(uint16_t weapon:std::array<uint16_t,23>{2,3,4,7,8,15,18,20,23,24,25,26,30,31,35,37,38,39,41,42,43,44,50}){
+  pool.clear();pool.synchronize(7,1,e.id,2000);e.id++;s.eventWatermark=e.id;e.weapon=weapon;pool.dispatch({&e,1},s,2000);auto sprites=pool.sprites(s,2000);check(sprites.size()==2&&sprites[0].texture==0x090aec&&sprites[1].texture==0xca92b7,"every firearm receives original texture keys");auto lines=pool.sample(s,2000);check(std::count_if(lines.begin(),lines.end(),[](const auto&v){return v.kind==particles::Kind::casing;})==(weapon==50?0:1),"firearm casing eligibility");
+ }
+ pool.clear();pool.synchronize(7,1,e.id,3000);e.id++;s.eventWatermark=e.id;e.weapon=52;pool.dispatch({&e,1},s,3000);check(pool.size()==0,"throw cannot emit firearm flash");
+ e.id++;s.eventWatermark=e.id;e.kind=EventKind::explosion;s.players[0]->alive=false;pool.dispatch({&e,1},s,3000);check(pool.sprites(s,3000).size()==2,"accepted explosion survives owner death");pool.dispatch({&e,1},s,3000);check(pool.size()==1,"explosion replay refused");check(pool.sprites(s,3600).size()==1,"explosion flame ends, original smoke remains");check(pool.sprites(s,5400).empty(),"explosion exact expiry");
+ for(uint16_t weapon=56;weapon<=59;++weapon){e.id++;s.eventWatermark=e.id;e.kind=EventKind::smoke;e.weapon=weapon;pool.dispatch({&e,1},s,6000);}auto cloud=pool.sprites(s,7000);check(cloud.size()==16,"four original smoke billboards per grenade");check(cloud[4].rgba[0]>cloud[4].rgba[1]&&cloud[8].rgba[1]>cloud[8].rgba[0],"native red green tint on original pixels");check(pool.sprites(s,18000).empty(),"12s smoke expiry");
+ s.players[0]->alive=true;e.kind=EventKind::shot;e.weapon=25;e.id++;s.eventWatermark=e.id;pool.dispatch({&e,1},s,19000);s.players[0]->life=4;check(pool.sprites(s,19001).empty(),"firearm old life cleared");e.id++;s.eventWatermark=e.id;pool.dispatch({&e,1},s,19001);check(pool.size()==0,"old life event refused");e.sourceLife=4;e.position[0]=std::numeric_limits<float>::quiet_NaN();e.id++;s.eventWatermark=e.id;pool.dispatch({&e,1},s,19001);check(pool.size()==0,"nonfinite position refused");e.position[0]=0;e.id++;s.eventWatermark=e.id;pool.dispatch({&e,1},s,19002);check(pool.sprites(s,19001).empty(),"clock rollback clears active");pool.dispatch({&e,1},s,19003);check(pool.size()==0,"rollback cannot replay");
+ particles::Pool bounded({4,1600,900});bounded.synchronize(7,1,e.id,20000);for(unsigned i=0;i<20;++i){e.id++;s.eventWatermark=e.id;bounded.dispatch({&e,1},s,20000);}check(bounded.size()==4,"bounded eviction");bounded.synchronize(7,2,e.id,20001);check(bounded.sprites(s,20001).empty(),"scene clears all effects");
+ // Caller supplies a posed CNP frame without changing the authoritative event
+ // or the independently placed muzzle flash. Verify direction and late replay.
+ pool.clear();pool.synchronize(7,3,e.id,21000);e.id++;s.eventWatermark=e.id;unsigned calls=0;
+ auto emission=[&](const Event&)->std::optional<particles::CasingEmission>{++calls;return particles::CasingEmission{{200,1700,300},{-2,0,0}};};
+ pool.dispatch({&e,1},s,21000,emission);auto emitted=pool.sample(s,21000);auto case0=std::find_if(emitted.begin(),emitted.end(),[](const auto& x){return x.kind==particles::Kind::casing;});
+ check(case0!=emitted.end()&&(case0->from[0]+case0->to[0])*.5f==200&&(case0->from[1]+case0->to[1])*.5f==1700,"CNP ejection position independent of muzzle");
+ check(pool.sprites(s,21000)[0].position==e.position,"CNP casing leaves muzzle flash unchanged");
+ auto moved=pool.sample(s,21100);auto case1=std::find_if(moved.begin(),moved.end(),[](const auto& x){return x.kind==particles::Kind::casing;});check((case1->from[0]+case1->to[0])*.5f<90&&(case1->from[2]+case1->to[2])*.5f==300,"CNP direction drives casing velocity");
+ pool.dispatch({&e,1},s,21100,emission);check(calls==1,"Replay never invokes emitter twice");
+ std::cout<<"Original texture sprites all firearms, smoke/explosion, source life, replay, clock and limits PASS\n";return 0;
 }catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}

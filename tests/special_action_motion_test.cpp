@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
-using namespace mgo2win;
+using namespace mgo2mt;
 static void require(bool ok,const char*what){if(!ok)throw std::runtime_error(what);}
 template<class F>static void rejects(F fn){try{fn();}catch(const std::exception&){return;}throw std::runtime_error("invalid motion accepted");}
 int main(int argc,char**argv){try{

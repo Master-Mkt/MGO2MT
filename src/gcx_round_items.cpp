@@ -1,3 +1,4 @@
+#include "product_identity.h"
 #include "gcx_round_items.h"
 #include "stage_profiles.h"
 #include <algorithm>
@@ -9,7 +10,7 @@
 #include <stdexcept>
 #include <tuple>
 
-namespace mgo2win::items {
+namespace mgo2mt::items {
 namespace {
 void require(bool ok,const char* message){if(!ok)throw std::runtime_error(message);}
 uint32_t number(std::istream& in,uint32_t maximum=0xffffffffu){
@@ -45,7 +46,7 @@ GcxItemLayout GcxItemLayout::read(std::istream& in){
   bytes+=line.size()+1;require(bytes<=1048576&&line.size()<=1024,"GCX file extent");
   std::istringstream row(line);std::string key;if(!(row>>key)||key.front()=='#')continue;
   if(!header){
-   require(key=="MGO2WIN.GCX_ROUND_ITEMS"&&number(row)==1,"GCX layout version");
+   require(key==mgo2mt::brand::Format{"MGO2MT.GCX_ROUND_ITEMS"}&&number(row)==1,"GCX layout version");
    layout.map=uint8_t(number(row,255));std::string state;require(bool(row>>state)&&(state=="verified"||state=="unavailable"),"GCX verification state");
    layout.verified=state=="verified";end_row(row);header=true;continue;
   }
@@ -135,7 +136,7 @@ std::vector<Seed> resolve_gcx_round_items(const GcxRoundPlan& plan,const stage::
   // is at Y=125 (e.g. source offsets 5561248/5560480). A bounded 150-unit
   // upward tolerance covers that source offset; never search sideways or
   // start at a roof far above the original anchor.
-  const auto& a=p.position;auto floor=collision.ray({a.x,a.y+150,a.z},{0,-1,0},3200);
+  const auto& a=p.position;auto floor=collision.ray({a.x,a.y+150,a.z},{0,-1,0},3200,stage::query::floor);
   if(!floor||floor->normal[1]<.707f)throw std::runtime_error("GCX source has no walkable floor: offset="+std::to_string(p.sourceOffset)+" xyz="+std::to_string(a.x)+","+std::to_string(a.y)+","+std::to_string(a.z)+(floor?" hitY="+std::to_string(floor->position[1])+" normalY="+std::to_string(floor->normal[1]):" no hit"));
   Position resolved{a.x,floor->position[1]+12,a.z,a.yaw};
   require(collision.clear({resolved.x,resolved.y,resolved.z},{25,60,2}),"GCX source is obstructed");

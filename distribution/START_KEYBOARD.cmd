@@ -1,2 +1,2 @@
 @echo off
-start "" "%~dp0MGO2WIN.exe" --local-playtest-keyboard
+start "" "%~dp0MGO2MT.exe" --local-playtest-keyboard

@@ -3,7 +3,7 @@
 #include <fstream>
 #include <stdexcept>
 #include <iostream>
-using namespace mgo2win;
+using namespace mgo2mt;
 void check(bool b,const char*s){if(!b)throw std::runtime_error(s);}
 int main(int argc,char**argv){try{
  for(auto name:{L"四文字名",L"한글이름",L"Test!",L"abcdefghijklmnop",L"日本語名前",L"!!**",L"😀😀😀😀"})check(CharacterCreation::name_error(name).empty(),"valid multilingual name");
@@ -64,9 +64,9 @@ int main(int argc,char**argv){try{
  for(unsigned gender=0;gender<2;++gender)for(unsigned kind:{100,200,300,400,500}){auto options=catalog.creation_choices(gender,kind);check(!options.empty(),"basic model choices available");for(const auto&r:options)check(r.gender==gender&&r.kind==kind&&!r.flags,"gender/kind/quality filter");}
  // Screen/remote integration: explicit draft, server authority, stale reconnect and HUD.
  {
-  auto file=std::filesystem::temp_directory_path()/(L"mgo2win-skill-screen-"+std::to_wstring(GetCurrentProcessId())+L".tsv");
+  auto file=std::filesystem::temp_directory_path()/(L"mgo2mt-skill-screen-"+std::to_wstring(GetCurrentProcessId())+L".tsv");
   struct Cleanup{std::filesystem::path file;~Cleanup(){std::error_code ec;std::filesystem::remove(file,ec);}}cleanup{file};
-  {std::ofstream out(file);out<<"MGO2WIN_SKILLS\t1\n";for(int id=1;id<=8;++id)out<<"SKILL\t"<<id<<"\t1\t1\tSkill "<<id<<"\tスキル "<<id<<'\n';}
+  {std::ofstream out(file);out<<"MGO2MT_SKILLS\t1\n";for(int id=1;id<=8;++id)out<<"SKILL\t"<<id<<"\t1\t1\tSkill "<<id<<"\tスキル "<<id<<'\n';}
   uint64_t now=100;CharacterScreen skillsFlow([](const std::atomic_bool&){CharacterReply r;r.status=CharacterStatus::success;r.list.slots=4;CharacterEntry e;e.id=101;e.name=L"SkillPC";r.list.entries.push_back(e);return r;},[&]{return now;});
   skillsFlow.skill_catalog(file);skillsFlow.selection([](uint32_t id,const std::atomic_bool&){CharacterSelectionReply r;r.status=CharacterSelectionStatus::success;r.request_may_have_been_sent=true;r.character.id=id;r.character.name=L"SkillPC";r.lobbies={{1,5733,0,L"Synthetic lobby",0,2}};return r;},std::make_shared<CharacterSelectionState>());
   std::atomic<skills::Remote*> remote=nullptr;

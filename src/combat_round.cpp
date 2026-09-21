@@ -6,14 +6,14 @@
 #include <stdexcept>
 #include <utility>
 
-namespace mgo2win::combat {
+namespace mgo2mt::combat {
 namespace {host::ParticipantToken token(Identity id){return {id.slot,id.instance,id.character};}}
 RoundCoordinator::RoundCoordinator(uint64_t epoch,Policy policy,std::shared_ptr<const weapons::Catalog> catalog,std::span<const Weapon> profiles,Spawn spawn)
  :epoch_(epoch),policy_(policy),rules_({policy.countdownMs,1,policy.dpEnabled}),catalog_(std::move(catalog)),spawn_(std::move(spawn)){
  if(!epoch||!policy.generation||policy.respawnDelayMs>60000||policy.roundDurationMs>wire::maximumRoundDurationMs)throw std::invalid_argument("Round identity/respawn policy");
  if(catalog_)for(const auto&w:profiles){
   // Knife is a fixed HOST grant, outside the three catalog selection rows/DP.
-  if(w.id==1||special_pc::weapon(w.id))continue;
+  if(w.id==1||w.mountedOnly||special_pc::weapon(w.id))continue;
   auto found=std::find_if(catalog_->entries().begin(),catalog_->entries().end(),[&](auto&e){return e.id==w.id;});
   if(found==catalog_->entries().end())throw std::invalid_argument("Weapon profile missing catalog identity");
   supported_.push_back(w.id);required_|=uint8_t(1u<<unsigned(found->category));

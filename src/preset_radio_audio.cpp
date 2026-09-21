@@ -3,7 +3,7 @@
 #include <array>
 #include <bit>
 #include <cmath>
-namespace mgo2win::radio_audio {
+namespace mgo2mt::radio_audio {
 namespace {
 constexpr std::array<uint32_t,16> bases{30639,30789,30939,31089,36780,36930,37080,37230,38410,38560,38710,38860,39010,39160,39310,39460};
 constexpr bool preset(unsigned id) noexcept {return id<=7||(id>=9&&id<=16);}

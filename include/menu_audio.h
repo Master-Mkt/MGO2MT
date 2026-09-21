@@ -1,7 +1,7 @@
 #pragma once
 #include <string_view>
 
-namespace mgo2win::menu_audio {
+namespace mgo2mt::menu_audio {
 // Current MGO2 ELF 1a55a41e...: AA7DB4 input -> 989D0C/988404
 // cancel(-1)/confirm(1)/changed cursor -> 482B0. Full evidence in
 // notes/MENU_AUDIO_MUSIC_20260913.md. Windows UI action mapping is native.

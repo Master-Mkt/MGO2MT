@@ -2,7 +2,7 @@
 #include "menu_theme.h"
 #include "name_text_fit.h"
 #include <algorithm>
-namespace mgo2win::hud {
+namespace mgo2mt::hud {
 std::wstring utf8(std::string_view s){
  if(s.empty())return {};if(s.size()>4096)return L"？";
  int n=MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,s.data(),int(s.size()),nullptr,0);

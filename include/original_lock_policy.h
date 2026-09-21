@@ -5,8 +5,9 @@
 #include <cmath>
 #include <cstdint>
 #include <optional>
+#include "original_weapon_parameters.h"
 
-namespace mgo2win::original_lock {
+namespace mgo2mt::original_lock {
 // Current MGO2.ELF SHA 1a55a41e...bfd13a, not the older debug table.
 // Distances are unscaled original stage-coordinate units; no SI conversion is
 // performed. Angles use current PPC float constants and signed 16-bit turns.
@@ -45,6 +46,16 @@ inline std::optional<Parameters> ak102_parameters(unsigned weaponId,
  return Parameters{{acquireRange,500.f,ak102_yaw,vertical_limit},
   {acquireRange+1000.f,500.f,ak102_yaw+ak102_yaw,vertical_limit},
   {weaponRange,500.f,ak102_yaw,vertical_limit}};
+}
+
+// Same recovered acquisition/retention arithmetic, selected from the original
+// per-ID player table. A zero authored range disables lock (sniper/launcher).
+inline std::optional<Parameters> weapon_parameters(uint16_t id,uint32_t flags,float modifier,unsigned surveyorLevel){
+ const auto* p=original_weapon::find(id);if(!p||p->lockRange<=0||surveyorLevel>3||!std::isfinite(modifier))return {};
+ const float range=p->lockRange*((flags&range_bonus_actor_flag)?1.25f:1.f)*surveyor_range_multiplier[surveyorLevel];
+ const float acquire=std::max(3000.f,range*std::fma(1.f-modifier,.5f,.5f));
+ if(!std::isfinite(acquire)||!std::isfinite(acquire+1000.f))return {};
+ return Parameters{{acquire,p->lockWidth,p->lockYaw,vertical_limit},{acquire+1000.f,p->lockWidth,p->lockYaw+p->lockYaw,vertical_limit},{range,p->lockWidth,p->lockYaw,vertical_limit}};
 }
 
 inline bool valid(const Limits&p){
@@ -95,4 +106,4 @@ inline Geometry evaluate_local(const Limits&p,std::array<float,3> local){
 inline bool prefer_mode0(float distance,std::optional<float> previous){
  return std::isfinite(distance)&&distance>0&&(!previous||distance<*previous);
 }
-} // namespace mgo2win::original_lock
+} // namespace mgo2mt::original_lock

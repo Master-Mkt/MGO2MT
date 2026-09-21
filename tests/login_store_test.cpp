@@ -4,7 +4,7 @@
 #include <iostream>
 #include <iterator>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 void require(bool b){if(!b)throw std::runtime_error("Protected login storage contract");}
 int main(){
  auto dir=std::filesystem::current_path()/(L"login-store-test-"+std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64()));

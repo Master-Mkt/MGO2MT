@@ -1,7 +1,7 @@
 #include "combat_cycle.h"
 #include <iostream>
 #include <set>
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace cw=combat::wire;
 namespace {void check(bool v,const char*m){if(!v)throw std::runtime_error(m);}}
 int main(int argc,char**argv){try{

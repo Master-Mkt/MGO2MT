@@ -1,6 +1,6 @@
 #pragma once
 #include <cstdint>
-namespace mgo2win {
+namespace mgo2mt {
 // Separate placement/pickup menu entry. Observing a held key while unavailable
 // never turns it into a fresh press when a modal closes or focus returns.
 class ItemMenuShortcut {

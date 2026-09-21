@@ -4,7 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 void require(bool value,const char* why){if(!value)throw std::runtime_error(why);}
 void bitmap(const void* pixels,const std::filesystem::path& path){
  BITMAPFILEHEADER h{};BITMAPINFOHEADER i{};h.bfType=0x4d42;h.bfOffBits=sizeof(h)+sizeof(i);h.bfSize=h.bfOffBits+1280*720*4;
@@ -31,7 +31,7 @@ int main(int argc,char**argv){try{
  require(!icons.find(0)&&!icons.find(25),"missing equipment never borrows weapon icon");
  require(system_ui_icons().load(root/"system-ui/index.tsv",error)&&system_ui_icons().size()==1,"only reviewed direct system UI binding");
  const auto* diagram=system_ui_icons().find(0);require(diagram&&diagram->width==360&&diagram->height==240,"original controller image extent");
- const auto temp=std::filesystem::temp_directory_path()/("mgo2win-original-ui-"+std::to_string(GetCurrentProcessId()));std::filesystem::create_directories(temp);
+ const auto temp=std::filesystem::temp_directory_path()/("mgo2mt-original-ui-"+std::to_string(GetCurrentProcessId()));std::filesystem::create_directories(temp);
  auto input=std::make_shared<ControllerInput>(temp/"input.cfg");input->config.device=1;auto graphics=std::make_shared<GraphicsSettings>(temp/"graphics.cfg");
  PlayerMenu menu(temp/"input.cfg",input,graphics),without(temp/"missing.cfg",input,graphics);menu.hold_assets(root);without.hold_assets(temp);
  constexpr uint16_t ids[]={6,8,9,10,16,19,20,21,22,23,24,61,62,63,64,65,66,67};
@@ -51,7 +51,7 @@ int main(int argc,char**argv){try{
  // Missing/invalid display metadata must clear a formerly valid cache.
  auto bad=temp/"equipment-icons";std::filesystem::create_directories(bad);std::filesystem::copy_file(root/"equipment-icons/index.tsv",bad/"index.tsv",std::filesystem::copy_options::overwrite_existing);
  for(auto id:ids)std::filesystem::copy_file(root/"equipment-icons"/("equipment_"+std::to_string(id)+".png"),bad/("equipment_"+std::to_string(id)+".png"),std::filesystem::copy_options::overwrite_existing);
- {std::ofstream f(bad/"display.tsv");f<<"MGO2WIN_EQUIPMENT_DISPLAY 1\n22 nan 64\n";}
+ {std::ofstream f(bad/"display.tsv");f<<"MGO2MT_EQUIPMENT_DISPLAY 1\n22 nan 64\n";}
  require(!icons.load(bad,error)&&icons.size()==0,"bad aspect does not retain stale image mapping");
  std::cout<<"original UI: 18 equipment IDs, separate namespaces, LA2 aspect, private Japanese regular/bold, controller pixels PASS\n";return 0;
  }catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}

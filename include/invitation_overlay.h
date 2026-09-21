@@ -5,7 +5,7 @@
 #include <span>
 #include <string>
 
-namespace mgo2win::invitation_ui {
+namespace mgo2mt::invitation_ui {
 // Presentation only. The connection-scoped core owns eligibility and expiry.
 struct View {
  uint64_t scope=0,id=0,receivedAt=0,expiresAt=0;

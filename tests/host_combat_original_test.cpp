@@ -3,7 +3,7 @@
 #include <limits>
 #include <string>
 
-using namespace mgo2win::combat::original;
+using namespace mgo2mt::combat::original;
 namespace {
 void check(bool yes,const char* what){if(!yes)throw std::runtime_error(what);}
 template<class F>void rejects(F&& f,Error expected,const char* what){

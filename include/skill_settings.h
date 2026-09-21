@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-namespace mgo2win::skills {
+namespace mgo2mt::skills {
 inline constexpr unsigned base_capacity=4, maximum_capacity=8;
 struct Choice {uint16_t id=0;uint8_t level=1;bool operator==(const Choice&)const=default;};
 struct Loadout {std::vector<Choice> entries;bool operator==(const Loadout&)const=default;};

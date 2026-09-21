@@ -5,7 +5,7 @@
 #include <optional>
 #include <mutex>
 #include <atomic>
-namespace mgo2win {
+namespace mgo2mt {
 enum class LobbyDisconnectReason {none,beacon_timeout,invalid_beacon,network_error};
 struct LobbyMonitorState {
  uint64_t generation=0;bool connected=false;std::optional<uint32_t> pingMs;uint64_t lastBeaconMs=0;

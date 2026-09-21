@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <optional>
 
-namespace mgo2win::original_headshot_producer {
+namespace mgo2mt::original_headshot_producer {
 // Raw current-ELF state, not native camera-mode labels or room rule flags.
 // 2EC650 / 2EC718: matching node +48 must be zero (active).
 struct CameraState {

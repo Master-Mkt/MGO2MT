@@ -3,7 +3,7 @@
 #include <filesystem>
 #include <map>
 #include <string>
-namespace mgo2win::items {
+namespace mgo2mt::items {
 struct WeaponOverride {DropOverride drop=DropOverride::original_default;std::optional<bool> emptyDiscard;bool operator==(const WeaponOverride&)const=default;};
 struct Settings {
  Capacity capacity{64,64};bool recoverOthers=true;

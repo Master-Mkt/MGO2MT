@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "configurePresets": [{"name": "windows-x64", "generator": "Visual Studio 18 2026", "architecture": "x64", "binaryDir": "${sourceDir}/build"}],
+  "buildPresets": [{"name": "windows-x64", "configurePreset": "windows-x64", "configuration": "Debug"}],
+  "testPresets": [{"name": "windows-x64", "configurePreset": "windows-x64", "configuration": "Debug", "output": {"outputOnFailure": true}}]
+}

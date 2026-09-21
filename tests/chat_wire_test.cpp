@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <functional>
 
-using namespace mgo2win::chat;
+using namespace mgo2mt::chat;
 namespace {
 void check(bool value, const char* what) { if (!value) throw std::runtime_error(what); }
 void reject(const std::function<void()>& operation, const char* what) {

@@ -1,0 +1,7 @@
+OpenSSL 4.0.2 (unmodified library embedded by the cryptography wheel)
+Copyright (c) 1998-2026 The OpenSSL Project Authors
+Copyright (c) 1995-1998 Eric A. Young, Tim J. Hudson
+Licensed under the Apache License, Version 2.0.
+Official license: https://github.com/openssl/openssl/blob/openssl-4.0.2/LICENSE.txt
+Project and source: https://github.com/openssl/openssl/tree/openssl-4.0.2
+The project has no separate upstream NOTICE file at this tag.

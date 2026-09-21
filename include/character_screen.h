@@ -1,11 +1,13 @@
 #pragma once
 #include "stage_assets.h"
+#include "multi_ui_state.h"
 #include <windows.h>
 #include "character_client.h"
 #include "lobby_groups.h"
 #include "character_slots.h"
 #include "character_creation.h"
 #include "weapon_selection.h"
+#include "mounted_weapons.h"
 #include "weapon_icons.h"
 #include "game_hud.h"
 #include "skill_menu.h"
@@ -19,7 +21,7 @@
 #include <functional>
 #include <mutex>
 #include <deque>
-namespace mgo2win {
+namespace mgo2mt {
 // Shared across screen navigation. An ambiguous send stays locked until a
 // refreshed list confirms the requested unique name (or the returned ID).
 struct CharacterRegistrationState {bool unresolved=false;uint32_t expected_id=0;std::wstring expected_name;std::optional<skills::Loadout> skills;};
@@ -49,6 +51,7 @@ class CharacterScreen {
  RoomRequests roomRequests_;bool detailVisible_=false,detailBusy_=false,matchVisible_=false;stage::Status stageStatus_=stage::Status::idle;unsigned detailFocus_=1;RoomReply detailReply_;RoomAction detailAction_;std::wstring detailNotice_;
  void open_room_detail();void request_room_join();bool detail_message(HWND,UINT,WPARAM,LPARAM);void draw_room_detail();void draw_room_match();
  std::shared_ptr<const weapons::Catalog> weaponCatalog_;
+ mounted::Registry mountedCatalog_;
  weapons::Icons weaponIcons_,briefingIcons_;
  briefing::Map briefingMap_;bool briefingMapReady_=false;
  void draw_briefing_icons();
@@ -72,6 +75,36 @@ class CharacterScreen {
  std::function<uint64_t()> clock_;void tick_hold();void confirm_delete();
  void start();void update();void stop();void activate();void focus(int,bool audible=true);
 public:
+ multi_ui::Context ui_presentation()const {
+  using R=multi_ui::Route;
+  R route=R::characters;
+  if(creation_)route=R::creation;
+  if(lobbyVisible_)route=lobbyCategories_?R::lobbyGroups:R::lobbies;
+  if(roomVisible_)route=R::rooms;
+  if(detailVisible_)route=R::roomDetail;
+  const bool joined=detailVisible_&&detailReply_.join_status==RoomJoinStatus::joined;
+  if(joined)route=weaponsVisible_?R::loadout:matchVisible_?R::gameplay:R::briefing;
+  if(joined&&detailReply_.preparation&&detailReply_.preparation->phase==combat::wire::RoundPhase::ended)route=R::result;
+  auto c=multi_ui::presentation(route,pending_||selecting_||registering_||detailBusy_||room_loading(),
+     slots_.dialog()||skill_visible()||briefingPanel_!=briefing::Panel::none);
+  const auto&p=detailReply_.preparation;
+  if(joined&&p){
+   if(p->respawnWaiting)c.flags.insert("respawn_waiting");
+   c.bindings["remaining_ms"]=p->roundClock?std::to_string(p->roundRemainingMs):"";
+   c.bindings["respawn_ms"]=std::to_string(p->respawnRemainingMs);
+   const auto&s=detailReply_.combat_state;
+   if(s&&s->epoch==p->epoch&&p->self.slot<s->players.size())if(const auto&player=s->players[p->self.slot];player&&player->identity==p->self){
+    c.bindings["hp"]=std::to_string(player->hp);c.bindings["max_hp"]=std::to_string(player->maxHp);
+    c.bindings["ammo"]=std::to_string(player->ammo);c.bindings["reserve"]=std::to_string(player->reserve);
+    c.bindings["weapon_id"]=std::to_string(player->weapon);
+    c.flags.insert(player->alive?"alive":"dead");
+    if(player->aiming)c.flags.insert("aiming");
+    if(player->reloadUntil)c.flags.insert("reloading");
+    if(route==R::gameplay)c.state=!player->alive?"dead":player->reloadUntil?"reloading":"active";
+   }
+  }
+  return c;
+ }
  uint64_t input_context()const{
   return uint64_t(pending_)|(uint64_t(selecting_)<<1)|(uint64_t(lobbyVisible_)<<2)|(uint64_t(lobbyCategories_)<<3)|
    (uint64_t(roomVisible_)<<4)|(uint64_t(detailVisible_)<<5)|(uint64_t(detailBusy_)<<6)|(uint64_t(matchVisible_)<<7)|
@@ -110,6 +143,8 @@ public:
  const std::optional<combat::wire::Preparation>& combat_preparation()const{return detailReply_.preparation;}
  std::optional<combat::Snapshot> combat_state()const{return detailReply_.combat_state;}
  combat::SopView combat_sop()const{return detailReply_.combat_sop;}
+ std::optional<combat::wire::DebugFlights> debug_flights()const{return detailReply_.debug_flights;}
+ std::optional<combat::wire::Environment> environment_settings()const{return detailReply_.environment;}
  bool room_enemy_name_tags()const{return detailReply_.detail&&detailReply_.detail->environment_known&&detailReply_.detail->enemy_nametags;}
  bool room_auto_aim()const{return detailReply_.detail&&detailReply_.detail->environment_known&&detailReply_.detail->auto_aim;}
  clan::State enemy_clan_emblem(uint32_t id){roomRequests_.enemyClanEmblem->want(id);return roomRequests_.enemyClanEmblem->state();}

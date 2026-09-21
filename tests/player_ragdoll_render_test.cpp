@@ -7,7 +7,7 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;using namespace physics;using Microsoft::WRL::ComPtr;
+using namespace mgo2mt;using namespace physics;using Microsoft::WRL::ComPtr;
 namespace {
 void check(bool value,const char* why){if(!value)throw std::runtime_error(why);}
 void ok(HRESULT value){check(SUCCEEDED(value),"Ragdoll WARP failure");}

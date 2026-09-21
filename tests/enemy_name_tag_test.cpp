@@ -7,7 +7,7 @@
 #include <limits>
 #include <stdexcept>
 #include <vector>
-using mgo2win::hud::EnemyNameTagRenderer;
+using mgo2mt::hud::EnemyNameTagRenderer;
 static void check(bool ok,const char* message){if(!ok)throw std::runtime_error(message);}
 struct Bitmap {
     HBITMAP value=nullptr;uint32_t* pixels=nullptr;int edge;
@@ -65,7 +65,7 @@ int wmain(int argc,wchar_t** argv){try{
         SelectObject(dc,old);DeleteObject(font);DeleteDC(dc);
     }
     std::vector<uint32_t> fullHp(w*h),halfHp(w*h),noHp(w*h);
-    using mgo2win::hud::EnemyVitals;
+    using mgo2mt::hud::EnemyVitals;
     check(renderer.paint(fullHp,w,h,200,100,"Enemy",pattern64.value,EnemyVitals{22,1000,1000}),"target stats render");
     check(renderer.paint(halfHp,w,h,200,100,"Enemy",pattern64.value,EnemyVitals{22,500,1000}),"target half HP");
     check(renderer.paint(noHp,w,h,200,100,"Enemy",pattern64.value,EnemyVitals{22,0,1000}),"target empty HP");

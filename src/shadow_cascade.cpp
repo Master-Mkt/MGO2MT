@@ -5,7 +5,7 @@
 #include <cmath>
 #include <cstring>
 #include <stdexcept>
-namespace mgo2win::shadows {
+namespace mgo2mt::shadows {
 
 Allocation allocation(const Settings&s,uint64_t budget,unsigned maxDimension){
  if(!valid(s))throw std::invalid_argument("Shadow settings");if(!s.enabled)return {};
@@ -13,7 +13,7 @@ Allocation allocation(const Settings&s,uint64_t budget,unsigned maxDimension){
  if(size<1024)return {0,0,0,true};return {s.cascades,size,uint64_t(size)*size*s.cascades*4,size!=s.resolution};
 }
 Plan plan(const WorldView&camera,std::array<float,3> direction,std::array<float,3> sun,const std::array<float,6>&bounds,const Settings&s,Allocation a){
- if(!valid(s)||!a.cascades||a.cascades>6||!a.resolution||camera.aspect<=0||camera.aspect>32||!std::isfinite(camera.aspect))throw std::invalid_argument("Shadow camera/settings");
+ if(!valid(s)||!a.cascades||a.cascades>6||!a.resolution||camera.aspect<=0||camera.aspect>32||!std::isfinite(camera.aspect)||!valid_vertical_fov(camera.verticalFov))throw std::invalid_argument("Shadow camera/settings");
  for(auto v:bounds)if(!std::isfinite(v)||std::abs(v)>=1e7)throw std::invalid_argument("Shadow bounds");for(unsigned i=0;i<3;++i)if(bounds[i]>bounds[i+3])throw std::invalid_argument("Shadow bounds order");
  for(auto group:{camera.eye,camera.direction,direction,sun})for(float v:group)if(!std::isfinite(v)||std::abs(v)>=1e7)throw std::invalid_argument("Shadow input");
  using namespace DirectX;auto vec=[](const auto&p){return XMVectorSet(p[0],p[1],p[2],0);};
@@ -23,7 +23,7 @@ Plan plan(const WorldView&camera,std::array<float,3> direction,std::array<float,
  // Fixed scene interval avoids camera-induced depth changes; include high jumps.
  zmin=std::floor((zmin-12000)/1024)*1024;zmax=std::ceil((zmax+12000)/1024)*1024;
  Plan p;p.count=a.cascades;p.resolution=a.resolution;p.eye=camera.eye;p.sun=sun;p.nearPlane=world_near_plane;XMFLOAT3 v;XMStoreFloat3(&v,forward);p.forward={v.x,v.y,v.z};XMStoreFloat3(&v,light);p.direction={v.x,v.y,v.z};
- float previous=world_near_plane,previousStart=world_near_plane;const float farDistance=std::min(s.distance,world_far_plane),tangent=std::tan(.5f);
+ float previous=world_near_plane,previousStart=world_near_plane;const float farDistance=std::min(s.distance,world_far_plane),tangent=std::tan(camera.verticalFov*.5f);
  for(unsigned i=0;i<a.cascades;++i){float t=float(i+1)/a.cascades;float end=.6f*world_near_plane*std::pow(farDistance/world_near_plane,t)+.4f*(world_near_plane+(farDistance-world_near_plane)*t);if(i+1==a.cascades)end=farDistance;p.splits[i]=end;
   const float begin=i?previous-(previous-previousStart)*.1f:previous;const float half=(end-begin)*.5f;const float radius=std::ceil(std::sqrt(half*half+end*end*tangent*tangent*(1+camera.aspect*camera.aspect))/16)*16;
   const float padded=(radius+s.normalBias)*a.resolution/(a.resolution-8.f),texel=2*padded/a.resolution;p.texelSize[i]=texel;

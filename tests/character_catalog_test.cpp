@@ -3,7 +3,7 @@
 #include <iostream>
 #include <cmath>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 void check(bool v,const char* why){if(!v)throw std::runtime_error(why);}
 int main(int argc,char**argv){try{
  if(argc!=2)return 2;std::ifstream in(argv[1],std::ios::binary);std::vector<char>b((std::istreambuf_iterator<char>(in)),{});

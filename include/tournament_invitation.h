@@ -8,7 +8,7 @@
 #include <span>
 #include <string>
 #include <vector>
-namespace mgo2win::invitations {
+namespace mgo2mt::invitations {
 inline constexpr uint16_t notification_opcode=0x49c1,answer_opcode=0x49c2,answer_reply_opcode=0x49c3;
 struct Notification {
  uint16_t lobby=0;uint32_t id=0,serverTime=0,opaque=0;uint8_t state=0,kind=0;

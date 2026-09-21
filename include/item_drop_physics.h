@@ -1,7 +1,7 @@
 #pragma once
 #include "item_box_profile.h"
 #include <map>
-namespace mgo2win::items {
+namespace mgo2mt::items {
 // Native finite-box physics. Position is bottom center. Rotation is cosmetic;
 // collision conservatively contains every yaw using the horizontal diagonal.
 class DropPhysics {

@@ -1,6 +1,6 @@
 #pragma once
 #include "gekko_jump.h"
-namespace mgo2win::special_pc {
+namespace mgo2mt::special_pc {
 // Native mantle only: up outside the wall, traverse above its top, then settle.
 // Never an original animation/physics claim. State stays in the HOST Slot.
 struct Climb {stage::Vec3 start{},raised{},across{},landing{},feet{};uint32_t elapsedMs=0;bool cancelled=false,finished=false;};

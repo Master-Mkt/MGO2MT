@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
-namespace mgo2win {
+namespace mgo2mt {
 namespace {
 using Quaternion=std::array<float,4>;
 bool normalize(Quaternion& q){

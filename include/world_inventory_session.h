@@ -1,7 +1,7 @@
 #pragma once
 #include "world_inventory_wire.h"
 #include <mutex>
-namespace mgo2win::items {
+namespace mgo2mt::items {
 struct ClientContext {Scope scope;Actor actor;Position position;bool active=false;};
 enum class ClientStatus {unavailable,probing,ready};
 enum class Delivery {none,pending,confirmed,rejected,unconfirmed};

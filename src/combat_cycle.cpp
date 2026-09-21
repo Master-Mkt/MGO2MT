@@ -3,11 +3,12 @@
 #include "stage_profiles.h"
 #include "gcx_round_items.h"
 #include "weapon_restrictions.h"
+#include "gameplay_fingerprint.h"
 #include <algorithm>
 #include <cmath>
 #include <fstream>
 #include <limits>
-namespace mgo2win::combat {
+namespace mgo2mt::combat {
 namespace {
 bool restricted_round_item(const restrictions::Bits& bits,items::Domain domain,uint32_t item){
  if(!restrictions::enabled(bits))return false;
@@ -28,6 +29,12 @@ std::optional<host::LoadRequest> next_cycle_request(const host::LoadRequest&r){
 }
 Cycle::Cycle(Options options,std::shared_ptr<const weapons::Catalog> catalog,Random random):options_(std::move(options)),random_(std::move(random)),catalog_(std::move(catalog)){
  if(options_.rotations.empty()||options_.rotations.size()>15||!options_.capacity||options_.capacity>17||options_.endedDisplayMs>60000||!options_.roundItems.valid()||!options_.health.valid()||!options_.lightDamage.valid())throw std::invalid_argument("Native cycle options");
+ // Freeze one validated configuration for the room. Invalid present JSON must
+ // never silently restore old damage or loadout values.
+ const auto data=options_.stageRoot.parent_path();std::string configError;auto fingerprint=gameplay::fingerprint(data);if(!fingerprint)throw std::runtime_error("Gameplay configuration fingerprint failed");configuration_=*fingerprint;
+ if(std::filesystem::exists(data/"gameplay.json")){gameplay::Config checked;if(!checked.load(data/"gameplay.json",configError))throw std::runtime_error(configError);gameplay_=std::move(checked);}
+ if(std::filesystem::exists(data/"mounted_weapons.json")&&!mounted_.load(data/"mounted_weapons.json",configError))throw std::runtime_error(configError);
+ if(gameplay::fingerprint(data)!=std::optional(configuration_))throw std::runtime_error("Gameplay configuration changed while loading");
  const auto rotation=options_.rotations.front();
  repeat_=options_.rotations.size()==1&&stage::runtime_stage_supported(rotation.map)&&rotation.rule<=1&&!rotation.flags&&!options_.round.dpEnabled&&options_.round.roundDurationMs;
  request_={1,1,0,0,options_.rotations.front(),host::MatchTransition::initial};
@@ -35,8 +42,10 @@ Cycle::Cycle(Options options,std::shared_ptr<const weapons::Catalog> catalog,Ran
  content_=build(epoch_,request_);
 }
 Cycle::Content Cycle::build(uint64_t epoch,const host::LoadRequest&request)const{
- Content next;auto combatPolicy=options_.combat;combatPolicy.freeForAll=request.rotation.rule==0;next.service=std::make_unique<Service>(epoch,combatPolicy);
+ Content next;auto combatPolicy=options_.combat;combatPolicy.freeForAll=request.rotation.rule==0;next.service=std::make_unique<Service>(epoch,combatPolicy);next.service->configure_environment(options_.environment);
+ next.service->configuration(configuration_);
  auto profiles=initial_profiles(request.rotation.map,request.rotation.rule,request.rotation.flags);
+ if(gameplay_&&!profiles.empty())profiles=gameplay_->profiles(request.rotation.map);
  // A prohibited knife must not enter the authority's grant or pickup registry.
  if(restricted_round_item(options_.round.restrictions,items::Domain::weapon,1))
   std::erase_if(profiles,[](const Weapon& weapon){return weapon.id==1;});
@@ -85,6 +94,7 @@ Cycle::Content Cycle::build(uint64_t epoch,const host::LoadRequest&request)const
   if(scene.snapshot()&&world->apply(*scene.snapshot())){next.service->configure(world->collision(),profiles,world->targets());next.world=std::move(world);}
  }catch(...){if(requireGcx)throw;/* malformed or absent world never grants combat */}
  if(requireGcx&&!next.world)throw std::runtime_error("GCX round item world unavailable");
+ if(next.world&&!next.service->authority().configure_mounted(mounted_,request.rotation.map))throw std::runtime_error("Mounted weapon scene configuration rejected");
  if(next.world&&!next.service->authority().configure_health(options_.health))throw std::runtime_error("Combat health settings");
  if(next.world&&next.objects){
   auto damage=std::make_shared<ObjectDamage>(ObjectDamage::load(options_.stageRoot,request.rotation.map,options_.lightDamage));next.objectRecords=std::make_shared<std::vector<std::vector<uint8_t>>>();

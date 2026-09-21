@@ -3,7 +3,7 @@
 #include <iostream>
 #include <stdexcept>
 
-using namespace mgo2win::stage;
+using namespace mgo2mt::stage;
 void require(bool ok) { if (!ok) throw std::runtime_error("stage fog test"); }
 void close(float a,float b) { require(std::abs(a-b) <= 0.000001f * std::max(1.f,std::abs(b))); }
 template<class F> void rejects(F f) {

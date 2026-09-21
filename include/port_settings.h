@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <string_view>
-namespace mgo2win {
+namespace mgo2mt {
 // Native setting policy. Original default 5730 / >1023 guard: AA19E0..AA19F0.
 // User-requested native bandwidth choices, kbps. Not an inferred PS3 wire value.
 constexpr bool valid_bandwidth(unsigned n){return n>=256&&n<=2048&&n%256==0;}

@@ -17,7 +17,7 @@
 // https://learn.microsoft.com/en-us/windows/win32/medfound/how-to-play-a-sequence-of-files
 // https://learn.microsoft.com/en-us/windows/win32/medfound/mfplay-tutorial--video-playback
 // MFPlay positions video via its child HWND + UpdateVideo, not SetVideoPosition.
-namespace mgo2win::title_movie {
+namespace mgo2mt::title_movie {
 using Microsoft::WRL::ComPtr;
 namespace {
 struct Event { MFP_EVENT_TYPE kind{}; HRESULT result=S_OK; ComPtr<IMFPMediaItem> item; };
@@ -130,12 +130,12 @@ struct Player::Impl {
   if(!child){
    static const ATOM atom=[](){
     WNDCLASSEXW cls{};cls.cbSize=sizeof(cls);cls.hInstance=GetModuleHandleW(nullptr);
-    cls.lpfnWndProc=&Impl::windowProc;cls.lpszClassName=L"MGO2WIN.TitleMovie.Video.v1";
+    cls.lpfnWndProc=&Impl::windowProc;cls.lpszClassName=L"MGO2MT.TitleMovie.Video.v1";
     cls.hbrBackground=static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));
     return RegisterClassExW(&cls);
    }();
    if(!atom){fail("Title movie video window registration",HRESULT_FROM_WIN32(GetLastError()));return false;}
-   child=CreateWindowExW(WS_EX_NOACTIVATE,L"MGO2WIN.TitleMovie.Video.v1",L"",
+   child=CreateWindowExW(WS_EX_NOACTIVATE,L"MGO2MT.TitleMovie.Video.v1",L"",
     WS_CHILD|WS_DISABLED|WS_CLIPSIBLINGS,0,0,16,9,parent,nullptr,GetModuleHandleW(nullptr),this);
    if(!child){fail("Title movie video window creation",HRESULT_FROM_WIN32(GetLastError()));return false;}
   }

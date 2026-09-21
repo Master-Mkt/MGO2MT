@@ -3,10 +3,10 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 static void check(bool ok,const char*s){if(!ok)throw std::runtime_error(s);}
 int main(){try{
- std::istringstream input("MGO2WIN.STAGE_COLLISION 1 0 0\n");auto world=std::make_shared<const stage::Collision>(stage::Collision::read(input));
+ std::istringstream input("MGO2MT.STAGE_COLLISION 1 0 0\n");auto world=std::make_shared<const stage::Collision>(stage::Collision::read(input));
  combat::Authority authority;combat::Weapon weapon;weapon.id=25;weapon.damage=275;weapon.intervalMs=100;weapon.reloadMs=100;weapon.range=10000;weapon.magazine=1;
  authority.begin(1,world,{&weapon,1});uint16_t inventory=25;combat::Identity self{0,1,100},enemy{1,1,101};combat::Pose own,target;target.feet={700,0,6000};
  check(authority.join(self,1,own,1000,1000,{&inventory,1},1000)&&authority.join(enemy,2,target,275,1000,{&inventory,1},1000),"host actors");authority.active(true);

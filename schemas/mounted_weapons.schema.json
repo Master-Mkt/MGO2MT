@@ -1,0 +1,315 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mgo2mt.local/schemas/mounted_weapons.schema.json",
+  "title": "MGO2MT mounted weapons and placements",
+  "description": "Editor assistance for the strict version-1 runtime parser. Runtime additionally checks UTF-8 byte lengths, finite float conversion, unit ejection direction, unique type IDs and map/instance pairs, existing type/profile references, at most 128 placements per map, and safe resource resolution. Maximum file size: 1 MiB. Coordinates use millimetres; angles use radians.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "types",
+    "placements"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "types": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "$ref": "#/$defs/mountedType"
+      }
+    },
+    "placements": {
+      "type": "array",
+      "maxItems": 1024,
+      "items": {
+        "$ref": "#/$defs/placement"
+      }
+    }
+  },
+  "$defs": {
+    "localVec3": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "number",
+        "exclusiveMinimum": -10000,
+        "exclusiveMaximum": 10000
+      }
+    },
+    "worldVec3": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "number",
+        "exclusiveMinimum": -1000000,
+        "exclusiveMaximum": 1000000
+      }
+    },
+    "resourcePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "pattern": "^(?!/)(?!.*//)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*[\\\\:<>\"|?*])(?!.*(?:^|/)(?:[Cc][Oo][Nn](?:[Ii][Nn]\\$|[Oo][Uu][Tt]\\$)?|[Pp][Rr][Nn]|[Aa][Uu][Xx]|[Nn][Uu][Ll]|[Cc][Oo][Mm][1-9Â¹Â²Â³]|[Ll][Pp][Tt][1-9Â¹Â²Â³]) *(?:\\.|/|$))(?!.*[. ](?:/|$))(?!.*\\/$)[^\\x00-\\x1f\\x7f]+$",
+      "description": "Forward-slash path relative to the data folder. Absolute paths, traversal, reserved Windows device names and unsafe path components are rejected."
+    },
+    "optionalResourcePath": {
+      "anyOf": [
+        {
+          "const": ""
+        },
+        {
+          "$ref": "#/$defs/resourcePath"
+        }
+      ]
+    },
+    "mountedType": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "weapon",
+        "model",
+        "pivot",
+        "muzzle",
+        "operatorOffset",
+        "yawMin",
+        "yawMax",
+        "pitchMin",
+        "pitchMax",
+        "useRadius",
+        "infiniteAmmo"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "weapon": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 65535,
+          "description": "HOST weapon profile for gun/mortar; zero for player-launch catapult. Never granted to handheld inventory."
+        },
+        "model": {
+          "$ref": "#/$defs/resourcePath"
+        },
+        "pivot": {
+          "$ref": "#/$defs/localVec3"
+        },
+        "muzzle": {
+          "$ref": "#/$defs/localVec3"
+        },
+        "operatorOffset": {
+          "$ref": "#/$defs/localVec3"
+        },
+        "yawMin": {
+          "type": "number",
+          "minimum": -3.141592653589793,
+          "maximum": 0
+        },
+        "yawMax": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 3.141592653589793
+        },
+        "pitchMin": {
+          "type": "number",
+          "minimum": -1.4,
+          "maximum": 1.4
+        },
+        "pitchMax": {
+          "type": "number",
+          "minimum": -1.4,
+          "maximum": 1.4
+        },
+        "useRadius": {
+          "type": "number",
+          "minimum": 100,
+          "maximum": 5000
+        },
+        "infiniteAmmo": {
+          "type": "boolean"
+        },
+        "rig": {
+          "$ref": "#/$defs/optionalResourcePath"
+        },
+        "maleMotion": {
+          "$ref": "#/$defs/optionalResourcePath"
+        },
+        "femaleMotion": {
+          "$ref": "#/$defs/optionalResourcePath"
+        },
+        "collisionCenter": {
+          "$ref": "#/$defs/localVec3"
+        },
+        "collisionHalfExtents": {
+          "anyOf": [
+            {
+              "const": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 3,
+              "items": {
+                "type": "number",
+                "minimum": 1,
+                "exclusiveMaximum": 10000
+              }
+            }
+          ],
+          "default": [
+            0,
+            0,
+            0
+          ]
+        },
+        "eye": {
+          "$ref": "#/$defs/localVec3",
+          "default": [
+            0,
+            1250,
+            -600
+          ]
+        },
+        "operatorOrbit": {
+          "type": "boolean",
+          "default": false
+        },
+        "ejection": {
+          "$ref": "#/$defs/localVec3",
+          "default": [
+            0,
+            0,
+            0
+          ]
+        },
+        "ejectionDirection": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "number",
+            "exclusiveMinimum": -2,
+            "exclusiveMaximum": 2
+          },
+          "default": [
+            0,
+            0,
+            0
+          ],
+          "description": "Runtime requires zero (unspecified), or Euclidean length in [0.99,1.01]. Model-local direction before yaw/pitch rotation."
+        },
+        "kind": {
+          "enum": [
+            "gun",
+            "mortar",
+            "catapult"
+          ],
+          "default": "gun"
+        },
+        "bindPitch": {
+          "type": "number",
+          "minimum": -3.141593,
+          "maximum": 3.141593
+        },
+        "initialPitch": {
+          "type": "number",
+          "minimum": -1.4,
+          "maximum": 1.4
+        },
+        "launchSpeed": {
+          "type": "number",
+          "minimum": 100,
+          "maximum": 100000
+        },
+        "gravity": {
+          "type": "number",
+          "minimum": 100,
+          "maximum": 50000
+        },
+        "blastRadius": {
+          "type": "number",
+          "minimum": 100,
+          "maximum": 20000
+        },
+        "cooldownMs": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 60000
+        },
+        "maxFlightMs": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 30000
+        },
+        "launchDirection": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "number",
+            "minimum": -1,
+            "maximum": 1
+          },
+          "description": "Unit local direction from original attachment matrix, before aim rotation."
+        },
+        "projectileModel": {
+          "$ref": "#/$defs/optionalResourcePath"
+        }
+      }
+    },
+    "placement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "map",
+        "id",
+        "type",
+        "origin",
+        "yaw"
+      ],
+      "properties": {
+        "map": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 255
+        },
+        "id": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 32767
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Must match an entry in types.id."
+        },
+        "origin": {
+          "$ref": "#/$defs/worldVec3"
+        },
+        "yaw": {
+          "type": "number",
+          "minimum": -3.141592653589793,
+          "maximum": 3.141592653589793
+        }
+      }
+    }
+  }
+}

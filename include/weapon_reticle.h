@@ -1,9 +1,11 @@
 #pragma once
 #include "combat_authority.h"
+#include "camera_projection.h"
+#include "weapon_effect_config.h"
 #include <cstdint>
 #include <optional>
 #include <span>
-namespace mgo2win::reticle {
+namespace mgo2mt::reticle {
 // Native presentation geometry; no recovered reticle texture or original
 // interpolation timing is claimed. Angles are HOST-provided cone half-angles.
 struct Scope {
@@ -11,7 +13,7 @@ struct Scope {
  bool operator==(const Scope&)const=default;
 };
 struct Viewport {
- int left=0,top=0,width=1280,height=720;float aspect=1280.f/720.f;
+ int left=0,top=0,width=1280,height=720;float aspect=1280.f/720.f,verticalFov=default_vertical_fov;
  bool operator==(const Viewport&)const=default;
 };
 struct Model {
@@ -23,7 +25,7 @@ struct Geometry {
  float centerX=0,centerY=0,radiusX=0,radiusY=0;Viewport viewport;
  bool operator==(const Geometry&)const=default;
 };
-// Uses the renderer's vertical FOV of 1 radian and its physical camera aspect.
+// Uses the active camera vertical FOV (default 1 radian) and physical aspect.
 // Pixel radii describe the supplied cone exactly. The drawn marks have a
 // native minimum gap of six pixels for legibility, never a clamped center.
 std::optional<Geometry> geometry(float angle,float centerX,float centerY,Viewport);
@@ -42,4 +44,5 @@ inline constexpr uint32_t orange=0xffffa52b;
 // Opaque orange over a straight-alpha 1280x720 HUD, after menu color conversion.
 // Does not clear the target: caller starts each HUD frame with a clean surface.
 void paint(std::span<uint32_t> pixels,int width,int height,const Geometry&);
+void paint(std::span<uint32_t> pixels,int width,int height,const Geometry&,const weapon_effect::Reticle&);
 }

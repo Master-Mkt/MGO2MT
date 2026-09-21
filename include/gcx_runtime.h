@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace mgo2win {
+namespace mgo2mt {
 // A bounded GCX subset, reading original compiled bytes. No JSON AST at runtime.
 struct GcxValue {
  enum class Kind { integer, hash, text, block } kind=Kind::integer;

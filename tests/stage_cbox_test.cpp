@@ -4,7 +4,7 @@
 #include <iostream>
 #include <set>
 #include <sstream>
-using namespace mgo2win::stage;
+using namespace mgo2mt::stage;
 static void check(bool b,const char* s){if(!b)throw std::runtime_error(s);}
 int main(int argc,char**argv){try{
  CboxLayout layout;layout.count=15;
@@ -20,8 +20,8 @@ int main(int argc,char**argv){try{
  for(unsigned seed=0;seed<256;++seed){auto objects=layout.select(uint8_t(seed));std::set<uint32_t> seen;for(auto&p:objects)check(seen.insert(p.anchor.sourceOffset).second,"no repeated node at any byte generation");check(objects==layout.select(uint8_t(seed)),"late participant determinism");}
  layout.count=46;check(layout.select(255).size()==46,"full candidate list terminates");
  layout.count=47;bool bad=false;try{layout.select(1);}catch(...){bad=true;}check(bad,"overfull request rejected before probe loop");
- for(auto text:{"MGO2WIN.STAGE_CBOX 1 1 0","MGO2WIN.STAGE_CBOX 1 0 65","MGO2WIN.STAGE_CBOX 1 1 2 1 2 0 0 0 1 2 1 1 1","MGO2WIN.STAGE_CBOX 1 1 1 1 2 0 0","MGO2WIN.STAGE_CBOX 1 0 0 extra"}){bool rejected=false;try{std::istringstream in(text);CboxLayout::read(in);}catch(...){rejected=true;}check(rejected,"invalid/truncated CBOX layout");}
- std::istringstream empty("MGO2WIN.STAGE_CBOX 1 0 0");check(CboxLayout::read(empty).select(0).empty(),"empty layout never divides by zero");
+ for(auto text:{"MGO2MT.STAGE_CBOX 1 1 0","MGO2MT.STAGE_CBOX 1 0 65","MGO2MT.STAGE_CBOX 1 1 2 1 2 0 0 0 1 2 1 1 1","MGO2MT.STAGE_CBOX 1 1 1 1 2 0 0","MGO2MT.STAGE_CBOX 1 0 0 extra"}){bool rejected=false;try{std::istringstream in(text);CboxLayout::read(in);}catch(...){rejected=true;}check(rejected,"invalid/truncated CBOX layout");}
+ std::istringstream empty("MGO2MT.STAGE_CBOX 1 0 0");check(CboxLayout::read(empty).select(0).empty(),"empty layout never divides by zero");
  if(argc>1){std::ifstream in(argv[1]);auto actual=CboxLayout::read(in);check(actual.count==15&&actual.anchors.size()==46,"original proc100 count and GEOM children");auto objects=actual.select(0);check(objects.front().anchor.sourceOffset==0x54d7a0&&objects.front().anchor.position==Vec3{-72287.6796875f,4000,73338.7578125f},"original authored position with repeated hash");}
  std::cout<<"CBOX PPC vectors, shared generation, unique authored nodes and bounds passed\n";return 0;
  }catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}

@@ -1,6 +1,6 @@
 #include "host_special_pc.h"
 #include <algorithm>
-namespace mgo2win::special_pc {
+namespace mgo2mt::special_pc {
 bool Control::apply(combat::Authority&authority,uint64_t now){
  std::lock_guard lock(mutex_);auto snapshot=authority.snapshot();if(!snapshot.epoch)return false;if(epoch_!=snapshot.epoch)randomWinner_.reset();epoch_=snapshot.epoch;
  auto before=players_;players_.clear();

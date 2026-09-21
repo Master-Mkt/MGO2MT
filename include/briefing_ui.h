@@ -1,7 +1,7 @@
 #pragma once
 #include "menu_theme.h"
 #include <array>
-namespace mgo2win::briefing {
+namespace mgo2mt::briefing {
 enum class Panel { none,map,rules,host,ready,quit };
 inline constexpr std::array<const wchar_t*,7> labels{L"GAME START",L"MAP",L"RULES",L"SKILLS",L"HOST",L"OPTIONS",L"QUIT"};
 inline constexpr int toolbarX=48,toolbarY=90,toolbarStep=58,toolbarSize=48;

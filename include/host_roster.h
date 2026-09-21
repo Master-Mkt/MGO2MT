@@ -2,7 +2,7 @@
 #include "host_protocol.h"
 #include <optional>
 #include <string>
-namespace mgo2win::host {
+namespace mgo2mt::host {
 struct Player {
  uint8_t slot=0;uint16_t instance=0;uint32_t character=0;
  std::string name,clan;

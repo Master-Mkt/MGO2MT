@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-namespace mgo2win::original {
+namespace mgo2mt::original {
 // Current MGO2 ELF SHA256:
 // 1a55a41ee5afdebd89075bd205e412c8311f569ba9dc022f629bb63fb4bfd13a
 // EC4F10 -> D3CB10/+17A8 -> D3C698 -> EC5390 -> D3BB38 -> 616C0.

@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <optional>
 
-namespace mgo2win::original_mastery {
+namespace mgo2mt::original_mastery {
 // Current MGO2.ELF SHA 1a55a41e...bfd13a. See the independent
 // outputs/mastery_policy_20260913/REPORT.md and verified.json.
 // 32A090: selected ID25 -> class4. 8CB7F0 stores this at weapon+58;

@@ -1,3 +1,4 @@
+#include "product_identity.h"
 #include "stage_object_sync.h"
 #include "stage_profiles.h"
 #include <set>
@@ -6,10 +7,10 @@
 #include <string>
 #include <algorithm>
 
-namespace mgo2win::stage {
+namespace mgo2mt::stage {
 ObjectRegistry load_object_registry(const std::filesystem::path&path){
  std::ifstream f(path);std::string magic,profile;unsigned version=0,map=0,rule=0,count=0;
- if(!(f>>magic>>version>>profile>>map>>rule>>count)||magic!="MGO2WIN.STAGE_OBJECTS"||version!=1||map>255)throw host::Invalid(host::Error::message);
+ if(!(f>>magic>>version>>profile>>map>>rule>>count)||magic!=mgo2mt::brand::Format{"MGO2MT.STAGE_OBJECTS"}||version!=1||map>255)throw host::Invalid(host::Error::message);
  const auto* candidate=runtime_profile(uint8_t(map));
  if(map==7&&profile=="n007a_native_lights_v1"){
   if(rule!=255||count!=15)throw host::Invalid(host::Error::message);

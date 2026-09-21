@@ -3,7 +3,7 @@
 #include <cmath>
 #include <stdexcept>
 
-namespace mgo2win::combat::footsteps {
+namespace mgo2mt::combat::footsteps {
 namespace {
 struct Clip { double duration; uint32_t cue; std::array<double, 2> times; };
 const Clip* clip(const Input& in) noexcept {

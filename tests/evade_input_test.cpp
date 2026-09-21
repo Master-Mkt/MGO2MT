@@ -7,7 +7,7 @@
 #include <iostream>
 #include <stdexcept>
 
-using namespace mgo2win;
+using namespace mgo2mt;
 using Kind=combat::EvadeKind;
 using Ack=player::EvadeInput::Ack;
 static void check(bool value,const char* message){if(!value)throw std::runtime_error(message);}

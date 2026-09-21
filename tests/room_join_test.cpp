@@ -4,7 +4,7 @@
 #include <fstream>
 #include <stdexcept>
 #include <sstream>
-using namespace mgo2win;
+using namespace mgo2mt;
 void check(bool v,const char*s){if(!v)throw std::runtime_error(s);}
 void put(std::vector<uint8_t>&b,size_t at,uint32_t v){for(unsigned i=0;i<4;++i)b[at+3-i]=uint8_t(v>>(8*i));}
 LobbyPacket detail(){LobbyPacket p{0x4313,0,std::vector<uint8_t>(877)};put(p.payload,4,77);p.payload[8]='R';p.payload[24]='C';p.payload[154]=1;p.payload[234]=16;p.payload[235]=2;put(p.payload,372,123);p.payload[376]='H';put(p.payload,400,124);p.payload[404]='P';return p;}

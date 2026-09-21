@@ -1,7 +1,7 @@
 #include "skill_wire.h"
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win::skills;
+using namespace mgo2mt::skills;
 static void check(bool ok,const char*message){if(!ok)throw std::runtime_error(message);}
 template<class F>static void rejects(F action,const char*message){try{action();}catch(const std::runtime_error&){return;}throw std::runtime_error(message);}
 static std::vector<uint8_t> reply(uint32_t token=7,uint32_t character=123){return {

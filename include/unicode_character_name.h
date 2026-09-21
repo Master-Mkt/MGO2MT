@@ -7,7 +7,7 @@
 #include <string_view>
 #include <vector>
 
-namespace mgo2win::unicode_character_name {
+namespace mgo2mt::unicode_character_name {
 // DRAFT native extension. No production opcode or capability negotiation is
 // assigned here. Never pass these bytes to an original fixed-width name field.
 inline constexpr std::string_view capability="MGO2WIN.unicode-character-name.v1";

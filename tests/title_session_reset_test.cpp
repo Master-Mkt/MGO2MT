@@ -15,8 +15,8 @@ int main(int argc,char** argv){try{
  check(argc==3,"usage: title_session_reset_test animated.m2an scenerio.gcx");
  const auto animationBytes=read(argv[1]),gcxBytes=read(argv[2]);
  std::ostringstream log;
- auto bridge=std::make_unique<mgo2win::TitleGcx>(gcxBytes,log);bridge->start(18);
- const mgo2win::TitleAnimation initial(animationBytes,bridge->timeout());
+ auto bridge=std::make_unique<mgo2mt::TitleGcx>(gcxBytes,log);bridge->start(18);
+ const mgo2mt::TitleAnimation initial(animationBytes,bridge->timeout());
  auto animation=initial;
  unsigned selected=0,completed=0,cues=0,fades=0;
  auto bind=[&]{
@@ -30,7 +30,7 @@ int main(int argc,char** argv){try{
  check(selected==1&&completed==1&&cues==1&&fades>0,"first original title lifecycle");
  // Fatal session return uses fresh original VM state and a pristine actor copy.
  for(unsigned cycle=0;cycle<3;++cycle){
-  bridge=std::make_unique<mgo2win::TitleGcx>(gcxBytes,log);bridge->start(18);
+  bridge=std::make_unique<mgo2mt::TitleGcx>(gcxBytes,log);bridge->start(18);
   animation=initial;animation.wait_for_start(true);bind();
   check(!bridge->loading_requested()&&animation.ticks()==0&&animation.accepted()==0,"no previous session latch");
   animation.tick(5,8);check(animation.rejected()==1,"held START does not bypass original initial gate");
@@ -49,7 +49,7 @@ int main(int argc,char** argv){try{
   check(selected==cycle+2&&completed==cycle+2,"completed actor ignores repeat input");
  }
  // Disabling the extension resumes the remaining original timeout, not a reset.
- mgo2win::TitleAnimation timeout(animationBytes,1000);timeout.tick(5,0);
+ mgo2mt::TitleAnimation timeout(animationBytes,1000);timeout.tick(5,0);
  for(unsigned i=0;i<100;++i)timeout.tick(5,0);
  timeout.wait_for_start(true);for(unsigned i=0;i<1000;++i)timeout.tick(5,0);
  check(timeout.state()==1,"pause preserves timeout");timeout.wait_for_start(false);

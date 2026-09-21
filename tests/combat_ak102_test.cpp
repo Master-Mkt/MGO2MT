@@ -5,14 +5,14 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;
-using namespace mgo2win::combat;
+using namespace mgo2mt;
+using namespace mgo2mt::combat;
 namespace {
 void check(bool ok,const char* message){if(!ok)throw std::runtime_error(message);}
 }
 int main(int argc,char**argv){try{
  check(argc==3,"catalog and original stage root required");
- auto profiles=initial_profiles(20,1,0);check(profiles.size()==11&&profiles.front().id==25&&profiles[1].id==3&&profiles[1].heldOnly&&profiles[2].id==52&&profiles[2].heldOnly,"AK attack plus explicit held-only secondary and support");
+ auto profiles=initial_profiles(20,1,0);check(profiles.size()==43&&profiles.front().id==25&&profiles[1].id==3&&!profiles[1].heldOnly&&profiles[2].id==52&&profiles[2].nativeProjectile,"expanded profiles retain AK, sidearm and support default ordering");
  check(initial_profiles(20,1,2).empty()&&initial_profiles(20,2,0).empty()&&initial_profiles(19,1,0).empty()&&initial_profiles(20,1,1).empty(),"unsupported DP/rule/map/flags cannot borrow profile");
  const auto&w=profiles.front();check(w.magazine==30&&w.reserve==90&&w.damage==275&&w.shotCue==original::ak102_native_shot_cue&&!w.impactCue&&w.bodyCue==8168,"bounded native source profile and reviewed normal shot");
  auto catalog=std::make_shared<weapons::Catalog>();std::string error;check(catalog->load(argv[1],error),"original weapon catalog");
@@ -26,7 +26,7 @@ int main(int argc,char**argv){try{
  auto floor=std::make_shared<const stage::Collision>(stage::Collision::make({{-20000,0,-20000},{20000,0,-20000},{20000,0,20000},{-20000,0,20000}},{{{0,1,2}},{{0,2,3}}}));
  Service host(1);host.configure(floor,profiles);std::array<Identity,2> ids{{{1,1,101},{2,1,102}}};
  std::array<Replica,2> clients;std::array<unsigned,2> shots{},deaths{};unsigned grants=0;uint32_t inputSequence=0;
- host.configure_round({1000,1,false,true},catalog,[&](Authority&a,Identity id,uint8_t team,std::span<const uint16_t> inventory,uint64_t now){check(inventory.size()==3&&inventory[0]==25&&inventory[1]==3&&inventory[2]==52,"grant contains fixed primary/secondary/support identities");bool ok=a.join(id,team,{{0,2,team==1?0.f:3000.f}},1000,1000,inventory,now);if(ok){auto held=a.item_held(id,1);check(held&&held->slots[0].contents.magazine==30&&held->slots[0].contents.reserve==90,"AK grant retains finite 120-round pool");for(unsigned slot=1;slot<3;++slot){const auto& c=held->slots[slot].contents;check(c.resource==items::Resource::durable&&c.quantity==1&&!c.magazine&&!c.reserve&&!c.charges,"held-only identities cannot add a shared-ammunition partner");}}grants+=ok;return ok;});
+ host.configure_round({1000,1,false,true},catalog,[&](Authority&a,Identity id,uint8_t team,std::span<const uint16_t> inventory,uint64_t now){check(inventory.size()==3&&inventory[0]==25&&inventory[1]==3&&inventory[2]==52,"grant contains fixed primary/secondary/support identities");bool ok=a.join(id,team,{{0,2,team==1?0.f:3000.f}},1000,1000,inventory,now);if(ok){auto held=a.item_held(id,1);check(held&&held->slots[0].contents.magazine==30&&held->slots[0].contents.reserve==90,"AK grant retains finite 120-round pool");for(unsigned slot=1;slot<3;++slot){const auto& c=held->slots[slot].contents;check(c.resource==items::Resource::ammunition&&c.quantity==1&&c.magazine==profiles[slot].magazine&&c.reserve==profiles[slot].reserve&&!c.charges,"sidearm and support keep their own finite ammunition");}}grants+=ok;return ok;});
  auto flush=[&]{for(auto&d:host.deliveries()){auto i=d.recipient.slot-1;auto value=wire::decode(d.payload);if(auto f=std::get_if<wire::Frame>(&value)){check(clients[i].snapshot(f->snapshot),"client accepts authoritative snapshot");for(auto&e:clients[i].events(f->events)){if(e.kind==EventKind::shot)check(e.cue==original::ak102_native_shot_cue,"both replicas receive reviewed normal shot cue");shots[i]+=e.kind==EventKind::shot;deaths[i]+=e.kind==EventKind::death;}check(clients[i].events(f->events).empty(),"repeated frame cannot replay effects");}}};
  auto command=[&](unsigned i,uint32_t seq,wire::CommandKind kind,uint64_t now){wire::Command c;c.epoch=1;c.sequence=seq;c.kind=kind;if(kind==wire::CommandKind::loaded){c.enabled=true;c.generation=1;c.sceneRevision=1;}else if(kind==wire::CommandKind::ready)c.enabled=true;else if(kind==wire::CommandKind::loadout)c.weapons={25,0,0};check(host.receive(ids[i],wire::encode(c),now),"round command");flush();};
  for(unsigned i=0;i<2;++i){check(host.admit(ids[i]),"admit");check(host.receive(ids[i],wire::encode(wire::Accept{1}),0),"explicit accept");}flush();

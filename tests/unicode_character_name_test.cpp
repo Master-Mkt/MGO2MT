@@ -1,7 +1,7 @@
 #include "unicode_character_name.h"
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win::unicode_character_name;
+using namespace mgo2mt::unicode_character_name;
 static void check(bool ok,const char*message){if(!ok)throw std::runtime_error(message);}
 static std::string scalar(uint32_t c){
  std::string out;if(c<=0x7f)out+=char(c);

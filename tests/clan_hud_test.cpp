@@ -4,7 +4,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <string_view>
-using namespace mgo2win::clan;
+using namespace mgo2mt::clan;
 static void check(bool value,const char* what){if(!value)throw std::runtime_error(what);}
 template<class F>static void rejects(F f){bool rejected=false;try{f();}catch(const std::exception&){rejected=true;}check(rejected,"malformed image accepted");}
 static void put(std::vector<uint8_t>& p,size_t at,uint32_t value,size_t n=4){for(size_t i=0;i<n;++i){p[at+n-i-1]=uint8_t(value);value>>=8;}}

@@ -2,7 +2,7 @@
 #include "gekko_test_profiles.h"
 #include <iostream>
 #include <limits>
-using namespace mgo2win;using namespace mgo2win::combat;
+using namespace mgo2mt;using namespace mgo2mt::combat;
 namespace {void check(bool v,const char*m){if(!v)throw std::runtime_error(m);}Identity id(unsigned n){return {uint8_t(n),uint16_t(n+1),100+n};}
 template<class F>bool rejects(F f){try{f();}catch(const wire::Invalid&){return true;}return false;}}
 int main(){try{

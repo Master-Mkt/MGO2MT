@@ -2,7 +2,7 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
-using namespace mgo2win::combat;
+using namespace mgo2mt::combat;
 void check(bool v,const char*s){if(!v)throw std::runtime_error(s);}
 int main(){try{
  tracers::Pool pool;Snapshot s;s.epoch=1;s.eventWatermark=10;Player p;p.identity={0,2,100};p.life=3;p.alive=true;s.players[0]=p;auto remote=p;remote.identity={1,4,101};s.players[1]=remote;

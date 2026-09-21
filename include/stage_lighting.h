@@ -1,9 +1,12 @@
 #pragma once
 #include <array>
+#include <span>
+#include <stop_token>
+#include "character_model.h"
 #include <vector>
 #include <istream>
 #include "environment_light.h"
-namespace mgo2win::stage {
+namespace mgo2mt::stage {
 using Vec3=std::array<float,3>;
 struct LightIdentity {
  unsigned groupFlags=0,id=0,key=0;
@@ -45,6 +48,8 @@ struct Lighting {
  // preceded by authored group-AABB overlap. Unsupported LT3 families are not lit.
  size_t enable_sphere(Vec3 center,float radius,bool enabled);
  LightSample sample(Vec3 position,Vec3 normal)const;
+ // Exact block bounds culling within one lighting revision; returns vertex evaluations.
+ size_t sample_vertices(std::span<ModelVertex>,std::stop_token = {})const;
  EnvironmentLight environment(Vec3 position)const;
 };
 }

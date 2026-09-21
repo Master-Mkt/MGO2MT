@@ -5,7 +5,7 @@
 #include <vector>
 #include <stdexcept>
 #include <cstring>
-namespace mgo2win {
+namespace mgo2mt {
 namespace {
 struct Stored {unsigned version=1,mode=0;wchar_t id[65]{},password[65]{};~Stored(){SecureZeroMemory(this,sizeof(*this));}};
 struct Blob {DATA_BLOB data{};~Blob(){if(data.pbData){SecureZeroMemory(data.pbData,data.cbData);LocalFree(data.pbData);}}};

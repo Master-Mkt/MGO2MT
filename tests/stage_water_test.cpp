@@ -10,7 +10,7 @@
 #include <iostream>
 #include <limits>
 #include <sstream>
-using namespace mgo2win::stage;
+using namespace mgo2mt::stage;
 int main(int argc,char** argv){
  const WaterField jj{{-49500,0,-176000},{27500,1000,28000}};
  auto water=Water::make({jj,jj});assert(water.fields().size()==1);
@@ -40,7 +40,7 @@ int main(int argc,char** argv){
  auto movement=movement_collision(combined);assert(movement!=combined&&movement->triangles.size()==1&&combined->triangles.size()==2);
  assert(movement->triangles[0].attribute==0x20A002834ULL); // normal control query accepts authored bit0x10
  auto decorative=std::make_shared<Collision>(Collision::make(solid->vertices,{{{0,1,2},0x10000000ULL,0}}));assert(movement_collision(decorative)->triangles.empty());
- auto unknown=std::make_shared<Collision>(Collision::make(solid->vertices,{{{0,1,2},0,0}}));assert(movement_collision(unknown)==unknown); // native unknown remains solid
+ auto unknown=std::make_shared<Collision>(Collision::make(solid->vertices,{{{0,1,2},0,0}}));assert(movement_collision(unknown)->triangles.empty()&&unknown->triangles[0].attribute==0); // None remains present only in raw geometry
  auto add=[](std::string& b,unsigned x){for(unsigned s=0;s<32;s+=8)b.push_back(char(x>>s));};
  std::string bytes="GWW1";add(bytes,1);add(bytes,1);for(float x:jj.center)add(bytes,std::bit_cast<unsigned>(x));for(float x:jj.halfSize)add(bytes,std::bit_cast<unsigned>(x));
  std::istringstream input(bytes);assert(Water::read(input).level(jj.center)==1000);

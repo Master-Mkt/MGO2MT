@@ -2,7 +2,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <thread>
-using namespace mgo2win::chat;
+using namespace mgo2mt::chat;
 static void check(bool v,const char*s){if(!v)throw std::runtime_error(s);}
 static std::vector<uint8_t> cap(uint64_t n,uint32_t room=17,uint32_t pc=7,uint8_t encoding=1,uint8_t flags=1){auto p=capability_payload(n,room,pc);p.resize(28);p[5]=0;p[6]=encoding;p[7]=flags;return p;}
 static void join(Session&s){s.connect(7);s.enter(17);s.roster({{7,"LOCAL",1},{8,"PEER",1},{9,"OTHER",2}},true);}

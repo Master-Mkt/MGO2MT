@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
-namespace mgo2win::player {
+namespace mgo2mt::player {
 using namespace physics;
 namespace {
 // MGO2 ELF 1a55a41e...: FD4014 body->model, FD3E60 constraint pairs.
@@ -56,6 +56,7 @@ void Ragdoll::step(const stage::Collision&world,float seconds){
  }
 }
 void Ragdoll::impulse(Vec3 impulse,Vec3 point){if(!active_||!finite(impulse)||!finite(point))return;unsigned closest=0;float distance=std::numeric_limits<float>::max();for(unsigned i=0;i<bodies_.size();++i){float d=length(sub(bodies_[i].position,point));if(d<distance){distance=d;closest=i;}bodies_[i].wake();}bodies_[closest].impulse(impulse,point);}
+bool Ragdoll::launch(Vec3 velocity){if(!active_||!finite(velocity)||length(velocity)>15000.f*1.000001f)return false;velocity=capped(velocity,15000);for(auto&body:bodies_){body.wake();body.velocity=velocity;}return true;}
 Vec3 Ragdoll::root_position()const{if(!active_)return {};auto rootRotation=normalize(multiply(bodies_[0].rotation,conjugate(axes_[0])));return sub(bodies_[0].position,rotate(rootRotation,offsets_[0]));}
 Vec3 Ragdoll::origin()const{auto root=root_position();return active_?Vec3{root[0],originY_,root[2]}:Vec3{};}
 bool Ragdoll::supine()const{if(!active_)return false;auto q=normalize(multiply(bodies_[0].rotation,conjugate(axes_[0])));return rotate(q,{0,0,1})[1]>0;}

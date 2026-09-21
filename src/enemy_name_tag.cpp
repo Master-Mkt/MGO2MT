@@ -4,7 +4,7 @@
 #include <string>
 #include <stdexcept>
 
-namespace mgo2win::hud {
+namespace mgo2mt::hud {
 namespace {
 constexpr int maxTextWidth=416,textHeight=24,panelHeight=40,iconSize=32;
 constexpr uint32_t amber=0x00ffd183,brown=0x002b2014;

@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <limits>
-namespace mgo2win {
+namespace mgo2mt {
 namespace {
 void require(bool v){if(!v)throw std::runtime_error("Invalid GWC1 appearance catalog");}
 struct Reader {

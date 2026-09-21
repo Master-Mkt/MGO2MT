@@ -6,6 +6,7 @@
 #include "stage_round.h"
 #include "stage_cbox.h"
 #include "stage_lighting.h"
+#include "stage_sky.h"
 #include "host_placements.h"
 #include "stage_object_sync.h"
 #include <filesystem>
@@ -13,7 +14,7 @@
 #include <memory>
 #include <mutex>
 #include <thread>
-namespace mgo2win::stage {
+namespace mgo2mt::stage {
 std::string_view name(uint8_t map);
 enum class Status {idle,loading,preview_ready,unknown_map,unavailable,invalid,graphics_error};
 struct LightChange {unsigned key=0,id=~0u;bool enabled=true;Vec3 center{};float radius=0;};
@@ -31,6 +32,7 @@ std::vector<ObjectBinding> read_object_bindings(const std::filesystem::path& roo
 struct Result {Status status=Status::idle;std::optional<host::LoadRequest> request;std::shared_ptr<const CharacterModel> model,debugModel,receivedModel;std::shared_ptr<const Collision> collision;uint64_t generation=0;Round round;std::vector<std::shared_ptr<const CharacterModel>> props;std::shared_ptr<const Lighting> lighting,authoredLighting;std::map<uint8_t,std::shared_ptr<const CharacterModel>> itemModels;std::optional<host::Placements> received;size_t missingItemModels=0;
  std::shared_ptr<const Collision> authoredCollision;std::shared_ptr<const CharacterModel> objectModel;
  std::shared_ptr<const CharacterModel> skyModel;
+ std::shared_ptr<const SkySettings> skySettings;
  // Render-only preparation, kept with cached static terrain across rounds.
  SurfaceLayerStats surfaceLayers;
  std::shared_ptr<const Collision> objectHitCollision;

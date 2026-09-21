@@ -2,7 +2,7 @@
 #include <iostream>
 #include <thread>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 static void require(bool ok){if(!ok)throw std::runtime_error("HTTP contract assertion");}
 int main(int argc,char** argv){try{
  if(argc==2&&std::string(argv[1])=="--live"){

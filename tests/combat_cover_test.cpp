@@ -5,11 +5,11 @@
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;using namespace mgo2win::combat;
+using namespace mgo2mt;using namespace mgo2mt::combat;
 namespace {
 void check(bool b,const char*s){if(!b)throw std::runtime_error(s);}
 Identity id(unsigned n){return {uint8_t(n),uint16_t(n+1),100+n};}
-std::shared_ptr<stage::Collision> scene(){return std::make_shared<stage::Collision>(stage::Collision::make({{-100000,0,-100000},{-100000,0,100000},{100000,0,100000},{100000,0,-100000},{-2000,0,0},{0,0,0},{0,2500,0},{-2000,2500,0}},{{{0,1,2}},{{0,2,3}},{{4,5,6}},{{4,6,7}}}));}
+std::shared_ptr<stage::Collision> scene(){return std::make_shared<stage::Collision>(stage::Collision::make({{-100000,0,-100000},{-100000,0,100000},{100000,0,100000},{100000,0,-100000},{-2000,0,0},{0,0,0},{0,2500,0},{-2000,2500,0}},{{{0,1,2},stage::attribute::native_solid},{{0,2,3},stage::attribute::native_solid},{{4,5,6},stage::attribute::native_solid},{{4,6,7},stage::attribute::native_solid}}));}
 Weapon gun(){Weapon w;w.id=23;w.damage=100;w.intervalMs=100;w.reloadMs=500;w.magazine=30;w.reserve=60;w.range=20000;w.automatic=true;return w;}
 Pose pose(float x=-100,float z=-300,float yaw=0){return {{x,0,z},yaw,0,{260,1700,2}};}
 void authority(){
@@ -43,7 +43,7 @@ void service(){
 }
 void native_exposure(){
  auto damage=[](int resistance){auto base=scene();auto vertices=base->vertices;auto triangles=base->triangles;
-  const auto n=unsigned(vertices.size());vertices.insert(vertices.end(),{{200,0,1500},{450,0,1500},{450,2500,1500},{200,2500,1500}});triangles.push_back({{n,n+1,n+2},0,0,0});triangles.push_back({{n,n+2,n+3},0,0,0});
+  const auto n=unsigned(vertices.size());vertices.insert(vertices.end(),{{200,0,1500},{450,0,1500},{450,2500,1500},{200,2500,1500}});triangles.push_back({{n,n+1,n+2},stage::attribute::native_solid,0,0});triangles.push_back({{n,n+2,n+3},stage::attribute::native_solid,0,0});
   auto world=std::make_shared<stage::Collision>(stage::Collision::make(vertices,triangles,{{0x15bccc,.5f,.5f,true,resistance,true}}));
   Authority h;h.begin(8,world,initial_profiles(20,1,0));check(h.join(id(0),1,pose(),1000,1000,std::array<uint16_t,1>{25},0)&&h.join(id(1),2,pose(320,4000,3.14159265f),1000,1000,std::array<uint16_t,1>{25},0),"native AK exposure actors");h.active(true);
   check(h.pose(id(0),8,1,pose(),100)==Reject::none&&h.cover(id(0),8,1,{1,cover::Action::attach,-1,false},100)==Reject::none,"native target lean");
@@ -57,5 +57,11 @@ void native_exposure(){
  Authority wet;wet.begin(8,scene(),std::array{gun()});check(wet.join(id(0),1,pose(),1000,1000,std::array<uint16_t,1>{23},0),"water actor");wet.active(true);wet.water(std::make_shared<stage::Water>(stage::Water::make({{{0,500,0},{10000,500,10000}}})));
  check(wet.pose(id(0),8,1,pose(),100)==Reject::none&&wet.cover(id(0),8,1,{1,cover::Action::attach},100)==Reject::unavailable&&wet.sop_view(id(0))->coverRequest==1,"wet admission rejected and acknowledged");
 }
+void tuned_cover(){
+ auto weapon=gun();weapon.tuning.weightKg=100;weapon.tuning.moveSpeedScale=.1f;
+ Authority h;h.begin(8,scene(),std::array{weapon});check(h.join(id(0),1,pose(-1000),1000,1000,std::array<uint16_t,1>{23},0),"heavy cover actor");h.active(true);
+ check(h.pose(id(0),8,1,pose(-1000),100)==Reject::none&&h.cover(id(0),8,1,{1,cover::Action::attach},100)==Reject::none,"heavy weapon cover attaches");
+ check(h.pose(id(0),8,2,pose(-1040),200)==Reject::none,"cover slide uses dedicated speed even with heavy movement tuning");
 }
-int main(){try{authority();service();native_exposure();std::cout<<"Cover HOST collision/ACK/replay/scope/exposed hitbox/native AK penetration/spread/water and 24-peer wire/service/remote PASS\n";return 0;}catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}
+}
+int main(){try{authority();service();native_exposure();tuned_cover();std::cout<<"Cover HOST collision/ACK/replay/scope/exposed hitbox/native AK penetration/spread/water/weighted slide and 24-peer wire/service/remote PASS\n";return 0;}catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}

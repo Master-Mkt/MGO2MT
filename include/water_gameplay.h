@@ -3,7 +3,7 @@
 #include "stage_water.h"
 #include <algorithm>
 #include <cmath>
-namespace mgo2win::water_gameplay {
+namespace mgo2mt::water_gameplay {
 // User-requested native extension. In particular .65 is NOT original JJ/MGO2
 // movement behavior. Oxygen timing/damage is a separate HOST-owned policy.
 struct Policy {float horizontalScale=.65f;bool blockProneTranslation=true;};
@@ -37,7 +37,7 @@ inline Contact evaluate(const stage::Water& water,stage::Vec3 feet,float floorY,
 inline Contact sample(const stage::Water* water,const stage::Collision& world,stage::Vec3 feet,stage::Capsule body,Policy policy={}){
  if(!water||!valid_body(body)||!valid_policy(policy)||!finite(feet))return {};
  auto origin=feet;origin[1]+=body.skin*2;
- const auto floor=world.ray(origin,{0,-1,0},body.height+body.skin*4);
+ const auto floor=world.ray(origin,{0,-1,0},body.height+body.skin*4,stage::query::player_floor);
  if(!floor||floor->normal[1]<.70710678f)return {};
  return evaluate(*water,feet,floor->position[1],body,policy);
 }

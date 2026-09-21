@@ -7,8 +7,8 @@
 #include <stdexcept>
 #include <string_view>
 #include <type_traits>
-using namespace mgo2win;
-namespace hs=mgo2win::host_skills;
+using namespace mgo2mt;
+namespace hs=mgo2mt::host_skills;
 namespace {
 void check(bool ok,const char* why){if(!ok)throw std::runtime_error(why);}
 std::vector<uint8_t> hex(std::string_view s){std::vector<uint8_t>b;check(s.size()%2==0,"hex fixture extent");auto digit=[](char c){return c<='9'?c-'0':c-'a'+10;};for(size_t i=0;i<s.size();i+=2)b.push_back(uint8_t(digit(s[i])*16+digit(s[i+1])));return b;}

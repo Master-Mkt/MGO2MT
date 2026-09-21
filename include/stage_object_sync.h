@@ -4,7 +4,7 @@
 #include <optional>
 #include <filesystem>
 
-namespace mgo2win::stage {
+namespace mgo2mt::stage {
 struct RegistryEntry {
  uint32_t bindingId=0;
  uint8_t width=0;

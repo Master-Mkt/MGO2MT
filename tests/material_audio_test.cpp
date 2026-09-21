@@ -1,7 +1,7 @@
 #include "material_audio.h"
 #include <cstdlib>
 #include <iostream>
-using namespace mgo2win::combat::material_audio;
+using namespace mgo2mt::combat::material_audio;
 static void require(bool value){if(!value){std::cerr<<"material audio contract failed\n";std::exit(1);}}
 int main(){
  // Golden examples from the original four GCX procedures, not material indexes.

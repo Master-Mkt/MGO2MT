@@ -10,7 +10,7 @@
 #include <iostream>
 #include <limits>
 #include <sstream>
-using namespace mgo2win::stage;
+using namespace mgo2mt::stage;
 static void add(std::string& b,unsigned x){for(unsigned s=0;s<32;s+=8)b.push_back(char(x>>s));}
 template<class F>void rejects(F f){bool bad=false;try{f();}catch(const std::exception&){bad=true;}assert(bad);}
 int main(int argc,char** argv){

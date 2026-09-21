@@ -9,7 +9,7 @@
 #include "port_screen.h"
 #include "authentication.h"
 #include "character_screen.h"
-namespace mgo2win {
+namespace mgo2mt {
 class LoginScreen {
  LoginForm form_;HDC dc_=nullptr;HBITMAP bitmap_=nullptr;HGDIOBJ old_=nullptr;void* pixels_=nullptr;
  std::vector<HFONT> fonts_;std::vector<unsigned> cues_;
@@ -33,6 +33,10 @@ class LoginScreen {
  void key(LoginForm::Key);
  bool save();void begin_auth(bool automatic);void update();
 public:
+ multi_ui::Context ui_presentation()const {
+  if(characters_)return characters_->ui_presentation();
+  return multi_ui::presentation(ports_?multi_ui::Route::settings:multi_ui::Route::login,pending_);
+ }
  explicit LoginScreen(std::filesystem::path store,bool authEnabled=true,
    std::function<AuthReply(const AuthCredentials&,const std::atomic_bool&)> transport=authenticate,bool externalPorts=true,std::shared_ptr<ControllerInput> input={},std::shared_ptr<GraphicsSettings> graphics={},std::filesystem::path networkKeys={},bool manualOnly=false,uint16_t fixedLocalPort=0);~LoginScreen();
  bool controller_sample(const PadSample& s){return ports_&&ports_->controller_sample(s);}
@@ -70,6 +74,8 @@ public:
  std::optional<combat::wire::Preparation> combat_preparation()const{return characters_?characters_->combat_preparation():std::nullopt;}
  std::optional<combat::Snapshot> combat_state()const{return characters_?characters_->combat_state():std::nullopt;}
  combat::SopView combat_sop()const{return characters_?characters_->combat_sop():combat::SopView{};}
+ std::optional<combat::wire::DebugFlights> debug_flights()const{return characters_?characters_->debug_flights():std::nullopt;}
+ std::optional<combat::wire::Environment> environment_settings()const{return characters_?characters_->environment_settings():std::nullopt;}
  bool room_enemy_name_tags()const{return characters_&&characters_->room_enemy_name_tags();}
  bool room_auto_aim()const{return characters_&&characters_->room_auto_aim();}
  clan::State enemy_clan_emblem(uint32_t id){return characters_?characters_->enemy_clan_emblem(id):clan::State{};}

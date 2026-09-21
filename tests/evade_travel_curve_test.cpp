@@ -5,11 +5,13 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
-using namespace mgo2win;
-using namespace mgo2win::combat::evade_runtime;
+using namespace mgo2mt;
+using namespace mgo2mt::combat::evade_runtime;
 namespace {void check(bool v,const char* m){if(!v)throw std::runtime_error(m);}}
 int main(int argc,char**argv){try{
- check(argc==2,"evade_travel_curve_test evade.gwmot");std::ifstream f(argv[1],std::ios::binary);check(bool(f),"source bank present");std::vector<char> bytes{std::istreambuf_iterator<char>(f),{}};PlayerMotionBank bank(bytes);
+ check(argc==3,"evade_travel_curve_test evade.gwmot evade_travel.gwet");std::string error;check(configure(argv[2],error)==ResourceStatus::local_resource,"local travel curve present");
+ auto profile=source_profile();const auto&roll_source_z=profile->roll;const auto&recover_source_z=profile->recover;const auto&travel_distances=profile->distances;
+ std::ifstream f(argv[1],std::ios::binary);check(bool(f),"source bank present");std::vector<char> bytes{std::istreambuf_iterator<char>(f),{}};PlayerMotionBank bank(bytes);
  const auto* roll=bank.find(PlayerMotion::Roll);const auto* recover=bank.find(PlayerMotion::RollRecover);check(roll&&recover&&roll->sourceIndex==56&&roll->sourceKey==0x57bb63&&roll->frames==40&&recover->sourceIndex==57&&recover->sourceKey==0x52de74&&recover->frames==45,"reviewed original source identities");
  for(size_t i=0;i<roll_source_z.size();++i)check(std::bit_cast<uint32_t>(roll_source_z[i])==std::bit_cast<uint32_t>(roll->roots[i][2]),"roll raw float bits exact");
  for(size_t i=0;i<recover_source_z.size();++i)check(std::bit_cast<uint32_t>(recover_source_z[i])==std::bit_cast<uint32_t>(recover->roots[i][2]),"recover raw float bits exact");

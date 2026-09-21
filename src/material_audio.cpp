@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <iterator>
 #include <utility>
-namespace mgo2win::combat::material_audio {
+namespace mgo2mt::combat::material_audio {
 namespace {
 struct Material { uint32_t hash, group; };
 struct Mapping { uint32_t base, group, cue; };

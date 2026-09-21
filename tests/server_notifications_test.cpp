@@ -6,7 +6,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <vector>
-using namespace mgo2win::notifications;
+using namespace mgo2mt::notifications;
 namespace {
 void check(bool value,const char* why){if(!value)throw std::runtime_error(why);}
 Scope scope(){return {1,2,3};}

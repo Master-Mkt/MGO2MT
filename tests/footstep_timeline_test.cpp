@@ -3,7 +3,7 @@
 #include <limits>
 #include <stdexcept>
 #include <iostream>
-using namespace mgo2win::combat::footsteps;
+using namespace mgo2mt::combat::footsteps;
 #define CHECK(x) do { if (!(x)) { std::cerr << "FAILED " << __LINE__ << ": " << #x << "\n"; std::abort(); } } while (false)
 int main() {
     Timeline t({.5});

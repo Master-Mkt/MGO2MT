@@ -1,7 +1,7 @@
 #include "combat_authority.h"
 #include <algorithm>
 #include <cmath>
-namespace mgo2win::combat {
+namespace mgo2mt::combat {
 namespace {uint64_t key(items::Domain d,uint32_t id){return (uint64_t(d)<<32)|id;}float distance2(Vec3 a,Vec3 b){float v=0;for(int i=0;i<3;++i)v+=(a[i]-b[i])*(a[i]-b[i]);return v;}}
 bool Authority::configure_items(uint64_t generation,items::Capacity capacity,float range){
  if(!epoch_||!generation||!std::isfinite(range)||range<=0||range>10000||generation<itemGeneration_)return false;
@@ -15,7 +15,7 @@ std::optional<items::Contents> Authority::item_template(items::Domain domain,uin
  if(!id||id>65535||domain>items::Domain::equipment)return {};
  if(domain==items::Domain::weapon&&id==1&&!weapons_.contains(1))return {};
  auto weapon=weapons_.find(uint16_t(id));if(domain==items::Domain::weapon&&weapon!=weapons_.end()){
-  const auto&w=weapon->second;return items::Contents{id,1,w.magazine,w.reserve,0,w.heldOnly?items::Resource::durable:items::Resource::ammunition,domain};
+  const auto&w=weapon->second;if(w.mountedOnly)return {};const bool durable=w.heldOnly||w.meleeAttack;return items::Contents{id,1,durable?0u:w.magazine,durable?0u:w.reserve,0,durable?items::Resource::durable:items::Resource::ammunition,domain};
  }
  if(!itemPolicies_.contains(key(domain,id)))return {};
  return items::Contents{id,1,0,0,0,items::Resource::durable,domain};
@@ -38,7 +38,7 @@ items::Result Authority::item_action(Identity admitted,const items::wire::Comman
  if(!items::wire::encode(command))return {ResultCode::invalid};
  if(h.sequence<=s->itemSequence)return {ResultCode::replay};s->itemSequence=h.sequence;
  if(!active_||!s->state.alive||s->state.stunned||!world_||now<s->poseAt||now-s->poseAt>policy_.stalePoseMs)return {ResultCode::unauthorized};
- if((s->state.specialPc.kind==special_pc::Kind::gekko&&command.action!=Action::equip)||s->state.specialPc.action!=special_pc::Action::none||s->state.specialPhase!=SpecialPhase::none||s->state.evadeKind!=EvadeKind::none||s->state.ladderAnchor)return {ResultCode::unauthorized};
+ if(s->state.mountedId||s->state.flightId||(s->state.specialPc.kind==special_pc::Kind::gekko&&command.action!=Action::equip)||s->state.specialPc.action!=special_pc::Action::none||s->state.specialPhase!=SpecialPhase::none||s->state.evadeKind!=EvadeKind::none||s->state.ladderAnchor)return {ResultCode::unauthorized};
  finish_reload(*s,now);if(s->state.reloadUntil)return {ResultCode::unauthorized};
  items::Request request{h.scope,h.actor,h.sequence,true};items::Result result;
  auto clearSight=[&](Vec3 target){auto origin=s->state.pose.feet;origin[1]+=s->state.pose.capsule.height-150;Vec3 direction{};float distance=std::sqrt(distance2(target,origin));if(distance<.01f)return true;for(int i=0;i<3;++i)direction[i]=(target[i]-origin[i])/distance;for(const auto& collision:{movement_,targets_})if(collision)if(auto hit=collision->ray(origin,direction,distance);hit&&hit->distance<distance-4)return false;return true;};
@@ -57,7 +57,7 @@ items::Result Authority::item_action(Identity admitted,const items::wire::Comman
   // placement is independent and accepts all registered catalog items.
   if(command.action==Action::install&&(old.domain!=Domain::weapon||old.item!=25||!weapons_.contains(25)))return {ResultCode::policy};
   Vec3 origin=s->state.pose.feet;origin[0]+=std::sin(s->state.pose.yaw)*650;origin[2]+=std::cos(s->state.pose.yaw)*650;origin[1]+=500;
-  std::optional<stage::CollisionHit> ground;for(const auto& collision:{movement_,targets_})if(collision)if(auto hit=collision->ray(origin,{0,-1,0},1000);hit&&std::abs(hit->normal[1])>=.5f&&(!ground||hit->distance<ground->distance))ground=hit;
+  std::optional<stage::CollisionHit> ground;for(const auto& collision:{movement_,targets_})if(collision)if(auto hit=collision->ray(origin,{0,-1,0},1000,stage::query::floor);hit&&std::abs(hit->normal[1])>=.5f&&(!ground||hit->distance<ground->distance))ground=hit;
   Vec3 target{};
   if(command.action==Action::drop){target=s->state.pose.feet;target[1]+=300;items::Position trial{target[0],target[1],target[2],s->state.pose.yaw};if(!itemPhysics_.clear(trial,old,movement_.get(),targets_.get()))return {ResultCode::unauthorized};}
   else {if(!ground)return {ResultCode::unauthorized};target=ground->position;target[1]+=2;auto sight=target;sight[1]+=40;if(!clearSight(sight))return {ResultCode::unauthorized};}
@@ -68,6 +68,7 @@ items::Result Authority::item_action(Identity admitted,const items::wire::Comman
  }else{
   const auto state=placedItems_.state();auto entity=std::find_if(state.entities.begin(),state.entities.end(),[&](const auto& e){return e.key.id==command.entity;});if(entity==state.entities.end())return {ResultCode::not_found};
   const auto& c=entity->contents;auto prototype=item_template(c.domain,c.item);
+  if(prototype&&c.domain==Domain::weapon&&weapons_.contains(uint16_t(c.item)))prototype->magazine+=weapons_.at(uint16_t(c.item)).tuning.chamberCapacity;
   if(c.domain==Domain::weapon&&special_pc::weapon(uint16_t(c.item)))return {ResultCode::policy};
   if(!prototype||c.quantity!=1||c.resource!=prototype->resource||c.magazine>prototype->magazine||c.reserve>prototype->reserve||c.charges>prototype->charges)return {ResultCode::policy};
   const bool recover=command.action==Action::recover||command.action==Action::use;
@@ -90,7 +91,8 @@ Decision Authority::advance_items(uint64_t now){
  if(!moves.empty()){if(!placedItems_.move(state.scope,moves))return out;state=placedItems_.state();}
  if(!active_||!world_)return out;
  for(const auto&e:state.entities){if(e.kind==items::PlacementKind::installed)continue;
-  const auto&c=e.contents;const auto prototype=item_template(c.domain,c.item);
+  const auto&c=e.contents;auto prototype=item_template(c.domain,c.item);
+  if(prototype&&c.domain==items::Domain::weapon&&weapons_.contains(uint16_t(c.item)))prototype->magazine+=weapons_.at(uint16_t(c.item)).tuning.chamberCapacity;
   if(c.domain==items::Domain::weapon&&special_pc::weapon(uint16_t(c.item)))continue;
   if(!prototype||c.quantity!=1||c.resource!=prototype->resource||c.magazine>prototype->magazine||c.reserve>prototype->reserve||c.charges>prototype->charges)continue;
   for(auto& current:slots_)if(current){auto&s=*current;auto&p=s.state;items::Actor actor{p.identity.slot,p.identity.instance,p.identity.character,p.life};

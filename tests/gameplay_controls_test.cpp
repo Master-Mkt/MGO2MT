@@ -5,12 +5,13 @@
 #include "stage_profiles.h"
 #include "stage_water.h"
 #include "weapon_visual_policy.h"
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;using namespace combat;
+using namespace mgo2mt;using namespace combat;
 void check(bool b,const char*m){if(!b)throw std::runtime_error(m);}
-auto floor_world(){return std::make_shared<const stage::Collision>(stage::Collision::make({{-100000,0,-100000},{-100000,0,100000},{100000,0,100000},{100000,0,-100000}},{{{0,1,2}},{{0,2,3}}}));}
+auto floor_world(){return std::make_shared<const stage::Collision>(stage::Collision::make({{-100000,0,-100000},{-100000,0,100000},{100000,0,100000},{100000,0,-100000}},{{{0,1,2},stage::attribute::native_solid},{{0,2,3},stage::attribute::native_solid}}));}
 int main(int argc,char**argv){try{
  check(argc==2,"stage root");const Identity id{0,1,100};auto profiles=initial_profiles(20,1,0);
  auto host=std::make_unique<Authority>();host->begin(1,floor_world(),profiles);check(host->join(id,1,{{0,2,0}},1000,1000,std::array<uint16_t,3>{25,3,52},0),"human spawn");host->active(true);
@@ -29,7 +30,7 @@ int main(int argc,char**argv){try{
  host->begin(3,floor_world(),profiles);check(host->join(id,1,{{0,30000,0}},1000,1000,std::array<uint16_t,1>{25},0),"high spawn");host->active(true);check(host->assign_special(id,special_pc::Kind::gekko,true,0)==Reject::none,"fall form");host->advance_falling(1);auto p=host->snapshot().players[0]->pose;
  for(unsigned n=1;n<=120;++n){p.feet[1]=std::max(2.f,30000.f-n*250);check(host->pose(id,3,n,p,n*50)==Reject::none,"accepted falling movement");check(host->advance_falling(n*50).events.empty(),"Gekko fall has no damage events");}check(host->snapshot().players[0]->hp==1000,"Gekko high landing HP");
  special_pc::SaluteAudio audio;Snapshot s;s.epoch=9;Player a;a.identity=id;a.life=1;a.alive=true;a.specialPc.kind=special_pc::Kind::gekko;s.players[0]=a;check(audio.update(s,1).empty(),"audio baseline");s.players[0]->specialPc={special_pc::Kind::gekko,true,special_pc::Action::salute,1,0};check(audio.update(s,1).size()==1&&audio.update(s,1).empty(),"salute sounds once");check(audio.update(s,2).empty(),"scene history not replayed");
- particles::Pool pool;s.eventWatermark=0;pool.synchronize(9,1,0,0);Event e;e.epoch=9;e.id=1;e.kind=EventKind::shot;e.weapon=128;e.source=id;e.sourceLife=1;e.normal={0,0,1};e.position={0,2600,0};s.eventWatermark=1;pool.dispatch({&e,1},s,0);check(pool.sample(s,0).size()==3,"muzzle flash rays");pool.dispatch({&e,1},s,1);check(pool.size()==1&&pool.sample(s,80).empty(),"flash duplicate and expiry");e.id=2;e.weapon=129;e.kind=EventKind::projectileTrail;s.eventWatermark=2;pool.dispatch({&e,1},s,100);check(pool.sample(s,100).front().kind==particles::Kind::smoke,"missile smoke");
+ particles::Pool pool;s.eventWatermark=0;pool.synchronize(9,1,0,0);Event e;e.epoch=9;e.id=1;e.kind=EventKind::shot;e.weapon=128;e.source=id;e.sourceLife=1;e.normal={0,0,1};e.position={0,2600,0};s.eventWatermark=1;pool.dispatch({&e,1},s,0);auto muzzleSprites=pool.sprites(s,0);check(muzzleSprites.size()==2&&muzzleSprites[0].texture==0x090aec&&muzzleSprites[0].additive&&muzzleSprites[1].texture==0xca92b7,"Gekko original muzzle flash and smoke sprites");auto fallback=pool.sample(s,0);check(std::none_of(fallback.begin(),fallback.end(),[](const auto&p){return p.kind==particles::Kind::casing;}),"Gekko has no cartridge casing");pool.dispatch({&e,1},s,1);check(pool.size()==2,"flash and smoke duplicate suppressed");auto afterFlash=pool.sprites(s,80);check(afterFlash.size()==1&&afterFlash[0].texture==0xca92b7,"flash expires while original muzzle smoke remains");e.id=2;e.weapon=129;e.kind=EventKind::projectileTrail;s.eventWatermark=2;pool.dispatch({&e,1},s,100);check(pool.sample(s,100).front().kind==particles::Kind::smoke,"missile smoke");
  for(uint16_t weapon:{2,3,22,24,25,26,30,31,35,50,128,129})for(uint16_t count:{0,1,5,6,30})check(tracer_shot(weapon,count)==((weapon==22||weapon==24||weapon==25||weapon==26||weapon==30||weapon==31||weapon==35)&&count>=1&&count<=5),"AR MG last-five tracer boundary");
  for(const auto& profile:stage::runtime_profiles){auto layout=items::load_gcx_item_layout(argv[1],profile.map);check(layout&&layout->verified&&layout->groups.size()==4,"own stage GCX verified");items::RoundItems settings;items::replace_pickup_item(settings,*layout,22,items::Domain::weapon,2);items::replace_pickup_item(settings,*layout,10,items::Domain::equipment,16);auto unchanged=settings.serialize();bool refused=false;try{items::replace_pickup_item(settings,*layout,99,items::Domain::weapon,2);}catch(...){refused=true;}check(refused&&settings.serialize()==unchanged,"invalid replacement atomic");
   std::ifstream f(std::filesystem::path(argv[1])/(std::string(profile.stage)+".collision.cfg"));auto collision=stage::movement_collision(std::make_shared<const stage::Collision>(stage::Collision::read(f)));

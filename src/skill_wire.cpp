@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <set>
 #include <stdexcept>
-namespace mgo2win::skills {
+namespace mgo2mt::skills {
 namespace {void put(std::vector<uint8_t>&b,uint32_t v,unsigned n){while(n)b.push_back(uint8_t(v>>(8*--n)));}uint32_t get(std::span<const uint8_t>b,size_t i,unsigned n){if(i+n>b.size())throw std::runtime_error("skill reply extent");uint32_t v=0;while(n--)v=(v<<8)|b[i++];return v;}}
 std::vector<uint8_t> remote_payload(const RemoteRequest&r){
  if(!r.token||r.set>3||r.loadout.entries.size()>8)throw std::runtime_error("skill request");

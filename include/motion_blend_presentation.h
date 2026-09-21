@@ -3,7 +3,7 @@
 #include <array>
 #include <cmath>
 #include <stdexcept>
-namespace mgo2win::motion_blend {
+namespace mgo2mt::motion_blend {
 // Render identity only; scene, full actor identity, life and model generation.
 using Scope=std::array<uint64_t,5>;
 class Lane {

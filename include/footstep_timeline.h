@@ -2,7 +2,7 @@
 #include <array>
 #include <cstdint>
 
-namespace mgo2win::combat::footsteps {
+namespace mgo2mt::combat::footsteps {
 struct Input {
     uint64_t epoch{}, scene{}, actor{}, life{};
     uint32_t sourceKey{}, sourceIndex{};

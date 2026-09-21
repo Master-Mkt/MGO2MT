@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;using namespace mgo2win::combat;
+using namespace mgo2mt;using namespace mgo2mt::combat;
 namespace {
 void check(bool ok,const char*why){if(!ok)throw std::runtime_error(why);}
 constexpr Identity a{1,10,101},b{2,11,202};

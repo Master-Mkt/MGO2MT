@@ -1,4 +1,5 @@
 #include "stage_normals.h"
+#include "stage_floor_blend.h"
 #include "source_coordinates.h"
 #include "gekko_preview.h"
 #include "build_version.h"
@@ -26,8 +27,8 @@
 #include <stdexcept>
 #include <thread>
 
-int run_audio_probe(int,wchar_t**,const std::atomic_bool*,const mgo2win::AudioControl*);
-namespace mgo2win { namespace {
+int run_audio_probe(int,wchar_t**,const std::atomic_bool*,const mgo2mt::AudioControl*);
+namespace mgo2mt { namespace {
 struct StepAudio {std::thread thread;std::atomic_bool stop{false},busy{false};AudioControl control;~StepAudio(){stop=true;if(thread.joinable())thread.join();}void play(const std::filesystem::path&p){if(busy||!std::filesystem::is_regular_file(p))return;if(thread.joinable())thread.join();stop=false;busy=true;control.gain=.65f;control.stream="gekko_native_footstep";thread=std::thread([this,p]{std::wstring a=L"audio",b=p.wstring(),c=L"2";wchar_t* args[]{a.data(),b.data(),c.data()};run_audio_probe(3,args,&stop,&control);busy=false;});}};
 using stage::Vec3;using Microsoft::WRL::ComPtr;using Action=special_pc::Action;
 void require(bool v,const char*m){if(!v)throw std::runtime_error(m);}void checked(HRESULT h){require(SUCCEEDED(h),"Gekko D3D operation failed");}
@@ -42,7 +43,7 @@ struct Window {
   if(self){if(m==WM_CLOSE){self->quit=true;return 0;}if(m==WM_SIZE){self->width=LOWORD(l);self->height=HIWORD(l);self->resized=true;return 0;}if(m==WM_KEYDOWN&&w==VK_F12&&!(l&(1LL<<30))){self->showSky=!self->showSky;return 0;}if(m==WM_KEYDOWN&&w==VK_ESCAPE){self->quit=true;return 0;}if(m==WM_ERASEBKGND)return 1;}
   return DefWindowProcW(h,m,w,l);
  }
- Window(){WNDCLASSW c{};c.lpfnWndProc=proc;c.hInstance=GetModuleHandleW(nullptr);c.lpszClassName=L"MGO2WIN.Gekko.LocalPreview";c.hCursor=LoadCursorW(nullptr,MAKEINTRESOURCEW(32512));if(!RegisterClassW(&c)&&GetLastError()!=ERROR_CLASS_ALREADY_EXISTS)throw std::runtime_error("Gekko window class");RECT r{0,0,1280,720};AdjustWindowRect(&r,WS_OVERLAPPEDWINDOW,FALSE);auto title=versioned_title(L"月光ローカル操作テスト | LS/WASD 移動・RS/IJKL 視点・A/Space ジャンプ・Y/X 蹴り・B/Z 挨拶・F12 天球診断・Esc 終了");handle=CreateWindowExW(0,c.lpszClassName,title.c_str(),WS_OVERLAPPEDWINDOW,CW_USEDEFAULT,CW_USEDEFAULT,r.right-r.left,r.bottom-r.top,nullptr,nullptr,c.hInstance,this);require(handle,"Gekko window");ShowWindow(handle,SW_SHOW);}
+ Window(){WNDCLASSW c{};c.lpfnWndProc=proc;c.hInstance=GetModuleHandleW(nullptr);c.lpszClassName=L"MGO2MT.Gekko.LocalPreview";c.hCursor=LoadCursorW(nullptr,MAKEINTRESOURCEW(32512));if(!RegisterClassW(&c)&&GetLastError()!=ERROR_CLASS_ALREADY_EXISTS)throw std::runtime_error("Gekko window class");RECT r{0,0,1280,720};AdjustWindowRect(&r,WS_OVERLAPPEDWINDOW,FALSE);auto title=versioned_title(L"月光ローカル操作テスト | LS/WASD 移動・RS/IJKL 視点・A/Space ジャンプ・Y/X 蹴り・B/Z 挨拶・F12 天球診断・Esc 終了");handle=CreateWindowExW(0,c.lpszClassName,title.c_str(),WS_OVERLAPPEDWINDOW,CW_USEDEFAULT,CW_USEDEFAULT,r.right-r.left,r.bottom-r.top,nullptr,nullptr,c.hInstance,this);require(handle,"Gekko window");ShowWindow(handle,SW_SHOW);}
  ~Window(){if(handle)DestroyWindow(handle);}
  void messages(){MSG m;while(PeekMessageW(&m,nullptr,0,0,PM_REMOVE)){if(m.message==WM_QUIT)quit=true;else{TranslateMessage(&m);DispatchMessageW(&m);}}}
 };
@@ -104,7 +105,7 @@ struct Actor {
 // locally and are never written into original stage assets or sent to a HOST.
 std::shared_ptr<const stage::Collision> capture_fixture(CharacterModel& model,const stage::Collision& base,Vec3 origin){
  std::vector<Vec3> vertices;std::vector<stage::CollisionTriangle> triangles;
- auto quad=[&](Vec3 a,Vec3 b,Vec3 c,Vec3 d){const auto n=unsigned(vertices.size());for(auto p:{a,b,c,d})vertices.push_back(add(p,origin));triangles.push_back({{n,n+1,n+2}});triangles.push_back({{n,n+2,n+3}});};
+ auto quad=[&](Vec3 a,Vec3 b,Vec3 c,Vec3 d){const auto n=unsigned(vertices.size());for(auto p:{a,b,c,d})vertices.push_back(add(p,origin));triangles.push_back({{n,n+1,n+2},stage::attribute::native_solid});triangles.push_back({{n,n+2,n+3},stage::attribute::native_solid});};
  quad({-40000,0,-40000},{-40000,0,40000},{40000,0,40000},{40000,0,-40000});
  quad({19000,0,1500},{29000,0,1500},{29000,7000,1500},{19000,7000,1500});
  quad({19000,7000,1500},{19000,7000,6500},{29000,7000,6500},{29000,7000,1500});
@@ -128,7 +129,7 @@ int run_gekko_preview(const std::filesystem::path&data,bool capture,const std::f
   special_pc::GekkoGreeting greeting(bytes(data/"special/gekko_salute.gwmot",1024*1024));
   std::unique_ptr<special_pc::GekkoTraversalMotionBank> traversal; // API provided by the dedicated original-motion sampler.
   if(std::filesystem::exists(data/"special/gekko_traversal.gwmot"))traversal=std::make_unique<special_pc::GekkoTraversalMotionBank>(bytes(data/"special/gekko_traversal.gwmot",4*1024*1024));
-  auto stageBytes=bytes(data/"stage/n022a.gwm",64*1024*1024);CharacterModel worldModel(stageBytes);stage::load_original_normals(worldModel,stageBytes,data/"stage/n022a.gwn");std::ifstream col(data/"stage/n022a.collision.cfg");require(bool(col),"Gekko stage collision");auto rawWorld=std::make_shared<const stage::Collision>(stage::Collision::read(col));auto world=stage::movement_collision(rawWorld);require(bool(world),"Gekko movement collision");
+  auto stageBytes=bytes(data/"stage/n022a.gwm",64*1024*1024);CharacterModel worldModel(stageBytes);stage::load_original_normals(worldModel,stageBytes,data/"stage/n022a.gwn");stage::load_floor_blend(worldModel,stageBytes,data/"stage/n022a.gfb");std::ifstream col(data/"stage/n022a.collision.cfg");require(bool(col),"Gekko stage collision");auto rawWorld=std::make_shared<const stage::Collision>(stage::Collision::read(col));auto world=stage::movement_collision(rawWorld);require(bool(world),"Gekko movement collision");
   std::ifstream light(data/"stage/n022a.lighting.cfg");if(light){auto lighting=stage::Lighting::read(light);for(auto&v:worldModel.vertices){auto s=lighting.sample({v.x,v.y,v.z},{v.nx,v.ny,v.nz});v.lr=s.color[0];v.lg=s.color[1];v.lb=s.color[2];v.lit=1;}}
   std::unique_ptr<CharacterModel> skyModel;if(std::filesystem::exists(data/"stage/n022a.sky.gwm"))skyModel=std::make_unique<CharacterModel>(bytes(data/"stage/n022a.sky.gwm",8*1024*1024),ModelExtent::sky);
   special_pc::GekkoFootsteps footsteps;StepAudio footAudio;unsigned footCount=0;
@@ -179,5 +180,5 @@ int run_gekko_preview(const std::filesystem::path&data,bool capture,const std::f
   c->ClearState();std::cout<<"Gekko local preview completed\n";return 0;
  }catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}
 }
-} // namespace mgo2win
+} // namespace mgo2mt
 

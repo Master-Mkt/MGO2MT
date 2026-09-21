@@ -2,12 +2,14 @@
 #include <array>
 #include <cstdint>
 #include <filesystem>
+#include <map>
 #include <optional>
 #include <span>
 #include <string>
+#include <string_view>
 #include <vector>
 
-namespace mgo2win::weapons {
+namespace mgo2mt::weapons {
 enum class Category : uint8_t { primary=0, secondary=1, support=2 };
 struct Entry {
  uint16_t id=0;
@@ -31,11 +33,15 @@ struct SelectionContext {
 class Catalog {
  std::vector<Entry> entries_;
  std::optional<uint32_t> initial_dp_;
+ std::map<uint16_t,std::string> all_names_;
 public:
  // Strict, bounded UTF-8 TSV. A failed reload preserves the current catalog.
  bool load(const std::filesystem::path&,std::string& error);
  const std::vector<Entry>& entries()const{return entries_;}
  const Entry* find(Category,uint16_t id)const;
+ // Includes mounted-only definitions, which are deliberately absent from
+ // the selectable handheld catalog. Empty means an unknown identity.
+ std::string_view name(uint16_t id)const;
  std::optional<uint32_t> initial_dp()const{return initial_dp_;}
  std::vector<const Entry*> choices(Category,const SelectionContext&,bool include_unavailable=true)const;
 };

@@ -25,7 +25,7 @@
 #include <fstream>
 #include <set>
 #include <thread>
-namespace mgo2win::alert_media {
+namespace mgo2mt::alert_media {
 using Microsoft::WRL::ComPtr;
 namespace {
 void need(bool ok,const char* message){if(!ok)throw std::runtime_error(message);}

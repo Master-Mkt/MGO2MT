@@ -3,7 +3,7 @@
 #include <cstring>
 #include <stdexcept>
 
-namespace mgo2win::clan {
+namespace mgo2mt::clan {
 std::optional<Image> decode_blob(std::span<const uint8_t> bytes){
  if(bytes.size()!=565)throw std::runtime_error("Clan emblem extent");
  if(std::all_of(bytes.begin(),bytes.end(),[](uint8_t value){return value==0;}))return {};

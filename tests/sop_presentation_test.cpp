@@ -1,7 +1,7 @@
 #include "sop_presentation.h"
 #include <stdexcept>
 #include <iostream>
-using namespace mgo2win;
+using namespace mgo2mt;
 void check(bool ok){if(!ok)throw std::runtime_error("SOP presentation assertion");}
 int main(){
  combat::Snapshot s;s.epoch=9;s.revision=1;

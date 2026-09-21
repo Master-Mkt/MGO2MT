@@ -5,7 +5,7 @@
 #include <filesystem>
 #include <string>
 #include <functional>
-namespace mgo2win {
+namespace mgo2mt {
 constexpr unsigned input_actions=24;
 struct InputConfig {
  unsigned device=0,slot=0;

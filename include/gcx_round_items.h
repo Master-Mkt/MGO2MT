@@ -3,7 +3,7 @@
 #include "stage_cbox.h"
 #include <istream>
 
-namespace mgo2win::items {
+namespace mgo2mt::items {
 struct GcxPickupAnchor {
  uint32_t sourceOffset=0,key=0;Position position;
 };

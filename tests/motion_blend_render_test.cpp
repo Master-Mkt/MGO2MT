@@ -9,7 +9,7 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 using Microsoft::WRL::ComPtr;
 namespace {
 void check(bool v,const char* why){if(!v)throw std::runtime_error(why);}

@@ -3,7 +3,7 @@
 #include "preset_radio.h"
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win::radio;
+using namespace mgo2mt::radio;
 namespace {
 void check(bool value,const char* message){if(!value)throw std::runtime_error(message);}
 const Identity self{0,11,101},peer{1,12,102};
@@ -77,15 +77,15 @@ int main(){try{
  check(offering.state().status==Status::ready&&offering.state().life==2,"offer survives receiver life change");
  // The exact default catalogue text reaches chat history, without acknowledging
  // an ordinary lobby chat flight containing the same text from the same PC.
- mgo2win::chat::Session chat;chat.connect(self.character,mgo2win::chat::EndpointProfile::nomad_jp);chat.enter(20);
+ mgo2mt::chat::Session chat;chat.connect(self.character,mgo2mt::chat::EndpointProfile::nomad_jp);chat.enter(20);
  chat.roster({{self.character,"日本語の自分",1},{peer.character,"日本語の相手",1}},true);
  const std::string text(mgo2::radio::defaultCategories()[0].messages[0].text);
  check(text=="ゴーゴーゴー！","original Japanese default text");
- check(chat.submit(chat.state().generation,text,false,100)==mgo2win::chat::Submit::accepted&&chat.take(100).has_value(),"ordinary chat flight");
+ check(chat.submit(chat.state().generation,text,false,100)==mgo2mt::chat::Submit::accepted&&chat.take(100).has_value(),"ordinary chat flight");
  check(chat.receive_radio(self.character,text,101),"radio appends joined ID");
- auto cs=chat.state();check(cs.delivery==mgo2win::chat::Delivery::awaiting_echo&&cs.lines.size()==1&&cs.lines[0].radio&&cs.lines[0].text==text&&cs.lines[0].name=="日本語の自分","radio does not ACK ordinary chat and keeps Japanese attribution");
+ auto cs=chat.state();check(cs.delivery==mgo2mt::chat::Delivery::awaiting_echo&&cs.lines.size()==1&&cs.lines[0].radio&&cs.lines[0].text==text&&cs.lines[0].name=="日本語の自分","radio does not ACK ordinary chat and keeps Japanese attribution");
  check(!chat.receive_radio(999,text,102),"unknown PC cannot insert radio history");
- check(chat.receive({self.character,0,text},103)&&chat.state().delivery==mgo2win::chat::Delivery::echo_received,"ordinary matching echo still works");
+ check(chat.receive({self.character,0,text},103)&&chat.state().delivery==mgo2mt::chat::Delivery::echo_received,"ordinary matching echo still works");
  for(unsigned i=0;i<70;++i)check(chat.receive_radio(peer.character,text,104+i),"known radio history");
  check(chat.state().lines.size()==64,"radio shares bounded 64-row history");
  chat.leave();check(!chat.receive_radio(self.character,text,200)&&chat.state().lines.empty(),"leave rejects stale radio history");

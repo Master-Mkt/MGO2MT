@@ -4,7 +4,7 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 static void require(bool v,const char*s){if(!v)throw std::runtime_error(s);}
 int main(){try{
  player::Control c;std::array<float,24> in{};auto step=[&](int frames=1){for(int i=0;i<frames;++i)c.step(in,.01f,true,true);};auto tap=[&](unsigned i){in[i]=1;step();in[i]=0;step();};step();

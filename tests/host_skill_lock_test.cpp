@@ -5,8 +5,8 @@
 #include <algorithm>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;
-namespace hs=mgo2win::host_skills;
+using namespace mgo2mt;
+namespace hs=mgo2mt::host_skills;
 namespace {
 void check(bool v,const char* why){if(!v)throw std::runtime_error(why);}
 void put(std::vector<uint8_t>& b,size_t at,uint64_t v,unsigned n){while(n){b[at+n-1]=uint8_t(v);v>>=8;--n;}}
@@ -26,9 +26,9 @@ hs::Verified verified(std::shared_ptr<const skills::Catalog> c,combat::Identity 
 }
 std::shared_ptr<const stage::Collision> floor(){
  std::vector<stage::Vec3>v{{-30000,0,-30000},{30000,0,-30000},{30000,0,30000},{-30000,0,30000}};
- return std::make_shared<const stage::Collision>(stage::Collision::make(v,{{{0,1,2}},{{0,2,3}}}));
+ return std::make_shared<const stage::Collision>(stage::Collision::make(v,{{{0,1,2},stage::attribute::native_solid},{{0,2,3},stage::attribute::native_solid}}));
 }
-stage::Collision wall(){return stage::Collision::make({{-20000,-5000,3000},{20000,-5000,3000},{0,20000,3000}},{{{0,1,2}}});}
+stage::Collision wall(){return stage::Collision::make({{-20000,-5000,3000},{20000,-5000,3000},{0,20000,3000}},{{{0,1,2},stage::attribute::native_solid}});}
 combat::Pose pose(float z){combat::Pose p;p.feet={0,2,z};return p;}
 struct Fixture {
  static constexpr uint64_t epoch=7;

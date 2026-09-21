@@ -7,7 +7,7 @@
 #include <iostream>
 #include <memory>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {
 void check(bool b,const char*m){if(!b)throw std::runtime_error(m);}
 constexpr combat::Identity self{0,1,100};

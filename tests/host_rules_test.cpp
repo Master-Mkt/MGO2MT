@@ -2,7 +2,7 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
-using namespace mgo2win::host;
+using namespace mgo2mt::host;
 void check(bool v,const char*s){if(!v)throw std::runtime_error(s);}
 int main(){try{
  RoundRules s({1000,1,true});ParticipantToken host{0,1,100},a{1,1,101},b{2,1,102},watch{3,1,103};

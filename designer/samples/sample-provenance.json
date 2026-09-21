@@ -1,0 +1,42 @@
+{
+  "format": "MGO2MT.UI_SAMPLE.1",
+  "originalGameAssets": false,
+  "imageSource": "Programmatically drawn original three-bar RGBA swatch; no external art",
+  "ddsWriter": "MGO2MTMultiUI.dll mui_export_dds",
+  "projectWriter": "MGO2MTMultiUIDesigner.Core Serialization.WriteProject",
+  "runtimeWriter": "MGO2MTMultiUIDesigner.Core Serialization.Encode",
+  "portableAssetRoot": ".",
+  "elements": 18,
+  "files": [
+    {
+      "path": "textures/sample-swatch.png",
+      "size": 329,
+      "sha256": "169ebe3396aa6c6b47ce7572c25d0c9baa41135f6e588da8c93c03ffa6d2adb9"
+    },
+    {
+      "path": "textures/sample-swatch.jpg",
+      "size": 1884,
+      "sha256": "c32594ffdcd40ee6c44af97738ebb89cc4a2e1efd0139fb3917d40245575b94d"
+    },
+    {
+      "path": "textures/sample-swatch.dds",
+      "size": 23168,
+      "sha256": "a94a377230812ba76302f8bea4f71dd1c0e85ffaedb322b1f7873f6cdacedbb7"
+    },
+    {
+      "path": "example.mgoui",
+      "size": 13522,
+      "sha256": "1bead4ee1aa018699b5b81e45fe0d373fafb0967ba83e3ce8b9f2b3137f5e5f6"
+    },
+    {
+      "path": "layout.example.json",
+      "size": 12247,
+      "sha256": "aaf988565ffceec31eb75c09a01f18b62d48255da229e6da00a0c84b05cbc884"
+    },
+    {
+      "path": "schemas/multi_ui_layout.schema.json",
+      "size": 9354,
+      "sha256": "17fe1a7e359bea1efe8dbbc93fc71d0132523237df31b4e39fd296f35e1f6c96"
+    }
+  ]
+}

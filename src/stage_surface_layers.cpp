@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include <vector>
 
-namespace mgo2win::stage {
+namespace mgo2mt::stage {
 namespace {
 using D3 = std::array<double, 3>;
 using D2 = std::array<double, 2>;

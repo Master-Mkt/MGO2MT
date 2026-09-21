@@ -1,6 +1,6 @@
 #include "weapon_restrictions.h"
 
-namespace mgo2win::restrictions {
+namespace mgo2mt::restrictions {
 namespace {
 constexpr Bits bit(unsigned index){Bits b{};b[index/8]=uint8_t(1u<<(index%8));return b;}
 constexpr Bits suppressors(){Bits b{};b[9]=0x20;b[10]=0x0e;return b;}

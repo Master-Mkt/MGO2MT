@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
-namespace mgo2win {
+namespace mgo2mt {
 // Reviewed normal BGM stop route: 4FB50 -> 4EE20, updates at 4E8D8.
 // Source ELF 1a55a41ee5afdebd89075bd205e412c8311f569ba9dc022f629bb63fb4bfd13a.
 // One already-playing voice, exponent 1, native nominal frame delta; no crossfade.

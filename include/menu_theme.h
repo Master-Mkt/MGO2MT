@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <string_view>
 #include "menu_font.h"
-namespace mgo2win {
+namespace mgo2mt {
 // Native interpretation of the user's 2026-09-10 retail menu references.
 // Clipped upper-left selection corner, inset rim and translucent amber glass.
 inline void menu_rect(HDC dc,int x,int y,int w,int h,COLORREF c){

@@ -2,7 +2,7 @@
 #include "player_motion.h"
 #include "evade_runtime_profile.h"
 #include <stdexcept>
-namespace mgo2win::player {
+namespace mgo2mt::player {
 class EvadeMotionBank {
  PlayerMotionBank bank_;
 public:

@@ -6,7 +6,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <cmath>
-using namespace mgo2win;using namespace mgo2win::combat;
+using namespace mgo2mt;using namespace mgo2mt::combat;
 namespace {
 void check(bool b,const char* s){if(!b)throw std::runtime_error(s);}
 Identity id(unsigned n){return {uint8_t(n),uint16_t(n+1),100+n};}

@@ -2,14 +2,14 @@
 #include "render_options.h"
 #include <d3d11.h>
 #include <wrl/client.h>
-namespace mgo2win::render_backend {
+namespace mgo2mt::render_backend {
 template<class T>using Handle=Microsoft::WRL::ComPtr<T>;
 // Thin D3D11 backend boundary. No scene, simulation, asset or UI ownership.
 struct RenderTarget {
  Handle<ID3D11Texture2D> color,depth;
  Handle<ID3D11RenderTargetView> target;
- Handle<ID3D11DepthStencilView> depthView;
- Handle<ID3D11ShaderResourceView> view;
+ Handle<ID3D11DepthStencilView> depthView,readOnlyDepthView;
+ Handle<ID3D11ShaderResourceView> view,depthResource;
 };
 class Device {
  ID3D11Device* device_;
@@ -18,7 +18,7 @@ public:
  Options options()const;
  void configure(Options)const;
  Handle<ID3D11SamplerState> sampler(unsigned anisotropy)const;
- RenderTarget target(unsigned width,unsigned height)const;
+ RenderTarget target(unsigned width,unsigned height,bool hdr=false)const;
  // Original BC bytes are retained; a separate color view decodes sRGB.
  Handle<ID3D11ShaderResourceView> color_view(ID3D11ShaderResourceView*)const;
  // Generates a complete RGBA mip chain through an isolated command list.

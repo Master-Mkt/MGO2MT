@@ -3,7 +3,7 @@
 #include "port_settings.h"
 #include <stdexcept>
 #include <string_view>
-namespace mgo2win {
+namespace mgo2mt {
 // Explicit native local test policy. Slots in switches are one-based; XInput is zero-based.
 struct LocalPlaytest {
  bool enabled=false,pad=false;unsigned slot=0;

@@ -2,7 +2,7 @@
 #include "combat_authority.h"
 #include <map>
 #include <set>
-namespace mgo2win::items {
+namespace mgo2mt::items {
 // Native contact receipt cue hook. Never infer pickup from initial Held grants.
 class PickupFeedback {
  uint64_t epoch_=0,floor_=0;combat::Identity self_;uint32_t life_=0;

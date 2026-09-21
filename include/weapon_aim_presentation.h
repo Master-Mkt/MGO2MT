@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <set>
-namespace mgo2win::reticle {
+namespace mgo2mt::reticle {
 // Native camera-only kick, separate from the HOST's actual bullet dispersion.
 // Does not change the player's input pose or grant a client accuracy advantage.
 class Recoil {
@@ -12,7 +12,7 @@ class Recoil {
 public:
  void reset(){scope_.reset();watermark_=eventCursor_=0;pitch_=yaw_=0;}
  void update(Scope scope,bool eligible,uint64_t watermark,std::span<const combat::Event> events,double dt){
-  if(!eligible||!scope.epoch||!scope.scene||!scope.life||scope.weapon!=25||
+  if(!eligible||!scope.epoch||!scope.scene||!scope.life||(!original_weapon::find(scope.weapon)&&scope.weapon!=50&&scope.weapon!=128&&scope.weapon!=129)||
      scope.identity.slot>=24||!scope.identity.instance||!scope.identity.character||!std::isfinite(dt)||dt<0){reset();return;}
   if(scope_!=scope){reset();scope_=scope;watermark_=eventCursor_=watermark;return;}
   if(watermark<watermark_)return;
@@ -45,7 +45,10 @@ inline std::optional<combat::Vec3> aim_point(combat::Vec3 origin,combat::Vec3 di
  const stage::Collision& world,const stage::Collision* objects,const combat::Snapshot& snapshot,combat::Identity self){
  if(!enemy_tag::finite(origin))return {};auto ray=enemy_tag::unit(direction);if(!ray)return {};
  float distance=200000;
- for(const auto* collision:{&world,objects})if(collision)if(auto hit=collision->ray(origin,*ray,distance))distance=hit->distance;
+ auto query=stage::query::bullet;
+ if(self.slot<snapshot.players.size())if(const auto& p=snapshot.players[self.slot];p&&p->identity==self)
+  if(auto category=projectile::collision_query(p->weapon))query=*category;
+ for(const auto* collision:{&world,objects})if(collision)if(auto hit=collision->ray(origin,*ray,distance,query))distance=hit->distance;
  for(const auto&p:snapshot.players)if(p&&p->alive&&p->identity!=self)
   if(auto hit=enemy_tag::capsule(origin,*ray,p->pose);hit&&*hit<distance)distance=*hit;
  return enemy_tag::add(origin,enemy_tag::mul(*ray,distance));

@@ -1,7 +1,7 @@
 #include "water_effects.h"
 #include <algorithm>
 #include <cmath>
-namespace mgo2win::stage {
+namespace mgo2mt::stage {
 void WaterEffects::reset(){effects_.clear();initialized_=wet_=false;distance_=cooldown_=0;epoch_=life_=0;}
 void WaterEffects::emit(Vec3 p,float level){
  // Native three-ring wake plus five droplets. Oldest effects retire first.

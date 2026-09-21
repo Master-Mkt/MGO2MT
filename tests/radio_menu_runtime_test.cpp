@@ -7,7 +7,7 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {
 void check(bool v,const char* m){if(!v)throw std::runtime_error(m);}
 constexpr size_t pixels=1280*720;
@@ -45,7 +45,7 @@ void physical(PlayerMenu& menu,uint32_t held,uint32_t pressed,bool active=true,b
 void open_radio(PlayerMenu& menu){menu.select_chat_radio();check(menu.text_entry(),"first SELECT is chat");menu.select_chat_radio();check(menu.radio_visible()&&!menu.text_entry(),"second SELECT is radio");}
 }
 int main(int argc,char** argv){try{
- const auto scratch=std::filesystem::temp_directory_path()/("MGO2WIN-radio-menu-"+std::to_string(GetCurrentProcessId())+"-"+std::to_string(GetTickCount64()));
+ const auto scratch=std::filesystem::temp_directory_path()/("MGO2MT-radio-menu-"+std::to_string(GetCurrentProcessId())+"-"+std::to_string(GetTickCount64()));
  std::filesystem::create_directories(scratch);
  std::filesystem::path output;if(argc>1){output=std::filesystem::path(argv[1]);std::filesystem::create_directories(output);}
  const auto save=[&](const Surface& s,const char* name){if(!output.empty())capture(s,output/name);};

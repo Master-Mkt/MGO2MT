@@ -6,7 +6,7 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 static void check(bool b,const char*s){if(!b)throw std::runtime_error(s);}
 static std::vector<uint8_t> bytes(std::string_view s){return {s.begin(),s.end()};}
 static std::vector<uint8_t> file(const std::filesystem::path&p){std::ifstream f(p,std::ios::binary);check(bool(f),"fixture open");return {std::istreambuf_iterator<char>(f),{}};}

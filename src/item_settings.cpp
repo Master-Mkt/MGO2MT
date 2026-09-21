@@ -1,3 +1,4 @@
+#include "product_identity.h"
 #include "item_settings.h"
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
@@ -7,19 +8,19 @@
 #include <fstream>
 #include <set>
 #include <sstream>
-namespace mgo2win::items {
+namespace mgo2mt::items {
 namespace {
 constexpr size_t maximum_file=1024*1024;
 bool number(std::string_view s,uint32_t& n){if(s.empty())return false;auto result=std::from_chars(s.data(),s.data()+s.size(),n);return result.ec==std::errc{}&&result.ptr==s.data()+s.size();}
 const char* mode(DropOverride d){return d==DropOverride::allow?"allow":d==DropOverride::deny?"deny":"default";}
-std::string encode(const Settings& s){std::ostringstream o;o<<"MGO2WIN_ITEM_SETTINGS 1\ncapacity "<<s.capacity.dropped<<' '<<s.capacity.installed<<"\nrecover_others "<<(s.recoverOthers?1:0)<<'\n';for(const auto&[id,v]:s.weapons)o<<"weapon "<<id<<' '<<mode(v.drop)<<' '<<(v.emptyDiscard?(*v.emptyDiscard?"discard":"keep"):"default")<<'\n';return o.str();}
+std::string encode(const Settings& s){std::ostringstream o;o<<"MGO2MT_ITEM_SETTINGS 1\ncapacity "<<s.capacity.dropped<<' '<<s.capacity.installed<<"\nrecover_others "<<(s.recoverOthers?1:0)<<'\n';for(const auto&[id,v]:s.weapons)o<<"weapon "<<id<<' '<<mode(v.drop)<<' '<<(v.emptyDiscard?(*v.emptyDiscard?"discard":"keep"):"default")<<'\n';return o.str();}
 }
 bool Settings::valid()const noexcept{if(capacity.dropped>4096||capacity.installed>4096||weapons.size()>4096)return false;for(const auto&[id,v]:weapons)if(v.drop!=DropOverride::original_default&&v.drop!=DropOverride::deny&&v.drop!=DropOverride::allow)return false;return true;}
 DropPolicy Settings::policy(uint32_t id,const DropPolicy* original)const noexcept{DropPolicy p;if(original){p.originalDrop=original->originalDrop;p.originalEmptyDiscard=original->originalEmptyDiscard;}auto found=weapons.find(id);if(found!=weapons.end()){p.drop=found->second.drop;p.emptyDiscard=found->second.emptyDiscard;}return p;}
 bool Settings::parse(std::string_view bytes,std::string& error){try{
  if(bytes.size()>maximum_file)throw std::runtime_error("Item settings exceed 1 MiB");Settings candidate;candidate.weapons.clear();std::istringstream input{std::string(bytes)};std::string line;bool header=false,capacitySeen=false,recoverSeen=false;
  while(std::getline(input,line)){if(line.size()>8192)throw std::runtime_error("Item settings line too long");std::istringstream words(line);std::string key;if(!(words>>key)||key[0]=='#')continue;std::string a,b,c,extra;
-  if(!header){if(key!="MGO2WIN_ITEM_SETTINGS"||!(words>>a)||a!="1"||(words>>extra))throw std::runtime_error("Unknown item settings version");header=true;continue;}
+  if(!header){if(key!=mgo2mt::brand::Format{"MGO2MT_ITEM_SETTINGS"}||!(words>>a)||a!="1"||(words>>extra))throw std::runtime_error("Unknown item settings version");header=true;continue;}
   if(key=="capacity"){if(capacitySeen||!(words>>a>>b)||(words>>extra)||!number(a,candidate.capacity.dropped)||!number(b,candidate.capacity.installed))throw std::runtime_error("Invalid item capacities");capacitySeen=true;}
   else if(key=="recover_others"){if(recoverSeen||!(words>>a)||(words>>extra)||(a!="0"&&a!="1"))throw std::runtime_error("Invalid recovery permission");candidate.recoverOthers=a=="1";recoverSeen=true;}
   else if(key=="weapon"){uint32_t id=0;if(!(words>>a>>b>>c)||(words>>extra)||!number(a,id)||candidate.weapons.contains(id)||candidate.weapons.size()>=4096)throw std::runtime_error("Invalid or duplicate weapon override");WeaponOverride v;if(b=="allow")v.drop=DropOverride::allow;else if(b=="deny")v.drop=DropOverride::deny;else if(b!="default")throw std::runtime_error("Invalid drop override");if(c=="discard")v.emptyDiscard=true;else if(c=="keep")v.emptyDiscard=false;else if(c!="default")throw std::runtime_error("Invalid empty-item override");candidate.weapons.emplace(id,v);}

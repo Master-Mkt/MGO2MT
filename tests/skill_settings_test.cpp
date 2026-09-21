@@ -3,14 +3,14 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win::skills;
+using namespace mgo2mt::skills;
 static void check(bool ok,const char*message){if(!ok)throw std::runtime_error(message);}
 int main(){
- auto root=std::filesystem::temp_directory_path()/("mgo2win-skill-settings-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+ auto root=std::filesystem::temp_directory_path()/("mgo2mt-skill-settings-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
  struct Cleanup{std::filesystem::path path;~Cleanup(){std::error_code ec;std::filesystem::remove_all(path,ec);}}cleanup{root};
  try{
   std::filesystem::create_directories(root);auto file=root/"catalog.tsv";
-  {std::ofstream f(file);f<<"MGO2WIN_SKILLS\t1\nSKILL\t0\t1\t1\tSynthetic A\t確認A\nSKILL\t0\t2\t2\tSynthetic A\t確認A\nSKILL\t0\t3\t3\tSynthetic A\t確認A\nSKILL\t1\t1\t4\tSynthetic B\t確認B\n";for(unsigned i=2;i<=10;++i)f<<"SKILL\t"<<i<<"\t1\t1\tSynthetic "<<i<<"\t確認"<<i<<'\n';}
+  {std::ofstream f(file);f<<"MGO2MT_SKILLS\t1\nSKILL\t0\t1\t1\tSynthetic A\t確認A\nSKILL\t0\t2\t2\tSynthetic A\t確認A\nSKILL\t0\t3\t3\tSynthetic A\t確認A\nSKILL\t1\t1\t4\tSynthetic B\t確認B\n";for(unsigned i=2;i<=10;++i)f<<"SKILL\t"<<i<<"\t1\t1\tSynthetic "<<i<<"\t確認"<<i<<'\n';}
   auto catalog=std::make_shared<Catalog>();std::string error;check(catalog->load(file,error),"bounded synthetic catalog loads");
   check(catalog->find(0,1)&&catalog->ids().size()==11&&catalog->levels(0).size()==3,"skill zero identity and level variants retained");
   check(bool(validate(*catalog,{})),"empty skill selection is permitted");
@@ -38,7 +38,7 @@ int main(){
   check(!load(records,77,*catalog,8,error)&&!error.empty(),"accidental content corruption rejected");
   check(!load(records,99,*catalog,4,error)&&error.empty(),"missing record has distinct empty status");
   check(!save(records,0,*catalog,{},4,error),"zero or absent character identity cannot persist state");
-  {std::ofstream out(file);out<<"MGO2WIN_SKILLS\t1\nSKILL\t1\t1\t1\tA\tA\nSKILL\t1\t1\t1\tA\tA\n";}
+  {std::ofstream out(file);out<<"MGO2MT_SKILLS\t1\nSKILL\t1\t1\t1\tA\tA\nSKILL\t1\t1\t1\tA\tA\n";}
   check(!catalog->load(file,error)&&catalog->entries().empty(),"duplicate catalog fails closed without stale rows");
   std::cout<<"Skill cost budget, replacement rollback, future entitlement and bounded per-character persistence passed\n";return 0;
  }catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}

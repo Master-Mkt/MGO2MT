@@ -3,7 +3,7 @@
 #include "combat_service.h"
 #include "water_oxygen.h"
 #include <iostream>
-using namespace mgo2win;
+using namespace mgo2mt;
 void check(bool b,const char*s){if(!b)throw std::runtime_error(s);}
 int main(){try{
  using namespace water_gameplay;

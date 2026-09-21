@@ -2,7 +2,7 @@
 #include "stage_profiles.h"
 #include <algorithm>
 #include <limits>
-namespace mgo2win::combat {
+namespace mgo2mt::combat {
 ObjectDamage ObjectDamage::load(const std::filesystem::path& root,uint8_t map){
  return load(root,map,Policy{});
 }

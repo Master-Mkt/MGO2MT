@@ -4,7 +4,7 @@
 #include <fstream>
 #include <vector>
 #include <string>
-namespace mgo2win {
+namespace mgo2mt {
 inline const wchar_t* original_menu_font_face(int weight){return weight>=FW_BOLD?L"SCE-PS3 NewRodin JPN Bold":L"SCE-PS3 NewRodin JPN Regular";}
 // Process-private original PS3 fonts. No Windows installation or registry edit.
 // Selecting NewRodin for these native menus is a presentation policy; original

@@ -2,7 +2,7 @@
 #include <array>
 #include <vector>
 #include <cwchar>
-namespace mgo2win::motion_blend {
+namespace mgo2mt::motion_blend {
 namespace {
 enum {rateId=100,descriptionId=101,statusId=102,defaultId=103};
 HWND control(HWND dialog,const wchar_t* klass,const wchar_t* text,int id,int x,int y,int width,int height,DWORD style=0){

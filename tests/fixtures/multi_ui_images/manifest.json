@@ -1,0 +1,21 @@
+{
+  "provenance": "Software-authored test patterns; no original game artwork",
+  "files": {
+    "alpha.png": {
+      "size": 157,
+      "sha256": "0c8774d0bf0b4443fe5548ef2adf63fbed5896f1e1059012137fc8f9990a213e"
+    },
+    "animated.gif": {
+      "size": 1701,
+      "sha256": "dfc0da696ebef71f5784dd00f86ef86875a38015ec4171d0c74bdb756c798e04"
+    },
+    "pages.tiff": {
+      "size": 3264,
+      "sha256": "8b08be80d1519dee1d6d9f747f06b2394bea4cd8eee1320e6e28f7ebf9eb0e5b"
+    },
+    "sizes.ico": {
+      "size": 303,
+      "sha256": "57d9fa28d49ba64a77d028f1e37c183eae821ebcd8933ee09e796ffaf31a5072"
+    }
+  }
+}

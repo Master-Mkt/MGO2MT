@@ -3,7 +3,7 @@
 #include <bcrypt.h>
 #include "stun.h"
 #include <algorithm>
-namespace mgo2win {
+namespace mgo2mt {
 namespace {
 uint16_t u16(std::span<const uint8_t>b,size_t p){return uint16_t(b[p]*256+b[p+1]);}
 uint32_t u32(std::span<const uint8_t>b,size_t p){return uint32_t(b[p])<<24|uint32_t(b[p+1])<<16|uint32_t(b[p+2])<<8|b[p+3];}

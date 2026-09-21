@@ -4,7 +4,7 @@
 #include <limits>
 #include <utility>
 
-namespace mgo2win::radio {
+namespace mgo2mt::radio {
 namespace {
 bool valid(Identity i) noexcept { return i.slot<24 && i.instance && i.character; }
 bool valid(const Context& c) noexcept {

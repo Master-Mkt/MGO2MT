@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <iostream>
 #include <limits>
-using namespace mgo2win;
+using namespace mgo2mt;
 void check(bool b,const char*s){if(!b)throw std::runtime_error(s);}
 combat::Player body(unsigned slot){combat::Player p;p.identity={uint8_t(slot),uint16_t(256+slot),100+slot};p.hp=p.maxHp=p.stamina=p.maxStamina=1000;p.weapon=25;p.alive=true;return p;}
 host::Player appearance(unsigned slot,unsigned gender=0){host::Player p{uint8_t(slot),uint16_t(256+slot),100+slot,"Fixture",""};p.appearance=std::array<uint8_t,28>{};(*p.appearance)[0]=uint8_t(gender);(*p.appearance)[2]=11;(*p.appearance)[3]=22;(*p.appearance)[15]=46;(*p.appearance)[17]=57;return p;}

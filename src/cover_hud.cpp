@@ -2,7 +2,7 @@
 #include "cover_hud.h"
 #include <string>
 #include <algorithm>
-namespace mgo2win::cover_hud {
+namespace mgo2mt::cover_hud {
 Renderer::Renderer(){
  dc_=CreateCompatibleDC(nullptr);BITMAPINFO info{};info.bmiHeader.biSize=sizeof(BITMAPINFOHEADER);info.bmiHeader.biWidth=1280;info.bmiHeader.biHeight=-720;info.bmiHeader.biPlanes=1;info.bmiHeader.biBitCount=32;info.bmiHeader.biCompression=BI_RGB;
  bitmap_=CreateDIBSection(dc_,&info,DIB_RGB_COLORS,reinterpret_cast<void**>(&pixels_),nullptr,0);if(bitmap_)old_=SelectObject(dc_,bitmap_);

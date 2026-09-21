@@ -5,7 +5,7 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {
 void check(bool v,const char* why){if(!v)throw std::runtime_error(why);}
 bool near(float a,float b,float eps=.02f){return std::abs(a-b)<=eps;}

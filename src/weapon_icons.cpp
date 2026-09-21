@@ -1,3 +1,4 @@
+#include "product_identity.h"
 #include "weapon_icons.h"
 #include <windows.h>
 #include <wincodec.h>
@@ -7,12 +8,13 @@
 #include <fstream>
 #include <charconv>
 #include <stdexcept>
-namespace mgo2win::weapons {
+#include <cctype>
+namespace mgo2mt::weapons {
 std::map<uint16_t,std::string> read_icon_index(const std::filesystem::path& path){
  std::ifstream f(path,std::ios::binary|std::ios::ate);
  if(!f||f.tellg()<1||f.tellg()>16384)throw std::runtime_error("Weapon icon index extent");
  f.seekg(0);std::string line;auto get=[&]{if(!std::getline(f,line))return false;if(!line.empty()&&line.back()=='\r')line.pop_back();return true;};
- if(!get()||line!="MGO2WIN_WEAPON_ICONS\t1")throw std::runtime_error("Weapon icon index version");
+ if(!get()||line!=mgo2mt::brand::Format{"MGO2MT_WEAPON_ICONS\t1"})throw std::runtime_error("Weapon icon index version");
  std::map<uint16_t,std::string> result;
  while(get()){
   auto tab=line.find('\t',5);unsigned id=0;
@@ -51,6 +53,39 @@ bool Icons::load(const std::filesystem::path& path,std::string& error){
  }catch(const std::exception&e){images_.clear();error=e.what();return false;}
 }
 const Icon* Icons::find(uint16_t id)const{auto it=images_.find(id);return it==images_.end()?nullptr:&it->second;}
+bool Icons::override_paths(const std::filesystem::path& dataRoot,const std::map<uint16_t,std::string>& paths,std::string& error){
+ try{
+  if(paths.size()>128)throw std::runtime_error("Too many weapon icon overrides");
+  if(paths.empty()){error.clear();return true;}
+  const auto root=std::filesystem::canonical(dataRoot);
+  struct Com {HRESULT status=CoInitializeEx(nullptr,COINIT_MULTITHREADED);~Com(){if(SUCCEEDED(status))CoUninitialize();}} com;
+  if(FAILED(com.status)&&com.status!=RPC_E_CHANGED_MODE)throw std::runtime_error("Weapon icon COM initialization");
+  using Microsoft::WRL::ComPtr;ComPtr<IWICImagingFactory> factory;
+  auto check=[](HRESULT value){if(FAILED(value))throw std::runtime_error("Weapon icon override PNG decode");};
+  check(CoCreateInstance(CLSID_WICImagingFactory,nullptr,CLSCTX_INPROC_SERVER,IID_PPV_ARGS(&factory)));
+  auto draft=images_;
+  for(const auto&[id,name]:paths){
+   if(!id||id>511||name.empty()||name.size()>240||!(name.size()>=4&&name[name.size()-4]=='.'&&std::tolower(static_cast<unsigned char>(name[name.size()-3]))=='p'&&std::tolower(static_cast<unsigned char>(name[name.size()-2]))=='n'&&std::tolower(static_cast<unsigned char>(name[name.size()-1]))=='g')||name.find_first_of("\\:<>|?*\t\r\n")!=name.npos)throw std::runtime_error("Invalid weapon icon override path");
+   const auto relative=std::filesystem::u8path(name);
+   if(relative.is_absolute()||relative.has_root_path())throw std::runtime_error("Weapon icon override must be relative");
+   for(const auto& part:relative)if(part=="."||part==".."||part.empty())throw std::runtime_error("Weapon icon override traversal");
+   const auto file=std::filesystem::canonical(root/relative);
+   const auto inside=file.lexically_relative(root);
+   if(inside.empty()||inside.is_absolute()||*inside.begin()==".."||!std::filesystem::is_regular_file(file)||std::filesystem::file_size(file)>4*1024*1024)throw std::runtime_error("Weapon icon override outside data or too large");
+   ComPtr<IWICBitmapDecoder> decoder;check(factory->CreateDecoderFromFilename(file.c_str(),nullptr,GENERIC_READ,WICDecodeMetadataCacheOnLoad,&decoder));
+   GUID container{};check(decoder->GetContainerFormat(&container));UINT frames=0;check(decoder->GetFrameCount(&frames));
+   if(container!=GUID_ContainerFormatPng||frames!=1)throw std::runtime_error("Weapon icon override must be single PNG");
+   ComPtr<IWICBitmapFrameDecode> frame;check(decoder->GetFrame(0,&frame));Icon icon;check(frame->GetSize(&icon.width,&icon.height));
+   if(!icon.width||!icon.height||icon.width>1024||icon.height>512)throw std::runtime_error("Weapon icon override dimensions");
+   ComPtr<IWICFormatConverter> converter;check(factory->CreateFormatConverter(&converter));
+   check(converter->Initialize(frame.Get(),GUID_WICPixelFormat32bppBGRA,WICBitmapDitherTypeNone,nullptr,0,WICBitmapPaletteTypeCustom));
+   icon.bgra.resize(size_t(icon.width)*icon.height);check(converter->CopyPixels(nullptr,icon.width*4,UINT(icon.bgra.size()*4),reinterpret_cast<BYTE*>(icon.bgra.data())));
+   draft[id]=std::move(icon);
+  }
+  size_t total=0;for(const auto&[id,icon]:draft){(void)id;total+=icon.bgra.size();if(total>8*1024*1024)throw std::runtime_error("Weapon icon total dimensions");}
+  images_=std::move(draft);error.clear();return true;
+ }catch(const std::exception&e){error=e.what();return false;}
+}
 void paint_icon(const Icon&icon,std::span<uint32_t> dst,int width,int height,int x,int y,int w,int h,bool muted,double displayWidth,double displayHeight){
  if(width<=0||height<=0||dst.size()<size_t(width)*height||w<=0||h<=0||!icon.width||!icon.height||icon.bgra.size()!=size_t(icon.width)*icon.height)return;
  if(!displayWidth&&!displayHeight){displayWidth=icon.width;displayHeight=icon.height;}

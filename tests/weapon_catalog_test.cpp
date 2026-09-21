@@ -3,11 +3,11 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win::weapons;
+using namespace mgo2mt::weapons;
 namespace {
 void check(bool condition,const char* message){if(!condition)throw std::runtime_error(message);}
 struct Fixture {
- std::filesystem::path path=std::filesystem::temp_directory_path()/("mgo2win-weapon-catalog-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count())+".tsv");
+ std::filesystem::path path=std::filesystem::temp_directory_path()/("mgo2mt-weapon-catalog-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count())+".tsv");
  void write(const std::string& s){std::ofstream f(path,std::ios::binary);f<<s;}
  ~Fixture(){std::error_code ec;std::filesystem::remove(path,ec);}
 };
@@ -38,7 +38,7 @@ int main(){try{
  context.room_restrictions[0]=1;check(access(*ak,context)==Access::restricted&&access(*m4,context)==Access::allowed,"original room restriction byte3 bit1 denies AK only");
  Entry variant{9,Category::primary,"D EAGLE L",1000,true,std::nullopt};check(access(variant,context)==Access::unverified,"unverified variant mapping cannot bypass enabled room restrictions");
  }else std::cout<<"Private recovered catalog absent; synthetic contract checks remain enabled\n";
- Fixture fixture;std::string header="MGO2WIN_WEAPON_CATALOG\t1\nINITIAL_DP\t?\n";
+ Fixture fixture;std::string header="MGO2MT_WEAPON_CATALOG\t1\nINITIAL_DP\t?\n";
  fixture.write(header+"WEAPON\tPRIMARY\t1\tST KNIFE\t?\t1\t1\n");
  check(catalog.load(fixture.path,error)&&!catalog.initial_dp(),"explicit unknown DP metadata accepted without fabricated zeros");
  auto unknown=catalog.find(Category::primary,1);context={};

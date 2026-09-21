@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <optional>
 
-namespace mgo2win::original {
+namespace mgo2mt::original {
 // Current MGO2 AK102 row 0x1293840: interval 30 at word 2. Nominal Windows
 // policy: five original clock ticks per 1001/60000 seconds (see clock audit).
 // Keep sub-millisecond precision; this is not the original attack poll phase.

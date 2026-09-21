@@ -2,7 +2,7 @@
 #include "invitation_overlay.h"
 #include "tournament_invitation.h"
 #include <memory>
-namespace mgo2win::invitation_ui {
+namespace mgo2mt::invitation_ui {
 class Presenter {
  std::shared_ptr<invitations::Session> session_;
  Overlay overlay_;View view_;uint64_t feedbackAt_=0,clock_=0;

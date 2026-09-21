@@ -8,13 +8,13 @@
 #include <random>
 #include <sstream>
 #include <stdexcept>
-using namespace mgo2win::stage;
+using namespace mgo2mt::stage;
 static void check(bool v,const char*s){if(!v)throw std::runtime_error(s);}
 static bool near(float a,float b,float tolerance=1){return std::abs(a-b)<=tolerance;}
 struct Mesh {
  std::vector<Vec3> v;std::vector<std::array<unsigned,3>> t;
  void quad(Vec3 a,Vec3 b,Vec3 c,Vec3 d){unsigned i=unsigned(v.size());v.insert(v.end(),{a,b,c,d});t.push_back({i,i+1,i+2});t.push_back({i,i+2,i+3});}
- Collision world(){std::ostringstream out;out<<"MGO2WIN.STAGE_COLLISION 1 "<<v.size()<<' '<<t.size()<<'\n';for(auto&p:v)out<<p[0]<<' '<<p[1]<<' '<<p[2]<<'\n';for(auto&p:t)out<<p[0]<<' '<<p[1]<<' '<<p[2]<<" 8192 7\n";std::istringstream in(out.str());return Collision::read(in);}
+ Collision world(){std::ostringstream out;out<<"MGO2MT.STAGE_COLLISION 1 "<<v.size()<<' '<<t.size()<<'\n';for(auto&p:v)out<<p[0]<<' '<<p[1]<<' '<<p[2]<<'\n';for(auto&p:t)out<<p[0]<<' '<<p[1]<<' '<<p[2]<<" 11282940 7\n";std::istringstream in(out.str());return Collision::read(in);}
 };
 int main(int argc,char**argv){try{
  Mesh box;box.quad({-10000,0,-10000},{10000,0,-10000},{10000,0,10000},{-10000,0,10000});
@@ -58,14 +58,14 @@ int main(int argc,char**argv){try{
  wet.water(waterField,.65f);wet.clear();check(!wet.water_state().level&&!wet.ready(),"clearing navigation drops water state");
  for(unsigned mode=0;mode<3;++mode)for(unsigned axis=0;axis<2;++axis){
   Navigation normal,reversed;check(normal.place(world,{0,1000,0})&&reversed.place(world,{0,1000,0}),"camera direction fixture");
-  mgo2win::camera::Settings settings;settings.reversed[mode*2+axis]=true;
+  mgo2mt::camera::Settings settings;settings.reversed[mode*2+axis]=true;
   auto motion=settings.motion(mode==2,mode!=0,.25f,.5f);
   for(unsigned i=0;i<30;++i){normal.advance(world,{0,0,.25f,.5f},1.f/60);reversed.advance(world,{0,0,motion[0],motion[1]},1.f/60);}
   check(near(reversed.yaw(),axis?-normal.yaw():normal.yaw(),.000001f)&&near(reversed.pitch(),axis?normal.pitch():-normal.pitch(),.000001f),"camera inversion reaches navigation without altering angular magnitude");
   check(reversed.feet()==normal.feet(),"camera direction setting does not translate player");
  }
  for(unsigned mode=0;mode<3;++mode)for(unsigned value:{1u,5u,10u}){
-  Navigation camera;check(camera.place(world,{0,1000,0}),"camera rate fixture");mgo2win::camera::Settings settings;settings.speed[mode]=value;
+  Navigation camera;check(camera.place(world,{0,1000,0}),"camera rate fixture");mgo2mt::camera::Settings settings;settings.speed[mode]=value;
   const auto rates=settings.rates(mode==2,mode!=0);auto origin=camera.feet();
   const float expectedScale=mode==0?(value==1?.5f:value==5?1.f:1.625f):(value==1?.2f:value==5?1.f:2.f);
   check(rates==std::array<float,2>{2.f*expectedScale,1.5f*expectedScale},"original mode-mapped setting curve preserves native default rates");

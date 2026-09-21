@@ -13,14 +13,14 @@ void require(bool condition, std::string_view message) {
     if (!condition) throw std::runtime_error(std::string(message));
 }
 
-void requireFps(const mgo2win::DebugFrameRate& meter, double expected,
+void requireFps(const mgo2mt::DebugFrameRate& meter, double expected,
                 std::string_view message) {
     require(meter.fps().has_value(), "FPS sample missing");
     require(std::abs(*meter.fps() - expected) < 0.000001, message);
 }
 
 void firstFrameAndRegularRates() {
-    mgo2win::DebugFrameRate meter;
+    mgo2mt::DebugFrameRate meter;
     require(!meter.fps(), "Fresh meter must be unavailable");
     meter.present(1000.0);
     require(!meter.fps(), "First completion must only start measurement");
@@ -38,7 +38,7 @@ void firstFrameAndRegularRates() {
 }
 
 void variableIntervalsAndWallClockStalls() {
-    mgo2win::DebugFrameRate meter;
+    mgo2mt::DebugFrameRate meter;
     for (const double now : {0.0, 0.1, 0.15, 0.35, 0.5}) meter.present(now);
     requireFps(meter, 8.0, "Use interval count/elapsed, not mean reciprocal dt");
     meter.present(0.65);
@@ -59,7 +59,7 @@ void variableIntervalsAndWallClockStalls() {
 }
 
 void invalidAndNonMonotonicTimes() {
-    mgo2win::DebugFrameRate meter;
+    mgo2mt::DebugFrameRate meter;
     const double nan = std::numeric_limits<double>::quiet_NaN();
     const double inf = std::numeric_limits<double>::infinity();
     for (const double invalid : {nan, inf, -inf}) {

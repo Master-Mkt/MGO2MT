@@ -1,7 +1,7 @@
 #include "combat_wire.h"
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win::combat;
+using namespace mgo2mt::combat;
 namespace {void check(bool b,const char* s){if(!b)throw std::runtime_error(s);}
 template<class F>bool rejects(F f){try{f();}catch(const wire::Invalid&){return true;}return false;}}
 int main(){try{

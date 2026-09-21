@@ -1,6 +1,6 @@
 #pragma once
 #include "combat_wire.h"
-namespace mgo2win::player {
+namespace mgo2mt::player {
 // One A press survives coalescing/packet loss until the recipient-specific ACK.
 // Cancelling pending work never reuses a request serial within the same life.
 class EvadeInput {

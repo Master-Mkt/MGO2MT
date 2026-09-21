@@ -1,7 +1,7 @@
 #pragma once
 #include "combat_authority.h"
 #include <cmath>
-namespace mgo2win::combat {
+namespace mgo2mt::combat {
 inline bool valid_special(const Player& p){
  return unsigned(p.specialPhase)<=3&&(p.specialPhase==SpecialPhase::none||
    (p.alive&&!p.stunned&&!p.reloadUntil&&p.pose.capsule.height>=1700));
@@ -16,9 +16,9 @@ inline bool valid_sop_view(const SopView& v,const Snapshot& s){
  for(float x:v.origin)if(!std::isfinite(x)||std::abs(x)>=1000000)return false;
  if((!v.activation&&v.origin!=Vec3{})||(!v.inputSequenced&&v.inputSequence))return false;
  if((v.evadeRequest||v.coverRequest||v.specialPcRequest)&&!v.inputSequenced)return false;
- // GWCB11: the HOST sends only this recipient's current native AK cone.
- // No client-supplied accuracy state, unsupported-weapon cone or dead-life bloom.
- if(v.spreadMilliRadians>30||(v.spreadMilliRadians&&(!self->alive||self->weapon!=25||self->specialPc.kind!=special_pc::Kind::human)))return false;
+ // HOST-approved JSON cone, maximum 0.1 rad * 8 moving multiplier. The
+ // replicated angle is rounded outward; no client-supplied accuracy state.
+ if(v.spreadMilliRadians>800||(v.spreadMilliRadians&&(!self->alive||self->stunned||!self->weapon)))return false;
  for(unsigned i=0;i<24;++i)if(v.visibleMask&(1u<<i)){
   const auto& target=s.players[i];if(!target||!target->alive||target->team!=self->team)return false;
  }

@@ -1,24 +1,28 @@
 #include "render_device.h"
 #include <d3dcompiler.h>
 #include <cstring>
-namespace mgo2win::render_backend {
+namespace mgo2mt::render_backend {
 namespace {
 constexpr GUID optionsKey{0x1f2672ec,0x7c82,0x418b,{0x81,0x3c,0x44,0xda,0x66,0xbd,0x85,0xa9}};
 void ok(HRESULT h){if(FAILED(h))throw std::runtime_error("D3D11 render resource allocation failed");}
 }
 Options Device::options()const{Options value{};UINT bytes=sizeof(value);if(FAILED(device_->GetPrivateData(optionsKey,&bytes,&value)))return {};return value;}
-void Device::configure(Options value)const{if(!valid(value))throw std::invalid_argument("Render options");ok(device_->SetPrivateData(optionsKey,sizeof(value),&value));}
+void Device::configure(Options value)const{if(!valid(value)||!render_reflections::valid(value.reflectionMaterials))throw std::invalid_argument("Render options");ok(device_->SetPrivateData(optionsKey,sizeof(value),&value));}
 Handle<ID3D11SamplerState> Device::sampler(unsigned anisotropy)const{
  if(!valid({anisotropy}))throw std::invalid_argument("Anisotropy");
  D3D11_SAMPLER_DESC s{};s.Filter=anisotropy?D3D11_FILTER_ANISOTROPIC:D3D11_FILTER_MIN_MAG_MIP_LINEAR;s.MaxAnisotropy=std::max(1u,anisotropy);
  s.AddressU=s.AddressV=s.AddressW=D3D11_TEXTURE_ADDRESS_WRAP;s.MaxLOD=D3D11_FLOAT32_MAX;
  Handle<ID3D11SamplerState> result;ok(device_->CreateSamplerState(&s,&result));return result;
 }
-RenderTarget Device::target(unsigned w,unsigned h)const{
+RenderTarget Device::target(unsigned w,unsigned h,bool hdr)const{
  if(!w||!h||w>8192||h>8192||uint64_t(w)*h>16777216)throw std::invalid_argument("Render target budget");
- RenderTarget r;D3D11_TEXTURE2D_DESC t{};t.Width=w;t.Height=h;t.MipLevels=t.ArraySize=t.SampleDesc.Count=1;t.Format=DXGI_FORMAT_R8G8B8A8_UNORM;t.BindFlags=D3D11_BIND_RENDER_TARGET|D3D11_BIND_SHADER_RESOURCE;
+ RenderTarget r;D3D11_TEXTURE2D_DESC t{};t.Width=w;t.Height=h;t.MipLevels=t.ArraySize=t.SampleDesc.Count=1;t.Format=hdr?DXGI_FORMAT_R16G16B16A16_FLOAT:DXGI_FORMAT_R8G8B8A8_UNORM;t.BindFlags=D3D11_BIND_RENDER_TARGET|D3D11_BIND_SHADER_RESOURCE;
  ok(device_->CreateTexture2D(&t,nullptr,&r.color));ok(device_->CreateRenderTargetView(r.color.Get(),nullptr,&r.target));ok(device_->CreateShaderResourceView(r.color.Get(),nullptr,&r.view));
- t.Format=DXGI_FORMAT_D32_FLOAT;t.BindFlags=D3D11_BIND_DEPTH_STENCIL;ok(device_->CreateTexture2D(&t,nullptr,&r.depth));ok(device_->CreateDepthStencilView(r.depth.Get(),nullptr,&r.depthView));return r;
+ t.Format=DXGI_FORMAT_R32_TYPELESS;t.BindFlags=D3D11_BIND_DEPTH_STENCIL|D3D11_BIND_SHADER_RESOURCE;ok(device_->CreateTexture2D(&t,nullptr,&r.depth));
+ D3D11_DEPTH_STENCIL_VIEW_DESC ds{};ds.Format=DXGI_FORMAT_D32_FLOAT;ds.ViewDimension=D3D11_DSV_DIMENSION_TEXTURE2D;ok(device_->CreateDepthStencilView(r.depth.Get(),&ds,&r.depthView));
+ // Read-only DSV binding requires feature level11. Feature10 samples a copy.
+ if(device_->GetFeatureLevel()>=D3D_FEATURE_LEVEL_11_0){ds.Flags=D3D11_DSV_READ_ONLY_DEPTH;ok(device_->CreateDepthStencilView(r.depth.Get(),&ds,&r.readOnlyDepthView));}
+ D3D11_SHADER_RESOURCE_VIEW_DESC srv{};srv.Format=DXGI_FORMAT_R32_FLOAT;srv.ViewDimension=D3D11_SRV_DIMENSION_TEXTURE2D;srv.Texture2D.MipLevels=1;ok(device_->CreateShaderResourceView(r.depth.Get(),&srv,&r.depthResource));return r;
 }
 Handle<ID3D11ShaderResourceView> Device::color_view(ID3D11ShaderResourceView* source)const{
  Handle<ID3D11Resource> resource;source->GetResource(&resource);D3D11_SHADER_RESOURCE_VIEW_DESC desc{};source->GetDesc(&desc);

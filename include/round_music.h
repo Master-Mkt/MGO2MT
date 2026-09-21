@@ -5,7 +5,7 @@
 #include "host_match.h"
 #include "stage_profiles.h"
 
-namespace mgo2win::stage {
+namespace mgo2mt::stage {
 // Current n022a GCX group 1, registered by 627E8 as SD phases 0/3/2/1.
 // The filenames identify the reviewed original family; additional music and
 // other original groups retain their selected single-track behavior.

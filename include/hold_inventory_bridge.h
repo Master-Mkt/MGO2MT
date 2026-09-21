@@ -1,7 +1,7 @@
 #pragma once
 #include "hold_selection.h"
 #include "world_inventory_session.h"
-namespace mgo2win::hold_selection {
+namespace mgo2mt::hold_selection {
 inline bool inventory_blocks_gameplay(items::Delivery delivery){return delivery==items::Delivery::pending||delivery==items::Delivery::unconfirmed;}
 inline Snapshot inventory_snapshot(const items::ClientState& state,bool eligible){
  Snapshot result;const auto& context=state.context;const auto& actor=context.actor;

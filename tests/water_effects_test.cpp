@@ -5,7 +5,7 @@
 #include <cassert>
 #include <cmath>
 #include <iostream>
-using namespace mgo2win::stage;
+using namespace mgo2mt::stage;
 int main(){
  WaterEffects effects;NavigationWaterState dry,wet{1000.f,1000.f,.65f,WaterFoot::inWater};Vec3 p{0,2,0};
  effects.update(1,1,p,wet,true,.016f);assert(effects.size()==0); // late join is not entry

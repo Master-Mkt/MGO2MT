@@ -1,6 +1,6 @@
 #pragma once
 #include <cstddef>
-namespace mgo2win::hold_selection {
+namespace mgo2mt::hold_selection {
 struct CardPosition {int x=0,y=0;};
 // Native 1280x720 placement from the recorded t15/t30 L-shaped selector.
 // Inventory order/number remains HOST owned; no synthetic NONE/extra slots.

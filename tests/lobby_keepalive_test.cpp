@@ -3,7 +3,7 @@
 #include <array>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 static void require(bool b){if(!b)throw std::runtime_error("lobby keepalive regression");}
 template<class F>void rejects(F f,LobbyDisconnectReason reason){bool failed=false;try{f();}catch(const LobbyBeaconError&e){failed=e.reason==reason;}require(failed);}
 int main(){try{

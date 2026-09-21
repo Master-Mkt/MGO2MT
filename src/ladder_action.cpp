@@ -4,7 +4,7 @@
 #include <fstream>
 #include <set>
 #include <stdexcept>
-namespace mgo2win::ladder {
+namespace mgo2mt::ladder {
 namespace {
 using stage::Vec3;
 bool finite(Vec3 p){for(float x:p)if(!std::isfinite(x)||std::abs(x)>=1000000)return false;return true;}
@@ -40,7 +40,7 @@ bool route(Vec3 from,Vec3 to,stage::Capsule c,const stage::Collision&w,std::span
  }return false;
 }
 bool state_valid(const State&s){return s.active&&valid(s.anchor)&&capsule(s.capsule)&&s.capsule.height==1700&&s.capsule.radius<=350&&finite(s.feet)&&std::hypot(s.feet[0]-s.anchor.bottom[0],s.feet[2]-s.anchor.bottom[2])<.05f&&s.feet[1]>=s.anchor.bottom[1]-.01f&&s.feet[1]<=s.anchor.top[1]+.01f;}
-bool support(Vec3 at,const stage::Collision&w){at[1]+=20;auto hit=w.ray(at,{0,-1,0},50);return hit&&std::abs(hit->normal[1])>=.7f&&std::abs(hit->position[1]-(at[1]-20))<=5;}
+bool support(Vec3 at,const stage::Collision&w){at[1]+=20;auto hit=w.ray(at,{0,-1,0},50,stage::query::player_floor);return hit&&std::abs(hit->normal[1])>=.7f&&std::abs(hit->position[1]-(at[1]-20))<=5;}
 }
 bool valid(const Anchor&a){return a.id&&finite(a.bottom)&&finite(a.top)&&finite(a.bottomExit)&&finite(a.topExit)&&std::isfinite(a.facingYaw)&&std::abs(a.facingYaw)<=3.141593f&&std::hypot(a.top[0]-a.bottom[0],a.top[2]-a.bottom[2])<.01f&&a.top[1]-a.bottom[1]>=300&&a.top[1]-a.bottom[1]<=20000&&distance(a.bottom,a.bottomExit)<=2000&&distance(a.top,a.topExit)<=2000;}
 std::vector<Anchor> load(const std::filesystem::path&path){

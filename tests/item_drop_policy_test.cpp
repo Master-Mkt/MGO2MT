@@ -1,7 +1,7 @@
 #include "item_drop_policy.h"
 #include <cstdlib>
 #include <iostream>
-using namespace mgo2win::items;
+using namespace mgo2mt::items;
 static void check(bool v,const char* text){if(!v){std::cerr<<text<<'\n';std::exit(1);}}
 int main(int argc,char**argv){
  check(argc==2,"catalog path required");
@@ -32,7 +32,7 @@ int main(int argc,char**argv){
  d.originalDrop=true;d.drop=DropOverride::deny;d.emptyDiscard=false;
  check(!d.allows_drop()&&!d.discards_empty()&&d.empty_decision().basis==PolicyBasis::local_override,"explicit false override is not absent");
  const auto before=p.entries().size();const auto name=p.find(22,Domain::equipment)->name;
- check(!p.parse(R"({"schema":"MGO2WIN.item_drop_policy","version":2,"entries":[]})",error),"unsupported version rejected");
+ check(!p.parse(R"({"schema":"MGO2MT.item_drop_policy","version":2,"entries":[]})",error),"unsupported version rejected");
  check(p.entries().size()==before&&p.find(22,Domain::equipment)->name==name,"failed reload retains full namespaces");
  std::cout<<"item drop policy namespaces/provenance PASS\n";
 }

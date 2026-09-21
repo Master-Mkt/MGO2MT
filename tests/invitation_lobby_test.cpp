@@ -2,7 +2,7 @@
 #include "invitation_lobby.h"
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 static void check(bool value,const char* message){if(!value)throw std::runtime_error(message);}
 int main(){try{
  NetworkKeys keys;for(unsigned i=0;i<1042;++i)keys.packet[i]=uint32_t(i*0x1234567u);keys.hmac.fill(0x3a);keys.wire={1,3,5,7};

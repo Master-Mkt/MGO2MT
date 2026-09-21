@@ -2,7 +2,7 @@
 #include <array>
 #include <cstdint>
 
-namespace mgo2win::stage {
+namespace mgo2mt::stage {
 // Literal GCX values accepted by 228BF0/229338/22A580. Distances retain
 // original world units. This is a data contract, not a weather renderer.
 struct FogScriptValues {

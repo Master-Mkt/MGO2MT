@@ -1,7 +1,7 @@
 #pragma once
 #include "controller_input.h"
 #include <cstdint>
-namespace mgo2win {
+namespace mgo2mt {
 // Native menu timing. Gameplay levels/edges and text editing never pass through
 // this clock. Rejected input is discarded, never queued for the next screen.
 class MenuInputWait {

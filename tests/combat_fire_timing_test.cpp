@@ -2,8 +2,8 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
-using namespace mgo2win;
-using namespace mgo2win::combat;
+using namespace mgo2mt;
+using namespace mgo2mt::combat;
 namespace {
 void check(bool value,const char* message){if(!value)throw std::runtime_error(message);}
 struct Match {

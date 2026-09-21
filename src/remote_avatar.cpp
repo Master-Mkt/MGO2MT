@@ -2,7 +2,7 @@
 #include "source_coordinates.h"
 #include <algorithm>
 #include <cmath>
-namespace mgo2win::remote {
+namespace mgo2mt::remote {
 namespace {
 constexpr float pi=3.14159265358979323846f;
 float turn(float from,float to,float t){return std::remainder(from+std::remainder(to-from,2*pi)*t,2*pi);}

@@ -1,7 +1,7 @@
 #include "native_radio_context.h"
 #include "preset_radio_wire.h"
 #include "stage_profiles.h"
-namespace mgo2win::radio {
+namespace mgo2mt::radio {
 namespace detail {
 Context build(uint64_t epoch,const host::LoadRequest* request,const combat::Snapshot* snapshot,
               const combat::wire::Preparation* preparation,std::span<const Identity> identities,bool active){

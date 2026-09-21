@@ -2,7 +2,7 @@
 #include "combat_authority.h"
 #include <iostream>
 #include <limits>
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {
 void check(bool b,const char* why){if(!b)throw std::runtime_error(why);}
 using namespace combat;

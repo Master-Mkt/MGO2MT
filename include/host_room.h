@@ -1,18 +1,19 @@
 #pragma once
 #include "host_match.h"
 #include "host_special_pc.h"
+#include "environment_settings.h"
 #include <atomic>
 #include <functional>
 #include <string>
-namespace mgo2win { struct LobbyPacket; struct NetworkKeys; }
-namespace mgo2win::host {
+namespace mgo2mt { struct LobbyPacket; struct NetworkKeys; }
+namespace mgo2mt::host {
 // Lobby-side dedicated-room control. The transport supplies an authenticated
 // game-lobby connection and encrypts only host_room_wire_payload's output.
 using RoomExchange=std::function<LobbyPacket(uint16_t,std::span<const uint8_t>)>;
 // Retail menu callbacks assign the entire rotation mode byte, not an OR mask.
 enum class RotationMode:uint8_t {normal=0,drebin_points=2,headshots_only=4};
 struct Settings {
- std::wstring name=L"MGO2WIN HOST",comment=L"OpenMGO2 dedicated host",password;
+ std::wstring name=L"MGO2MT HOST",comment=L"OpenMGO2 dedicated host",password;
  uint8_t subtype=2,capacity=17; // Server capacity includes the dedicated host.
  uint32_t briefing_minutes=2;
  std::vector<Rotation> rotations{{20,1,0}};
@@ -29,6 +30,7 @@ struct Settings {
  uint8_t unique_red=0,unique_blue=2;
  std::array<uint8_t,16> weapon_restrictions{};
  std::shared_ptr<special_pc::Control> nativeSpecial=std::make_shared<special_pc::Control>();
+ std::shared_ptr<environment::Control> nativeEnvironment=std::make_shared<environment::Control>();
 };
 constexpr size_t room_settings_size=345,room_environment_size=204;
 std::vector<uint8_t> settings_payload(const Settings&);

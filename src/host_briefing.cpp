@@ -1,7 +1,7 @@
 #include "host_briefing.h"
 #include "host_match.h"
 
-namespace mgo2win::host {
+namespace mgo2mt::host {
 std::vector<uint8_t> phase_update(uint8_t phase) {
     if (phase > 7) throw Invalid(Error::message);
     // 27E8B0: opcode, cache ID, ceil(55/8) mask bytes, typed byte value.

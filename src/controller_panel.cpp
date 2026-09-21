@@ -5,7 +5,7 @@
 #include <iostream>
 #include <syncstream>
 #include <cmath>
-namespace mgo2win {
+namespace mgo2mt {
 ControllerPanel::ControllerPanel(std::filesystem::path p,std::shared_ptr<ControllerInput> input):path_(std::move(p)),input_(std::move(input)),draft_(input_->config){}
 void ControllerPanel::discard_changes(){draft_=input_->config;cancel_capture();dirty_=back_=connected_=preview_running_=false;held_=0;left_magnitude_=right_magnitude_=0;cues_.clear();notice_=L"保存した設定を表示しています。変更後は保存して適用してください。";}
 void ControllerPanel::select_device(int delta){draft_.device=1-draft_.device;dirty_=true;capture_=-1;notice_=L"機器ごとの割り当てを表示しています。保存すると有効になります。";cue(menu_audio::Cursor);}

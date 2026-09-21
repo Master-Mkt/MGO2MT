@@ -1,7 +1,7 @@
 #include "combat_world.h"
 #include "stage_profiles.h"
 #include <fstream>
-namespace mgo2win::combat {
+namespace mgo2mt::combat {
 World World::load(const std::filesystem::path&root,uint8_t map){
  World w;auto file=stage::asset_path(root,map,".collision.cfg");if(!std::filesystem::is_regular_file(file)||std::filesystem::file_size(file)>32*1024*1024)throw std::runtime_error("Host collision extent");std::ifstream in(file);w.base_=std::make_shared<const stage::Collision>(stage::Collision::read(in));
  w.registry_=stage::load_combat_object_registry(stage::asset_path(root,map,".objects.cfg"));w.bindings_=stage::read_object_bindings(root,false,map);

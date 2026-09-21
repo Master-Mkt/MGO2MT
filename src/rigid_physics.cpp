@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
-namespace mgo2win::physics {
+namespace mgo2mt::physics {
 Vec3 add(Vec3 a,Vec3 b){for(unsigned i=0;i<3;++i)a[i]+=b[i];return a;}
 Vec3 sub(Vec3 a,Vec3 b){for(unsigned i=0;i<3;++i)a[i]-=b[i];return a;}
 Vec3 mul(Vec3 a,float s){for(auto&v:a)v*=s;return a;}

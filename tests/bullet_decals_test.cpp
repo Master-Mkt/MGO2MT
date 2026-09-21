@@ -3,7 +3,7 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
-using namespace mgo2win::combat::decals;
+using namespace mgo2mt::combat::decals;
 namespace {
 void check(bool b,const char*s){if(!b)throw std::runtime_error(s);}
 float dot(Vec3 a,Vec3 b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];}

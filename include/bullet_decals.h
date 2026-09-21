@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <deque>
 #include <vector>
-namespace mgo2win::combat::decals {
+namespace mgo2mt::combat::decals {
 using Vec3=std::array<float,3>;
 struct Scope {uint64_t epoch=0,scene=0;bool operator==(const Scope&)const=default;};
 // This classification must come from a current, matching collision query.

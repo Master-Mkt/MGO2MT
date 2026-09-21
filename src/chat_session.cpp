@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <limits>
 #include <stdexcept>
-namespace mgo2win::chat {
+namespace mgo2mt::chat {
 namespace {bool ascii(std::string_view s){return std::none_of(s.begin(),s.end(),[](unsigned char c){return c>=128;});}}
 void Session::connect(uint32_t self,EndpointProfile profile){std::lock_guard lock(mutex_);const auto generation=state_.generation+1;state_={};state_.generation=generation;state_.self=self;endpointEncoding_=self&&profile==EndpointProfile::nomad_jp?std::optional{Encoding::utf8}:std::nullopt;members_.clear();queued_.reset();flight_.reset();deadline_=lastSend_=lastNow_=sequence_=0;everSent_=false;capNonce_=capDeadline_=0;capRequested_=false;}
 void Session::capabilities(Encoding encoding,bool team){std::lock_guard lock(mutex_);state_.encoding=encoding;state_.teamSupported=team;}

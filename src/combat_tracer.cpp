@@ -2,7 +2,7 @@
 #include "weapon_visual_policy.h"
 #include <algorithm>
 #include <cmath>
-namespace mgo2win::combat::tracers {
+namespace mgo2mt::combat::tracers {
 namespace {
 bool finite(Vec3 p){for(float x:p)if(!std::isfinite(x)||std::abs(x)>1000000)return false;return true;}
 bool owner(const Snapshot&s,Identity id,uint32_t life){if(id.slot>=24||!life)return false;const auto&p=s.players[id.slot];return p&&p->identity==id&&p->life==life;}

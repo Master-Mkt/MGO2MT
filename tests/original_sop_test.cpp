@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <limits>
-using namespace mgo2win::original_sop;
+using namespace mgo2mt::original_sop;
 namespace { void check(bool ok) { if(!ok) { std::cerr<<"SOP check failed\n"; std::exit(1); } } }
 int main() {
     for(auto b:{Branch::status22,Branch::status140}) {

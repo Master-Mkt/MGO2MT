@@ -3,7 +3,7 @@
 #include <iostream>
 #include <algorithm>
 #include <sstream>
-using namespace mgo2win;
+using namespace mgo2mt;
 void check(bool b,const char*s){if(!b)throw std::runtime_error(s);}
 void put(std::vector<uint8_t>&b,size_t at,unsigned v,unsigned bytes=4){while(bytes){b[at+--bytes]=uint8_t(v);v>>=8;}}
 LobbyPacket list(std::initializer_list<unsigned> ids){
@@ -25,14 +25,14 @@ int main(){try{
  auto accountPayload=session_payload(zeroKeys,gameAuth),gamePayload=game_session_payload(zeroKeys,gameAuth,77);network_block(accountPayload,zeroKeys.packet,false);network_block(gamePayload,zeroKeys.packet,false);
  check(accountPayload[3]==17&&gamePayload[3]==77&&gameAuth.user==17,"game session uses selected PC, preserves account identity");
  auto membership=[](const std::string&s){std::istringstream in(s);return read_lobby_membership(in);};
- auto rows=membership("MGO2WIN.LOBBIES 1\n49.212.132.180\n7\n3 5733 8\n4 5734 10\n5 5735 1\n6 5736 4\n7 5737 2\n8 5738 3\n9 5739 7\n");
+ auto rows=membership("MGO2MT.LOBBIES 1\n49.212.132.180\n7\n3 5733 8\n4 5734 10\n5 5735 1\n6 5736 4\n7 5737 2\n8 5738 3\n9 5739 7\n");
  std::vector<GameLobbyEntry> groups;for(auto row:rows)groups.push_back({row.id,row.port,1,L"Renamed",0});
  apply_lobby_membership(groups,rows);const unsigned expected[]={2,5,1,3,0,4,2};
  for(size_t i=0;i<groups.size();++i)check(unsigned(lobby_group(groups[i].subtype))==expected[i],"reviewed server IDs mapped independently of name");
  check(lobby_group_count(groups)==6&&lobby_group_rows(groups,2)==std::vector<size_t>({0,6}),"both training kinds combined without reordering or loss");
  groups[0].port=5999;groups.push_back({250,5999,0,L"Otacon",0,1});apply_lobby_membership(groups,rows);
  check(groups[0].subtype==0&&groups.back().subtype==0&&lobby_group_count(groups)==7,"changed endpoint or familiar name cannot claim membership");
- for(const auto&s:{"MGO2WIN.LOBBIES 2 49.212.132.180 0","MGO2WIN.LOBBIES 1 203.0.113.1 0","MGO2WIN.LOBBIES 1 49.212.132.180 257","MGO2WIN.LOBBIES 1 49.212.132.180 1 1 5733","MGO2WIN.LOBBIES 1 49.212.132.180 1 1 65536 1","MGO2WIN.LOBBIES 1 49.212.132.180 2 1 5733 1 1 5734 2","MGO2WIN.LOBBIES 1 49.212.132.180 0 junk"}){
+ for(const auto&s:{"MGO2MT.LOBBIES 2 49.212.132.180 0","MGO2MT.LOBBIES 1 203.0.113.1 0","MGO2MT.LOBBIES 1 49.212.132.180 257","MGO2MT.LOBBIES 1 49.212.132.180 1 1 5733","MGO2MT.LOBBIES 1 49.212.132.180 1 1 65536 1","MGO2MT.LOBBIES 1 49.212.132.180 2 1 5733 1 1 5734 2","MGO2MT.LOBBIES 1 49.212.132.180 0 junk"}){
   bool bad=false;try{membership(s);}catch(...){bad=true;}check(bad,"malformed membership rejected before selection");}
  std::atomic_bool cancel=false;unsigned reads=0,sends=0;int mode=0;
  CharacterExchange fake=[&](uint16_t cmd,std::span<const uint8_t>b){

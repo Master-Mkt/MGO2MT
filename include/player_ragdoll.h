@@ -1,7 +1,7 @@
 #pragma once
 #include "character_catalog.h"
 #include "rigid_physics.h"
-namespace mgo2win::player {
+namespace mgo2mt::player {
 class Ragdoll {
  struct Bone {uint32_t key;int parent;physics::Vec3 bind;physics::Quat local;};
  struct Link {unsigned child,parent;physics::Vec3 childAnchor,parentAnchor;physics::Quat rest;float cone;};
@@ -19,6 +19,8 @@ public:
  bool start(const CharacterCatalog&,unsigned gender,const MotionPose&,physics::Vec3 actorOrigin,float yaw);
  void step(const stage::Collision&,float seconds);
  void impulse(physics::Vec3 worldImpulse,physics::Vec3 worldPoint);
+ // HOST blast velocity, distributed to all bodies to preserve the joints.
+ bool launch(physics::Vec3 worldVelocity);
  MotionPose pose()const;
  physics::Vec3 origin()const;
  physics::Vec3 root_position()const;

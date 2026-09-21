@@ -4,7 +4,7 @@
 #include <set>
 #include <stdexcept>
 #include <utility>
-namespace mgo2win::host_skills {
+namespace mgo2mt::host_skills {
 namespace {
 void require(bool b){if(!b)throw std::invalid_argument("native host skill snapshot");}
 bool valid(const Scope&s){return s.room&&s.host&&s.character&&s.character!=s.host&&s.epoch&&s.slot<24&&s.instance;}

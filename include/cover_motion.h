@@ -5,7 +5,7 @@
 #include <cmath>
 #include <cstring>
 #include <stdexcept>
-namespace mgo2win::cover {
+namespace mgo2mt::cover {
 // Native public action IDs. They are neither PS3 wire values nor PlayerMotion IDs.
 enum class Action:uint32_t {stand_right,stand_left,move_right,move_left,
  peek_right_enter,peek_right_hold,peek_right_exit,peek_left_enter,peek_left_hold,peek_left_exit,

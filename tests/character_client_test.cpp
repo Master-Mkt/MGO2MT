@@ -1,11 +1,12 @@
 #include "character_client.h"
 #include "character_screen.h"
+#include "gameplay_fingerprint.h"
 #include <stdexcept>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <algorithm>
-using namespace mgo2win;
+using namespace mgo2mt;
 void require(bool b){if(!b)throw std::runtime_error("character contract failed");}
 template<class F>void rejects(F f){bool rejected=false;try{f();}catch(...){rejected=true;}require(rejected);}
 void put(std::vector<uint8_t>&b,size_t at,uint32_t v,unsigned n=4){while(n){b.at(at+--n)=uint8_t(v);v>>=8;}}
@@ -14,7 +15,23 @@ CharacterList fixture(unsigned n){std::vector<uint8_t>b(471);b[4]=8;b[5]=uint8_t
 std::vector<uint8_t> read(const std::filesystem::path&p){std::ifstream f(p,std::ios::binary);require(bool(f));return {std::istreambuf_iterator<char>(f),{}};}
 void frames(CharacterScreen&s,unsigned ms){auto until=GetTickCount64()+ms;do{s.draw();Sleep(5);}while(GetTickCount64()<until);}
 std::string report(CharacterScreen&s){std::ostringstream out;auto old=std::cout.rdbuf(out.rdbuf());s.report();std::cout.rdbuf(old);return out.str();}
+void frozen_configuration(){
+ const auto root=std::filesystem::temp_directory_path()/("mgo2mt-client-config-"+std::to_string(GetCurrentProcessId())+"-"+std::to_string(GetTickCount64()));
+ require(std::filesystem::create_directory(root));const auto gameplayFile=root/"gameplay.json",mounted=root/"mounted_weapons.json";
+ auto write=[](const auto& path,const char* value){std::ofstream out(path,std::ios::binary|std::ios::trunc);out<<value;require(bool(out));};
+ require(client_gameplay_configuration(root)==std::optional<uint64_t>(0));
+ write(gameplayFile,"{\"loaded\":1}");auto initial=gameplay::fingerprint(root);require(initial&&*initial&&!client_gameplay_configuration(root));
+ require(!freeze_client_gameplay_configuration(root,*initial+1));require(freeze_client_gameplay_configuration(root,*initial));require(freeze_client_gameplay_configuration(root/".",*initial));require(client_gameplay_configuration(root)==initial);
+ write(gameplayFile,"{\"loaded\":2}");auto changed=gameplay::fingerprint(root);require(changed&&changed!=initial&&!client_gameplay_configuration(root));require(!freeze_client_gameplay_configuration(root,*changed));
+ write(gameplayFile,"{\"loaded\":1}");require(client_gameplay_configuration(root)==initial);write(mounted,"{}");require(!client_gameplay_configuration(root));
+ require(std::filesystem::remove(mounted));require(client_gameplay_configuration(root)==initial);
+ const auto shapeDirectory=root/"character",shape=shapeDirectory/"hit_geometry.gwhit";require(std::filesystem::create_directory(shapeDirectory));write(shape,"synthetic-shape-a");
+ const auto shapeFingerprint=gameplay::fingerprint(root);require(shapeFingerprint&&shapeFingerprint!=initial&&!client_gameplay_configuration(root));
+ write(shape,"synthetic-shape-b");require(gameplay::fingerprint(root)!=shapeFingerprint);require(std::filesystem::remove(shape));require(std::filesystem::remove(shapeDirectory));require(client_gameplay_configuration(root)==initial);
+ require(std::filesystem::remove(gameplayFile));require(!client_gameplay_configuration(root));require(std::filesystem::remove(root));
+}
 int main(int argc,char**argv){
+ frozen_configuration();
  NetworkKeys k;for(size_t i=0;i<1042;++i){k.packet[i]=uint32_t(i*0x1234567u);k.auth[i]=~k.packet[i];}k.hmac.fill(0x3a);k.wire={1,3,5,7};k.salt.fill(42);
  if(argc>1){k=NetworkKeys::load(argv[1]);auto oracle=read(std::filesystem::path(argv[1]).parent_path()/"crypto_vectors.bin");require(oracle.size()==32*24);for(size_t i=0;i<oracle.size();i+=24){std::vector<uint8_t> b(oracle.begin()+i,oracle.begin()+i+8);network_block(b,k.auth,false);require(std::equal(b.begin(),b.end(),oracle.begin()+i+8));network_block(b,k.auth,true);require(std::equal(b.begin(),b.end(),oracle.begin()+i));network_block(b,k.packet,true);require(std::equal(b.begin(),b.end(),oracle.begin()+i+16));network_block(b,k.packet,false);require(std::equal(b.begin(),b.end(),oracle.begin()+i));}require(encode_lobby(k,0x2005,1,{})==read(std::filesystem::path(argv[1]).parent_path()/"gate_request.bin"));}
  AuthReply a;a.status=AuthStatus::success;a.user=123;a.session={0x12,0xab,0x09,0xfe,0,0,0,0};auto encrypted=session_payload(k,a);require(encrypted.size()==24);network_block(encrypted,k.packet,false);require(encrypted[3]==123);std::vector<uint8_t>s(encrypted.begin()+4,encrypted.begin()+12);for(unsigned i=0;i<8;++i)s[i]^=k.salt[i];network_block(s,k.auth,true);require(std::string(s.begin(),s.end())=="12ab09fe");a.session[7]=1;rejects([&]{session_payload(k,a);});

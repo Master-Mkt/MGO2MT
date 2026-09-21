@@ -2,7 +2,7 @@
 #include "weapon_icons.h"
 #include <stdexcept>
 
-namespace mgo2win::briefing {
+namespace mgo2mt::briefing {
 // Native presentation of the two original n022a online_map texture planes.
 // Shared square placement and amber tint are Windows UI choices; original
 // alpha and geometry stay unchanged. World-to-map/player markers are unknown.

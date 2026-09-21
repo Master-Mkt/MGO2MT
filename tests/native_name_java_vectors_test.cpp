@@ -3,7 +3,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-using namespace mgo2win;
+using namespace mgo2mt;
 void check(bool value,const char* message){if(!value)throw std::runtime_error(message);}
 int main(int argc,char**argv){try{
  check(argc==2,"Java fixture directory required");const std::filesystem::path root=argv[1];

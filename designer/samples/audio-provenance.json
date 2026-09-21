@@ -1,0 +1,28 @@
+{
+  "audioSource": "Self-authored 660Hz mono test tones, 0.5 seconds; MP3 encoded locally from authored PCM with FFmpeg/libmp3lame",
+  "automaticGameInstall": false,
+  "files": [
+    {
+      "sha256": "32952d90230573a9a383eef1ed0876ad325f81d4d6b3bf47d1828e10764058f9",
+      "size": 6597,
+      "path": "audio-controls.mgoui"
+    },
+    {
+      "sha256": "6f9c76f1e0acab892a665c5fb887f1450cddf9b158fb7f8737175d40b06b4509",
+      "size": 5924,
+      "path": "audio-controls.layout.json"
+    },
+    {
+      "sha256": "e575aba65dfc1644bca2e12c0f5ecd0f9954f60139627ace040baa9827947c99",
+      "size": 44144,
+      "path": "audio/confirmation.wav"
+    },
+    {
+      "sha256": "63019b53536c28a2f43d8e4b82225431508d4cd78c385c11f3bf2848614c3af5",
+      "size": 6940,
+      "path": "audio/confirmation.mp3"
+    }
+  ],
+  "originalGameAssets": false,
+  "format": "MGO2MT.UI_AUDIO_SAMPLE.1"
+}

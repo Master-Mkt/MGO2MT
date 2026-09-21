@@ -1,7 +1,7 @@
 #include "gekko_climb.h"
 #include <algorithm>
 #include <cmath>
-namespace mgo2win::special_pc {
+namespace mgo2mt::special_pc {
 namespace {
 using stage::Vec3;
 bool finite(Vec3 p){for(auto v:p)if(!std::isfinite(v)||std::abs(v)>=1000000)return false;return true;}
@@ -12,7 +12,7 @@ bool supported(Vec3 p,const stage::Collision&w){
  const float spread=native_gekko.capsule.radius*.7f;
  for(auto offset:std::array<Vec3,5>{{{0,0,0},{spread,0,0},{-spread,0,0},{0,0,spread},{0,0,-spread}}}){
   auto origin=p;for(unsigned k=0;k<3;++k)origin[k]+=offset[k];origin[1]+=30;
-  auto h=w.ray(origin,{0,-1,0},65);if(!h||std::abs(h->normal[1])<.70710678f||std::abs(h->position[1]+2-p[1])>20)return false;
+  auto h=w.ray(origin,{0,-1,0},65,stage::query::player_floor);if(!h||std::abs(h->normal[1])<.70710678f||std::abs(h->position[1]+2-p[1])>20)return false;
  }return true;
 }
 Vec3 position(const Climb&c,uint32_t t){Vec3 a,b;float u;
@@ -27,7 +27,7 @@ std::optional<Climb> begin_climb(Vec3 feet,float yaw,const stage::Collision&w,st
  const Vec3 forward{std::sin(yaw),0,std::cos(yaw)};auto origin=feet;origin[1]+=2000;
  auto wall=w.ray(origin,forward,2500);if(!wall||std::abs(wall->normal[1])>.3f||wall->distance<native_gekko.capsule.radius)return {};
  auto probe=wall->position;probe[0]+=forward[0]*(native_gekko.capsule.radius+150);probe[2]+=forward[2]*(native_gekko.capsule.radius+150);probe[1]=feet[1]+native_gekko.jumpHeight+30;
- auto top=w.ray(probe,{0,-1,0},native_gekko.jumpHeight+30);if(!top||std::abs(top->normal[1])<.70710678f)return {};
+ auto top=w.ray(probe,{0,-1,0},native_gekko.jumpHeight+30,stage::query::player_floor);if(!top||std::abs(top->normal[1])<.70710678f)return {};
  auto landing=top->position;landing[1]+=2;const float height=landing[1]-feet[1];if(height<300||height>native_gekko.jumpHeight||!supported(landing,w))return {};
  auto raised=feet;raised[1]=landing[1]+100;auto across=landing;across[1]+=100;
  if(!path(feet,raised,w,peers)||!path(raised,across,w,peers)||!path(across,landing,w,peers))return {};

@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
-namespace mgo2win::combat::material_effects {
+namespace mgo2mt::combat::material_effects {
 namespace {
 // Independently checked against the named callback option in all four GCX files.
 // 6690BC -> 85C00 -> 64F8C0 -> flash / two line emitters.

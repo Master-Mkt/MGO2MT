@@ -2,7 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <map>
-using namespace mgo2win::host;
+using namespace mgo2mt::host;
 void check(bool v,const char*s){if(!v)throw std::runtime_error(s);}
 std::vector<uint8_t> delta(std::map<unsigned,std::vector<uint8_t>>fields){
  std::vector<uint8_t>b(9);b[0]=11;for(auto&[id,value]:fields){b[2+id/8]|=uint8_t(1u<<(id%8));b.insert(b.end(),value.begin(),value.end());}return b;

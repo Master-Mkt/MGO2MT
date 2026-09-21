@@ -4,14 +4,14 @@
 #include <fstream>
 #include <sstream>
 #include <chrono>
-using namespace mgo2win;
+using namespace mgo2mt;
 static void check(bool ok,const char*why){if(!ok)throw std::runtime_error(why);}
 template<class F>static bool invalid(F fn){try{fn();return false;}catch(const host::Invalid&){return true;}}
 int main(){try{
  using Update=host::ObjectStates::Update;
- struct Temp {std::filesystem::path path=std::filesystem::temp_directory_path()/("mgo2win-object-registry-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count())+".cfg");~Temp(){std::error_code error;std::filesystem::remove(path,error);}} temp;
+ struct Temp {std::filesystem::path path=std::filesystem::temp_directory_path()/("mgo2mt-object-registry-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count())+".cfg");~Temp(){std::error_code error;std::filesystem::remove(path,error);}} temp;
  auto write=[&](const std::string&s){std::ofstream f(temp.path);f<<s;check(bool(f),"temporary registry written");};
- std::ostringstream source;source<<"MGO2WIN.STAGE_OBJECTS 1 n022a_success32 20 1 32\n";
+ std::ostringstream source;source<<"MGO2MT.STAGE_OBJECTS 1 n022a_success32 20 1 32\n";
  constexpr uint32_t ids[]={5565312,5565360,5565408,5565472,5565536,5565584,5565648,5565696,5565744,5565776,5565120,5565152,5566224,5566528,5566880,5567184,5567568};
  for(unsigned i=0;i<32;++i)source<<i<<' '<<(i<17?ids[i]:0xc0000000u+i-17)<<' '<<(i<12?1:i<17?8:2)<<' '<<(i<17?"bits":"maximum")<<'\n';
  const auto valid=source.str();write(valid);auto reviewed=stage::load_object_registry(temp.path);

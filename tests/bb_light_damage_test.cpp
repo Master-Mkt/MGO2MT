@@ -5,14 +5,14 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {
 void check(bool v,const char* m){if(!v)throw std::runtime_error(m);}
 constexpr combat::Identity shooter{0,1,100};
 struct Lamp {uint32_t binding=0,component=0;size_t index=0;};
 void projectile_world_revision(){
  auto empty=std::make_shared<const stage::Collision>(stage::Collision::make({},{}));
- auto wall=[](float z,uint32_t object){auto mesh=stage::Collision::make({{-10000,-10000,z},{10000,-10000,z},{10000,10000,z},{-10000,10000,z}},{{{0,1,2},0,0,~0u,object},{{0,2,3},0,0,~0u,object}});return std::make_shared<const stage::Collision>(std::move(mesh));};
+ auto wall=[](float z,uint32_t object){auto mesh=stage::Collision::make({{-10000,-10000,z},{10000,-10000,z},{10000,10000,z},{-10000,10000,z}},{{{0,1,2},stage::attribute::native_solid,0,~0u,object},{{0,2,3},stage::attribute::native_solid,0,~0u,object}});return std::make_shared<const stage::Collision>(std::move(mesh));};
  auto run=[&](bool objectChange){
   auto a=std::make_unique<combat::Authority>();combat::Weapon w;w.id=50;w.damage=1125;w.intervalMs=100;w.reloadMs=1000;w.magazine=1;w.reserve=3;w.range=150000;w.nativeProjectile=true;
   a->begin(1,wall(10000,88),std::array{w});check(a->join(shooter,1,{},10000,1000,std::array<uint16_t,1>{50},0),"RPG world revision shooter");a->active(true);

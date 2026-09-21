@@ -2,7 +2,7 @@
 #include "water_gameplay.h"
 #include <algorithm>
 #include <cmath>
-namespace mgo2win::combat {
+namespace mgo2mt::combat {
 bool Authority::water(std::shared_ptr<const stage::Water> water,float ratio){
  if(!water_gameplay::valid_policy({ratio,true}))return false;
  water_=std::move(water);waterRatio_=ratio;

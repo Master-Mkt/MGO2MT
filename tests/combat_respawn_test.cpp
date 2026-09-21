@@ -7,7 +7,7 @@
 #include <iostream>
 #include <set>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {
 namespace cw=combat::wire;
 void check(bool ok,const char*why){if(!ok)throw std::runtime_error(why);}

@@ -1,23 +1,27 @@
 #pragma once
 #include "combat_authority.h"
+#include "environment_settings.h"
 #include <variant>
 #include <stdexcept>
-namespace mgo2win::combat::wire {
+namespace mgo2mt::combat::wire {
 // Native extension: reliable channel 1, an explicit versioned offer/accept.
 // Original damage packets have no shot identity or round epoch. This extension
 // adds those for host validation and exactly-once effects. It is not an original
 // MGO2 opcode. Unrecognized peers never receive inputs or state records.
 constexpr uint8_t opcode=0xef;
-constexpr uint8_t version=19;
+// v22 adds a debug request byte and a separate <=1092-byte flight record.
+// Normal Snapshot/player record positions remain unchanged.
+constexpr uint8_t version=27; // v27 permits HOST-configured weapon cones up to 800 mrad.
 constexpr uint32_t maximumRoundDurationMs=24u*60*60*1000;
 enum class Status:uint8_t {awaiting_world,awaiting_profile,awaiting_spawn,preparing,active,ended};
-struct Offer {uint64_t epoch=0;Identity self;bool operator==(const Offer&)const=default;};
-struct Accept {uint64_t epoch=0;bool operator==(const Accept&)const=default;};
+struct Offer {uint64_t epoch=0;Identity self;uint64_t configuration=0;bool operator==(const Offer&)const=default;};
+struct Accept {uint64_t epoch=0;uint64_t configuration=0;bool operator==(const Accept&)const=default;};
 // fire is the newest held level; firePressed retains one short press while
 // congested. They cannot be collapsed to one bit without phantom auto fire.
-struct Input {uint64_t epoch=0;uint32_t sequence=0;Pose pose;uint16_t weapon=0;bool fire=false,reload=false,firePressed=false,suspended=false;uint32_t life=1;bool specialPressed=false,specialHeld=false;EvadeKind evadeKind=EvadeKind::none;uint32_t evadeRequest=0;cover::Intent cover;special_pc::Intent specialPc;ladder::Intent ladder;bool aiming=false;bool operator==(const Input&)const=default;};
+struct Input {uint64_t epoch=0;uint32_t sequence=0;Pose pose;uint16_t weapon=0;bool fire=false,reload=false,firePressed=false,suspended=false;uint32_t life=1;bool specialPressed=false,specialHeld=false;EvadeKind evadeKind=EvadeKind::none;uint32_t evadeRequest=0;cover::Intent cover;special_pc::Intent specialPc;ladder::Intent ladder;bool aiming=false,meleePressed=false,debugPhysics=false;mounted::Intent mounted;bool operator==(const Input&)const=default;};
 Input coalesce_input(const Input& older,const Input& newer);
 struct Frame {Snapshot snapshot;Status status=Status::awaiting_world;std::vector<Event> events;SopView sop;bool operator==(const Frame&)const=default;};
+struct DebugFlights {uint64_t epoch=0,scene=0;Identity recipient;uint32_t life=0,sequence=0,inputSequence=0;uint64_t at=0;bool truncated=false;std::vector<projectile::DebugFlight> flights;bool operator==(const DebugFlights&)const=default;};
 enum class RoundPhase:uint8_t {waiting,selecting,active,ended};
 enum class CommandKind:uint8_t {loaded,ready,team,loadout};
 enum class CommandError:uint8_t {none,sequence,unavailable,not_loaded,phase,team,weapon,restricted,insufficient_dp,spawn,already_deployed};
@@ -46,7 +50,8 @@ struct Preparation {
  bool respawnWaiting=false;uint32_t respawnRemainingMs=0;
  bool operator==(const Preparation&)const=default;
 };
-using Record=std::variant<Offer,Accept,Input,Frame,Command,Preparation>;
+struct Environment {uint64_t epoch=0,revision=0;environment::Config config;bool operator==(const Environment&)const=default;};
+using Record=std::variant<Offer,Accept,Input,Frame,Command,Preparation,DebugFlights,Environment>;
 struct Invalid:std::runtime_error {Invalid():runtime_error("Invalid native combat record"){};};
 bool recognized(std::span<const uint8_t>);
 std::vector<uint8_t> encode(const Record&);

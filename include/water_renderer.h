@@ -2,7 +2,7 @@
 #include "character_renderer.h"
 #include "stage_water.h"
 #include <memory>
-namespace mgo2win::water_visuals {
+namespace mgo2mt::water_visuals {
 using Vec3=std::array<float,3>;
 // Native gray overlay, not the recovered original material/shader.
 struct Policy {float gray=.5f,opacity=.35f;};

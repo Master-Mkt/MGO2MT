@@ -7,12 +7,12 @@
 #include <limits>
 #include <sstream>
 #include <stdexcept>
-using namespace mgo2win;
-using namespace mgo2win::combat::spawn;
+using namespace mgo2mt;
+using namespace mgo2mt::combat::spawn;
 void check(bool ok,const char*s){if(!ok)throw std::runtime_error(s);}
 bool near(float a,float b,float tolerance=.02f){return std::abs(a-b)<tolerance;}
 std::string fixture(){
- std::ostringstream out;out<<"MGO2WIN_TDM_SPAWNS 1\nstage n022a\nmap 20\nrule 1\n";
+ std::ostringstream out;out<<"MGO2MT_TDM_SPAWNS 1\nstage n022a\nmap 20\nrule 1\n";
  for(unsigned v=0;v<2;++v)for(unsigned k=0;k<2;++k)for(unsigned t=0;t<2;++t)for(unsigned i=0;i<16;++i){
   auto index=v?i%8:i;out<<"spawn "<<(v?"mini":"normal")<<' '<<(k?"respawn":"initial")<<' '<<t<<' '<<i<<" 0x"<<std::hex<<std::setw(6)<<std::setfill('0')<<(0x100000+v*0x1000+k*0x100+t*0x20+index)<<std::dec<<' '<<int(index*1000+t*20000)<<" 100 0 "<<(t?-32768:16384)<<'\n';
  }return out.str();

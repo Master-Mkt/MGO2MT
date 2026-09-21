@@ -4,7 +4,7 @@
 #include <istream>
 #include <vector>
 
-namespace mgo2win::stage {
+namespace mgo2mt::stage {
 // GEOM child hashes may repeat. sourceOffset identifies the authored node;
 // the position in anchors preserves 1A1468/1A1348 iteration order.
 struct CboxAnchor {

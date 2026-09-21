@@ -1,11 +1,11 @@
 #include "combat_authority.h"
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;using namespace mgo2win::combat;
+using namespace mgo2mt;using namespace mgo2mt::combat;
 void check(bool b,const char*s){if(!b)throw std::runtime_error(s);}
 int main(){try{
  std::vector<stage::Vec3> v{{-5000,0,-5000},{-5000,0,5000},{5000,0,5000},{5000,0,-5000},{500,3000,-5000},{500,3000,5000},{5000,3000,5000},{5000,3000,-5000}};
- auto world=std::make_shared<stage::Collision>(stage::Collision::make(v,{{{0,1,2}},{{0,2,3}},{{4,5,6}},{{4,6,7}}}));
+ auto world=std::make_shared<stage::Collision>(stage::Collision::make(v,{{{0,1,2},stage::attribute::native_solid},{{0,2,3},stage::attribute::native_solid},{{4,5,6},stage::attribute::native_solid},{{4,6,7},stage::attribute::native_solid}}));
  Weapon w;w.id=23;w.damage=100;w.intervalMs=100;w.reloadMs=500;w.magazine=30;w.reserve=60;w.range=10000;
  Authority host;host.begin(7,world,std::array{w});ladder::Anchor a{1,{0,4,0},{0,3004,0},{-400,4,0},{1100,3004,0},1.57079633f};host.configure_ladders({a});Identity id{0,1,100};Pose p{a.bottomExit,0,0,{350,1700,2}};
  check(host.join(id,1,p,1000,1000,std::array<uint16_t,1>{23},0),"join");host.active(true);uint32_t sequence=1;uint64_t now=100;

@@ -1,5 +1,5 @@
 #include "weapon_selection.h"
-namespace mgo2win::weapons {
+namespace mgo2mt::weapons {
 void Selection::context(std::optional<SelectionContext> next){
  context_=next;
  // Re-check the complete draft when balance or restrictions change. Keeping an

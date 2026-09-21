@@ -16,7 +16,7 @@
 #include <map>
 #include <sstream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 using Microsoft::WRL::ComPtr;
 namespace {
 void check(bool value,const char* why){if(!value)throw std::runtime_error(why);}
@@ -47,10 +47,10 @@ using V=stage::Vec3;
 combat::EvadeKind kind(E e){return e==E::roll?combat::EvadeKind::roll:e==E::rollLeft?combat::EvadeKind::rollLeft:e==E::rollRight?combat::EvadeKind::rollRight:e==E::backstep?combat::EvadeKind::backstep:combat::EvadeKind::none;}
 float horizontal(V a,V b){return std::hypot(a[0]-b[0],a[2]-b[2]);}
 stage::Collision floor_world(bool wall=false){
- std::ostringstream data;data<<"MGO2WIN.STAGE_COLLISION 1 "<<(wall?8:4)<<' '<<(wall?4:2)<<'\n';
+ std::ostringstream data;data<<"MGO2MT.STAGE_COLLISION 1 "<<(wall?8:4)<<' '<<(wall?4:2)<<'\n';
  data<<"-20000 0 -20000\n20000 0 -20000\n20000 0 20000\n-20000 0 20000\n";
  if(wall)data<<"-20000 0 900\n20000 0 900\n20000 5000 900\n-20000 5000 900\n";
- data<<"0 1 2 8192 7\n0 2 3 8192 7\n";if(wall)data<<"4 5 6 8192 7\n4 6 7 8192 7\n";
+ data<<"0 1 2 11282940 7\n0 2 3 11282940 7\n";if(wall)data<<"4 5 6 11282940 7\n4 6 7 11282940 7\n";
  std::istringstream in(data.str());return stage::Collision::read(in);
 }
 struct Runtime {
@@ -104,7 +104,7 @@ void held_and_cancel(const stage::Collision&world){
  auto wall=floor_world(true);Runtime blocked(wall,E::roll);for(unsigned i=0;i<220;++i)blocked.step(1.f/60);check(blocked.nav.feet()[2]>400&&blocked.nav.feet()[2]<551,"New travel curve remains stopped by real finite wall capsule sweep");
 }
 void slope_stop(){
- std::istringstream input("MGO2WIN.STAGE_COLLISION 1 4 2\n-20000 -4000 -20000\n20000 -4000 -20000\n20000 4000 20000\n-20000 4000 20000\n0 1 2 8192 7\n0 2 3 8192 7\n");
+ std::istringstream input("MGO2MT.STAGE_COLLISION 1 4 2\n-20000 -4000 -20000\n20000 -4000 -20000\n20000 4000 20000\n-20000 4000 20000\n0 1 2 11282940 7\n0 2 3 11282940 7\n");
  const auto slope=stage::Collision::read(input);stage::Navigation nav;check(nav.place(slope,{0,1000,0}),"Synthetic walkable twenty-percent slope placement");
  const auto initial=nav.feet();for(unsigned i=0;i<240;++i)nav.advance(slope,{},1.f/120);check(horizontal(initial,nav.feet())<.001f&&nav.grounded(),"Walkable slope gravity alone must not accumulate tangential XZ drift");
  auto move=[&](float direction){const auto before=nav.feet();for(unsigned i=0;i<240;++i){nav.advance(slope,{direction,0,0,0,1000},1.f/120);check(slope.clear(nav.feet(),nav.capsule()),"Slope walking retains real capsule clearance");}

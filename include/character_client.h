@@ -16,7 +16,11 @@
 #include <mutex>
 #include <optional>
 #include <memory>
-namespace mgo2win {
+namespace mgo2mt {
+// Bind the already loaded JSON settings to this process. A later file edit
+// requires a restart; admission must never advertise settings not in memory.
+bool freeze_client_gameplay_configuration(const std::filesystem::path& data,uint64_t fingerprint);
+std::optional<uint64_t> client_gameplay_configuration(const std::filesystem::path& data);
 // Native adapter contract from the reviewed OpenMGO2 candidate; not an ELF port.
 struct NetworkKeys {
  std::array<uint32_t,1042> packet{},auth{};
@@ -77,7 +81,7 @@ struct RoomDetail {uint32_t id=0;std::wstring name,comment;uint8_t subtype=0,cap
 };
 enum class RoomEvent {list,detail,join};
 enum class RoomJoinStatus {none,rejected,permission_checked,outcome_unknown,invalid_input,host_connecting,host_profile,host_sync,joined,host_cancelled,host_timeout,host_rejected,host_disconnected,host_network_error,host_protocol_error,host_unavailable};
-struct RoomReply {RoomStatus status=RoomStatus::connecting;std::vector<RoomEntry> rooms;uint32_t error=0;RoomEvent event=RoomEvent::list;uint32_t requested_room=0;std::optional<RoomDetail> detail;RoomJoinStatus join_status=RoomJoinStatus::none;std::optional<host::Roster> host_roster;std::optional<host::MatchState> host_match;std::optional<host::Placements> host_placements;std::optional<stage::SceneSnapshot> host_scene;stage::SceneSyncStatus scene_status=stage::SceneSyncStatus::idle;std::optional<combat::wire::Offer> combat_offer;std::optional<combat::Snapshot> combat_state;combat::wire::Status combat_status=combat::wire::Status::awaiting_world;std::vector<combat::Event> combat_events;std::optional<combat::wire::Preparation> preparation;combat::SopView combat_sop;LobbyDisconnectReason lobby_disconnect=LobbyDisconnectReason::none;};
+struct RoomReply {RoomStatus status=RoomStatus::connecting;std::vector<RoomEntry> rooms;uint32_t error=0;RoomEvent event=RoomEvent::list;uint32_t requested_room=0;std::optional<RoomDetail> detail;RoomJoinStatus join_status=RoomJoinStatus::none;std::optional<host::Roster> host_roster;std::optional<host::MatchState> host_match;std::optional<host::Placements> host_placements;std::optional<stage::SceneSnapshot> host_scene;stage::SceneSyncStatus scene_status=stage::SceneSyncStatus::idle;std::optional<combat::wire::Offer> combat_offer;std::optional<combat::Snapshot> combat_state;combat::wire::Status combat_status=combat::wire::Status::awaiting_world;std::vector<combat::Event> combat_events;std::optional<combat::wire::Preparation> preparation;combat::SopView combat_sop;std::optional<combat::wire::DebugFlights> debug_flights;std::optional<combat::wire::Environment> environment;LobbyDisconnectReason lobby_disconnect=LobbyDisconnectReason::none;};
 struct RoomAction {
  RoomEvent event=RoomEvent::detail;uint32_t id=0;uint8_t subtype=0;std::array<wchar_t,17> password{};
  ~RoomAction(){volatile wchar_t*p=password.data();for(size_t i=0;i<password.size();++i)p[i]=0;}

@@ -10,7 +10,7 @@
 #include <utility>
 #include <iostream>
 #include <syncstream>
-namespace mgo2win::host {
+namespace mgo2mt::host {
 namespace {
 const char* stage_name(Stage s){switch(s){
  case Stage::connecting:return "connecting";case Stage::profile:return "profile";case Stage::synchronizing:return "synchronizing";case Stage::joined:return "joined";
@@ -51,7 +51,7 @@ std::vector<uint8_t> profile_payload(uint32_t id,std::span<const uint8_t>info,st
  b.push_back(uint8_t(highest));for(unsigned i=1;i<=highest;++i)put(b,values[i],2);b.insert(b.end(),name.begin(),name.end());b.push_back(0);b.insert(b.end(),clan.begin(),clan.end());if(b.size()>372)throw Invalid(Error::extent);return b;
 }
 Machine::Machine(Hello local,uint32_t host,std::vector<uint8_t>profile,uint64_t now,std::optional<stage::ObjectRegistry> registry):local_(std::move(local)),host_(host),profile_(std::move(profile)),start_(now),last_(now),stage_at_(now),hello_next_(now){objectRegistry_=std::move(registry);if(objectRegistry_){stage::SceneReceiver validate(*objectRegistry_,0);}if(!host||host==local_.character||profile_.empty()||profile_[0]!=2||profile_.size()>372)throw Invalid(Error::identity);encode_hello(local_);}
-void Machine::fail(Stage s,unsigned error){if(active(stage_))lastActiveStage_=stage_;stage_=s;error_=error;pending_.clear();reordered_.clear();combatOffer_.reset();radioMessages_.clear();inventoryMessages_.clear();combat_.clear();sop_={};combatEvents_.clear();combatPendingInput_.reset();preparation_.reset();combatStatus_=combat::wire::Status::awaiting_world;roster_={};match_={};placements_.clear();itemReordered_.clear();objects_.reset();objectSlot_.reset();objectPending_.clear();objectReordered_.clear();}
+void Machine::fail(Stage s,unsigned error){if(active(stage_))lastActiveStage_=stage_;stage_=s;error_=error;pending_.clear();reordered_.clear();combatOffer_.reset();radioMessages_.clear();inventoryMessages_.clear();combat_.clear();sop_={};debugFlights_.clear();environment_.clear();combatEvents_.clear();combatPendingInput_.reset();preparation_.reset();combatStatus_=combat::wire::Status::awaiting_world;roster_={};match_={};placements_.clear();itemReordered_.clear();objects_.reset();objectSlot_.reset();objectPending_.clear();objectReordered_.clear();}
 void Machine::queue(std::vector<uint8_t>b,uint64_t now){if(pending_.size()>=32||pending_.contains(tx_app_))throw Invalid(Error::sequence);Message m;m.channel=1;m.serial=tx_app_++;m.payload=std::move(b);pending_.emplace(m.serial,Pending{std::move(m),now,0});}
 void Machine::registries(std::vector<stage::ObjectRegistry> registries){
  if(stage_!=Stage::connecting)throw Invalid(Error::message);
@@ -88,18 +88,23 @@ void Machine::application(std::span<const uint8_t>b,uint64_t now){if(b.empty())t
   if(stage_==Stage::joined&&((hadSelf&&!present(local_.character))||(hadHost&&!present(host_)))){fail(Stage::disconnected);return;}
   if(playerClass&&b[6]==3&&stage_==Stage::profile){queue({10},now);stage_=Stage::synchronizing;stage_at_=now;}
  }
- else if(b[0]==11){auto generation=update_match(match_,b);if(generation&&placements_.result().generation!=generation){placements_.begin(*generation);combatOffer_.reset();radioMessages_.clear();inventoryMessages_.clear();combat_.clear();sop_={};combatEvents_.clear();combatPendingInput_.reset();preparation_.reset();combatStatus_=combat::wire::Status::awaiting_world;itemReordered_.clear();itemSerial_=0;generationPacket_=rx_;objectRx_=0;objectTx_=0;objectRequestAt_=0;objectReordered_.clear();objectPending_.clear();}if(generation&&stage_==Stage::synchronizing){stage_=Stage::joined;was_joined_=true;stage_at_=now;keepalive_at_=now+2000;}}
+ else if(b[0]==11){auto generation=update_match(match_,b);if(generation&&placements_.result().generation!=generation){placements_.begin(*generation);combatOffer_.reset();radioMessages_.clear();inventoryMessages_.clear();combat_.clear();sop_={};debugFlights_.clear();environment_.clear();combatEvents_.clear();combatPendingInput_.reset();preparation_.reset();combatStatus_=combat::wire::Status::awaiting_world;itemReordered_.clear();itemSerial_=0;generationPacket_=rx_;objectRx_=0;objectTx_=0;objectRequestAt_=0;objectReordered_.clear();objectPending_.clear();}if(generation&&stage_==Stage::synchronizing){stage_=Stage::joined;was_joined_=true;stage_at_=now;keepalive_at_=now+2000;}}
  if(combat::wire::recognized(b)){
   try{auto record=combat::wire::decode(b);
    if(auto offer=std::get_if<combat::wire::Offer>(&record)){
+    if(offer->configuration!=configuration_){std::osyncstream(std::clog)<<"combat_configuration_mismatch: gameplay.json or mounted_weapons.json differs from HOST\n";fail(Stage::protocol_error,ERROR_REVISION_MISMATCH);return;}
     if(stage_!=Stage::joined||offer->self.character!=local_.character||!roster_.slots[offer->self.slot]||roster_.slots[offer->self.slot]->instance!=offer->self.instance||roster_.slots[offer->self.slot]->character!=local_.character)throw Invalid(Error::identity);
     if(combatOffer_&&offer->epoch<combatOffer_->epoch)throw Invalid(Error::sequence);
-    if(!combatOffer_||*combatOffer_!=*offer){combatOffer_=*offer;radioMessages_.clear();inventoryMessages_.clear();combat_.clear();sop_={};combatEvents_.clear();combatPendingInput_.reset();preparation_.reset();queue(combat::wire::encode(combat::wire::Accept{offer->epoch}),now);}
+    if(!combatOffer_||*combatOffer_!=*offer){combatOffer_=*offer;radioMessages_.clear();inventoryMessages_.clear();combat_.clear();sop_={};debugFlights_.clear();environment_.clear();combatEvents_.clear();combatPendingInput_.reset();preparation_.reset();queue(combat::wire::encode(combat::wire::Accept{offer->epoch,configuration_}),now);}
    }else if(auto state=std::get_if<combat::wire::Preparation>(&record)){
     if(!combatOffer_||state->epoch!=combatOffer_->epoch||state->self!=combatOffer_->self||!match_.generation||state->generation!=*match_.generation)throw Invalid(Error::identity);
     for(const auto&p:state->players)if(p){const auto&r=roster_.slots[p->id.slot];if(!r||r->instance!=p->id.instance||r->character!=p->id.character)throw Invalid(Error::identity);}
     if(preparation_&&state->revision<preparation_->revision)throw Invalid(Error::sequence);
     preparation_=*state;
+   }else if(auto setting=std::get_if<combat::wire::Environment>(&record)){
+    if(combatOffer_)environment_.receive(*setting,*combatOffer_);
+   }else if(auto diagnostic=std::get_if<combat::wire::DebugFlights>(&record)){
+    if(combatOffer_&&combat_.state())debugFlights_.receive(*diagnostic,*combatOffer_,*combat_.state(),now);
    }else if(auto frame=std::get_if<combat::wire::Frame>(&record)){
     if(!combatOffer_||frame->snapshot.epoch!=combatOffer_->epoch)throw Invalid(Error::identity);
     for(const auto&p:frame->snapshot.players)if(p){const auto&r=roster_.slots[p->identity.slot];if(!r||r->instance!=p->identity.instance||r->character!=p->identity.character)throw Invalid(Error::identity);}
@@ -107,10 +112,10 @@ void Machine::application(std::span<const uint8_t>b,uint64_t now){if(b.empty())t
     if(combat_.state()&&combat_.state()->revision==frame->snapshot.revision&&sop_!=frame->sop)throw Invalid(Error::sequence);
     if(!combat_.snapshot(frame->snapshot))throw Invalid(Error::sequence);
     sop_=frame->sop;
-    auto events=combat_.events(frame->events);if(combatEvents_.size()+events.size()>128)throw Invalid(Error::extent);
-    combatEvents_.insert(combatEvents_.end(),events.begin(),events.end());combatStatus_=frame->status;
+    auto events=combat_.events(frame->events,true);if(combatEvents_.size()+events.size()>128)throw Invalid(Error::extent);
+    combatEvents_.insert(combatEvents_.end(),events.begin(),events.end());combatStatus_=frame->status;debugFlights_.poll(combat_.state(),combatStatus_,now);
    }else throw Invalid(Error::message);
-  }catch(const combat::wire::Invalid&){throw Invalid(Error::message);}
+  }catch(const combat::wire::Invalid&){if(b.size()>=7&&(b[6]==6||b[6]==7))return;throw Invalid(Error::message);}
  }
  sync_objects();
  // Other channels/application records belong to gameplay; no gameplay action
@@ -164,6 +169,7 @@ void Machine::receive(std::span<const uint8_t>raw,uint64_t now){if(!active(stage
 std::vector<std::vector<uint8_t>> Machine::poll(uint64_t now){std::vector<std::vector<uint8_t>>out;if(!active(stage_))return out;
  if(now<start_||now<last_){fail(Stage::protocol_error);return out;}
  if((stage_!=Stage::joined&&now-stage_at_>=8000)||(stage_==Stage::joined&&now-last_>=10000)){fail(stage_==Stage::joined?Stage::disconnected:Stage::timeout);return out;}
+ debugFlights_.poll(combat_.state(),combatStatus_,now);
  flush_combat_input(now);
  auto send=[&](std::vector<Message>m,Keys k){out.push_back(encode({tx_++,std::move(m)},k));};
  // Opcode 0 is the reviewed no-op callback on both sides. A native 2s
@@ -188,6 +194,7 @@ void Machine::flush_combat_input(uint64_t now){
  if(pending_.size()<8){queue(combat::wire::encode(*combatPendingInput_),now);combatPendingInput_.reset();}
 }
 bool Machine::combat_input(const combat::wire::Input&input,uint64_t now){
+ if(!input.debugPhysics)debugFlights_.request(false,input.sequence,input.life);
  if(stage_!=Stage::joined||!combatOffer_||input.epoch!=combatOffer_->epoch||combatStatus_!=combat::wire::Status::active||!combat_.state())return false;
  const auto&player=combat_.state()->players[combatOffer_->self.slot];if(!player||!player->alive||player->stunned||input.life!=player->life)return false;
  try{
@@ -200,7 +207,7 @@ bool Machine::combat_input(const combat::wire::Input&input,uint64_t now){
   }
   // Bound reliable traffic while retaining one newest pose and pending action.
   // The next poll drains this after ACKs free a slot, even without another input.
-  combatPendingInput_=merged;flush_combat_input(now);return true;
+  debugFlights_.request(input.debugPhysics,input.sequence,input.life);combatPendingInput_=merged;flush_combat_input(now);return true;
  }catch(const combat::wire::Invalid&){return false;}
 }
 bool Machine::combat_command(const combat::wire::Command&command,uint64_t now){
@@ -227,7 +234,7 @@ std::vector<std::vector<uint8_t>> Machine::inventory_messages(){return std::exch
 std::vector<radio::Body> Machine::radio_messages(){return std::exchange(radioMessages_,{});}
 void Machine::cancel(){if(active(stage_))fail(Stage::cancelled);}
 std::optional<std::vector<uint8_t>> Machine::leave_packet(){if(!profile_sent_)return {};Message m;m.channel=1;m.serial=tx_app_++;m.payload={1};return encode({tx_++,{m}},keys_);}
-Result run(const Local&local,const Admission&admission,std::span<const uint8_t>profile,const std::atomic_bool&stop,const std::atomic_bool&cancel,const std::function<void(Result)>&publish,const std::function<bool()>&lobbyAlive,std::optional<stage::ObjectRegistry> registry,const std::function<std::optional<combat::wire::Input>()>&combatInput,const std::function<std::optional<combat::wire::Command>()>&combatCommand,std::shared_ptr<radio::Session> radioSession,std::shared_ptr<items::ClientSession> inventorySession,std::vector<stage::ObjectRegistry> registries){
+Result run(const Local&local,const Admission&admission,std::span<const uint8_t>profile,const std::atomic_bool&stop,const std::atomic_bool&cancel,const std::function<void(Result)>&publish,const std::function<bool()>&lobbyAlive,std::optional<stage::ObjectRegistry> registry,const std::function<std::optional<combat::wire::Input>()>&combatInput,const std::function<std::optional<combat::wire::Command>()>&combatCommand,std::shared_ptr<radio::Session> radioSession,std::shared_ptr<items::ClientSession> inventorySession,std::vector<stage::ObjectRegistry> registries,uint64_t configuration){
  struct InventoryLeave {std::shared_ptr<items::ClientSession> session;~InventoryLeave(){if(session)session->disconnect();}} inventoryLeave{inventorySession};
  struct RadioLeave {std::shared_ptr<radio::Session> session;~RadioLeave(){if(session)session->disconnect();}} radioLeave{radioSession};
  Result out;ConnectionLog diagnostic{out};try{if(local.socket==~uintptr_t(0)||!valid_endpoint(local.public_endpoint)||!valid_endpoint(local.private_endpoint))return out;
@@ -238,8 +245,8 @@ Result run(const Local&local,const Admission&admission,std::span<const uint8_t>p
   Endpoint peer=admission.endpoints[0];const bool lan=peer.address==local.public_endpoint.address;if(lan)peer=admission.endpoints[1];
   diagnostic.begin(lan,local.private_endpoint.port,peer.port);
   sockaddr_in destination{};destination.sin_family=AF_INET;destination.sin_port=htons(peer.port);std::copy(peer.address.begin(),peer.address.end(),reinterpret_cast<uint8_t*>(&destination.sin_addr));
-  Machine machine({local.character,seed,2,2,{local.public_endpoint,local.private_endpoint}},admission.character,{profile.begin(),profile.end()},GetTickCount64(),std::move(registry));machine.registries(std::move(registries));Stage reported=Stage::unavailable;uint64_t reportedRevision=0,reportedMatchRevision=0,reportedPlacementRevision=0;bool reportedPartial=false;std::optional<stage::SceneSnapshot> reportedScene;auto reportedSceneStatus=stage::SceneSyncStatus::idle;std::optional<combat::Snapshot> reportedCombat;std::optional<combat::wire::Offer> reportedOffer;auto reportedCombatStatus=combat::wire::Status::awaiting_world;
-  std::optional<combat::wire::Preparation> reportedPreparation;std::optional<combat::wire::Command> pendingCommand;
+  Machine machine({local.character,seed,2,2,{local.public_endpoint,local.private_endpoint}},admission.character,{profile.begin(),profile.end()},GetTickCount64(),std::move(registry));machine.registries(std::move(registries));machine.configuration(configuration);Stage reported=Stage::unavailable;uint64_t reportedRevision=0,reportedMatchRevision=0,reportedPlacementRevision=0;bool reportedPartial=false;std::optional<stage::SceneSnapshot> reportedScene;auto reportedSceneStatus=stage::SceneSyncStatus::idle;std::optional<combat::Snapshot> reportedCombat;std::optional<combat::wire::Offer> reportedOffer;auto reportedCombatStatus=combat::wire::Status::awaiting_world;
+  std::optional<combat::wire::Environment> reportedEnvironment;std::optional<combat::wire::DebugFlights> reportedDebug;std::optional<combat::wire::Preparation> reportedPreparation;std::optional<combat::wire::Command> pendingCommand;
   diagnostic.observe(machine);
   while(active(machine.result().stage)){
    if(stop||cancel){machine.cancel();break;}
@@ -265,7 +272,7 @@ Result run(const Local&local,const Admission&admission,std::span<const uint8_t>p
    }
    for(auto&b:machine.poll(now)){int n=sendto(socket,reinterpret_cast<const char*>(b.data()),int(b.size()),0,reinterpret_cast<sockaddr*>(&destination),sizeof(destination));if(n==SOCKET_ERROR){auto err=WSAGetLastError();if(err!=WSAEWOULDBLOCK){out=machine.result();out.stage=Stage::network_error;out.error=unsigned(err);return out;}}else ++diagnostic.sent;}
    diagnostic.observe(machine);
-   out=machine.result();if(out.stage!=reported||out.roster.revision!=reportedRevision||out.match.revision!=reportedMatchRevision||out.placements.revision!=reportedPlacementRevision||out.placements.partial!=reportedPartial||out.scene!=reportedScene||out.scene_status!=reportedSceneStatus||out.combat_state!=reportedCombat||out.combat_offer!=reportedOffer||out.combat_status!=reportedCombatStatus||!out.combat_events.empty()||out.preparation!=reportedPreparation){reportedPreparation=out.preparation;reported=out.stage;reportedRevision=out.roster.revision;reportedMatchRevision=out.match.revision;reportedPlacementRevision=out.placements.revision;reportedPartial=out.placements.partial;reportedScene=out.scene;reportedSceneStatus=out.scene_status;reportedCombat=out.combat_state;reportedOffer=out.combat_offer;reportedCombatStatus=out.combat_status;out.combat_events=machine.combat_events();publish(out);}if(!active(out.stage))break;
+   out=machine.result();if(out.environment!=reportedEnvironment||out.debug_flights!=reportedDebug||out.stage!=reported||out.roster.revision!=reportedRevision||out.match.revision!=reportedMatchRevision||out.placements.revision!=reportedPlacementRevision||out.placements.partial!=reportedPartial||out.scene!=reportedScene||out.scene_status!=reportedSceneStatus||out.combat_state!=reportedCombat||out.combat_offer!=reportedOffer||out.combat_status!=reportedCombatStatus||!out.combat_events.empty()||out.preparation!=reportedPreparation){reportedEnvironment=out.environment;reportedDebug=out.debug_flights;reportedPreparation=out.preparation;reported=out.stage;reportedRevision=out.roster.revision;reportedMatchRevision=out.match.revision;reportedPlacementRevision=out.placements.revision;reportedPartial=out.placements.partial;reportedScene=out.scene;reportedSceneStatus=out.scene_status;reportedCombat=out.combat_state;reportedOffer=out.combat_offer;reportedCombatStatus=out.combat_status;out.combat_events=machine.combat_events();publish(out);}if(!active(out.stage))break;
    fd_set read;FD_ZERO(&read);FD_SET(socket,&read);timeval wait{0,20000};int n=select(0,&read,nullptr,nullptr,&wait);if(n<0){out.stage=Stage::network_error;out.error=unsigned(WSAGetLastError());return out;}
    if(n){std::array<uint8_t,2049>b{};sockaddr_in from{};int len=sizeof(from);n=recvfrom(socket,reinterpret_cast<char*>(b.data()),int(b.size()),0,reinterpret_cast<sockaddr*>(&from),&len);if(n<0){auto err=WSAGetLastError();if(err==WSAEWOULDBLOCK||err==WSAEMSGSIZE||err==WSAECONNRESET)continue;out.stage=Stage::network_error;out.error=unsigned(err);return out;}++diagnostic.received;if(from.sin_family==AF_INET&&from.sin_port==destination.sin_port&&from.sin_addr.s_addr==destination.sin_addr.s_addr)machine.receive(std::span(b).first(size_t(n)),GetTickCount64());else ++diagnostic.ignoredSource;diagnostic.observe(machine);}
   }

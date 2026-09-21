@@ -9,7 +9,7 @@
 #include <iterator>
 #include <stdexcept>
 using Microsoft::WRL::ComPtr;
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {
 void check(bool value,const char* reason){if(!value)throw std::runtime_error(reason);}
 void ok(HRESULT value){check(SUCCEEDED(value),"Stage material D3D11 failure");}

@@ -1,6 +1,6 @@
 #pragma once
 #include "stage_collision.h"
-namespace mgo2win::physics {
+namespace mgo2mt::physics {
 using stage::Vec3;
 using Quat=std::array<float,4>;
 Vec3 add(Vec3,Vec3);Vec3 sub(Vec3,Vec3);Vec3 mul(Vec3,float);

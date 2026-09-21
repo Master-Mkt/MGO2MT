@@ -1,6 +1,6 @@
 #include "selection_presentation.h"
 #include <stdexcept>
 #include <iostream>
-using namespace mgo2win;
+using namespace mgo2mt;
 void check(bool b){if(!b)throw std::runtime_error("PC selection presentation boundary");}
 int main(){try{SelectionPresentation p;p.configure(2000,true,true);p.observe(7,100);check(p.frame(60099).kind==SelectionPresentation::Kind::idle);auto first=p.frame(60100);check(first.kind==SelectionPresentation::Kind::magazine);p.activity(60500);check(p.frame(60500).kind==SelectionPresentation::Kind::idle);check(p.frame(120500).kind==SelectionPresentation::Kind::box);p.select(121000);check(p.take_sound()&&!p.take_sound());check(p.selecting(122999)&&!p.selecting(123000));check(p.frame(123000).kind==SelectionPresentation::Kind::idle);p.observe(0,124000);check(p.frame(200000).kind==SelectionPresentation::Kind::idle);p.select(200000);check(!p.take_sound());p.observe(8,300000);check(p.frame(359999).kind==SelectionPresentation::Kind::idle);SelectionPresentation delayed;delayed.configure(6667,false,false,400);delayed.observe(1,100);delayed.select(100);check(!delayed.take_sound(499)&&delayed.take_sound(500)&&!delayed.take_sound(501));SelectionPresentation missing;missing.observe(1,0);missing.select(10);check(!missing.selecting(10)&&!missing.take_sound()&&missing.frame(999999).kind==SelectionPresentation::Kind::idle);std::cout<<"PC-select 60-second idle, original-asset gate, one-shot salute and reset passed\n";return 0;}catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}

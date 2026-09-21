@@ -2,7 +2,7 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
-using namespace mgo2win::original_lock;
+using namespace mgo2mt::original_lock;
 static void check(bool b,const char*m){if(!b)throw std::runtime_error(m);}
 int main(){try{
  const auto p=ak102_parameters(25,0,0,1);check(bool(p),"AK102 current parameter with explicit Surveyor1");

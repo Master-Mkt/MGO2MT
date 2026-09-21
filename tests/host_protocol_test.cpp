@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
-using namespace mgo2win::host;
+using namespace mgo2mt::host;
 void check(bool v,const char*s){if(!v)throw std::runtime_error(s);}
 template<class F>void invalid(F f){bool failed=false;try{f();}catch(const Invalid&){failed=true;}check(failed,"malformed host data accepted");}
 int main(int argc,char**argv){try{

@@ -5,7 +5,7 @@
 #include <span>
 #include <string>
 #include <vector>
-namespace mgo2win::hud {
+namespace mgo2mt::hud {
 std::wstring utf8(std::string_view);
 std::wstring time_label(std::optional<uint32_t> milliseconds);
 std::wstring mode_label(uint8_t rule, bool abbreviated=false);

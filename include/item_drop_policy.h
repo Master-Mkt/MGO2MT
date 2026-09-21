@@ -5,7 +5,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
-namespace mgo2win::items {
+namespace mgo2mt::items {
 enum class Domain : uint8_t {weapon,equipment,world_item};
 enum class DropOverride { original_default, deny, allow };
 enum class PolicyBasis { unresolved, original_fact, local_override };

@@ -3,8 +3,8 @@
 #include "render_device.h"
 #include <span>
 #include <string>
-namespace mgo2win {class CharacterRenderer;}
-namespace mgo2win::shadows {
+namespace mgo2mt {class CharacterRenderer;}
+namespace mgo2mt::shadows {
 struct Caster {CharacterRenderer* renderer=nullptr;float yaw=0;std::array<float,3> origin{};};
 struct Statistics {unsigned cascades=0,resolution=0;uint64_t allocatedBytes=0,drawCalls=0,triangles=0;bool active=false,reduced=false;};
 class Renderer {

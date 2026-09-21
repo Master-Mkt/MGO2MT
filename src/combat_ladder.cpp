@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <set>
 #include <stdexcept>
-namespace mgo2win::combat {
+namespace mgo2mt::combat {
 void Authority::configure_ladders(std::vector<ladder::Anchor> anchors){
  if(anchors.size()>128)throw std::invalid_argument("Ladder capacity");std::set<uint16_t> ids;
  for(const auto&a:anchors)if(!ladder::valid(a)||!ids.insert(a.id).second)throw std::invalid_argument("Ladder anchor");
@@ -19,7 +19,7 @@ Decision Authority::ladder_action(Identity id,uint64_t epoch,uint32_t sequence,c
  const auto elapsed=s->ladderSequenced?(std::min)(uint64_t(100),now-s->ladderAt):0;
  s->ladderSequence=sequence;s->ladderSequenced=true;s->ladderAt=now;
  if(!active_)return {Reject::not_active,{}};if(!p.alive||p.stunned)return {Reject::dead,{}};
- if(p.specialPc.kind!=special_pc::Kind::human||p.reloadUntil||p.cover.attached||p.cover.lean||p.evadeKind!=EvadeKind::none||p.specialPhase!=SpecialPhase::none||p.pose.capsule.height!=1700)return {Reject::unavailable,{}};
+ if(p.mountedId||p.flightId||p.specialPc.kind!=special_pc::Kind::human||p.reloadUntil||p.cover.attached||p.cover.lean||p.evadeKind!=EvadeKind::none||p.specialPhase!=SpecialPhase::none||p.pose.capsule.height!=1700)return {Reject::unavailable,{}};
  if(!movement_||water_gameplay::sample(water_.get(),*movement_,p.pose.feet,p.pose.capsule,{waterRatio_,true}).foot==stage::WaterFoot::inWater)return {Reject::unavailable,{}};
  std::vector<ladder::Body> peers;for(const auto&other:slots_)if(other&&other->state.alive&&other->state.identity!=id)peers.push_back({other->state.pose.feet,other->state.pose.capsule});
  if(!s->ladderState){

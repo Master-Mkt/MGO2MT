@@ -2,7 +2,7 @@
 #include "character_renderer.h"
 #include "combat_tracer.h"
 #include <memory>
-namespace mgo2win::combat::tracers {
+namespace mgo2mt::combat::tracers {
 class Renderer {
  struct Impl;std::unique_ptr<Impl> impl_;
 public:

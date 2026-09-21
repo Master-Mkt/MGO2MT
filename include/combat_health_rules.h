@@ -3,7 +3,7 @@
 #include "gekko_regeneration.h"
 #include <filesystem>
 #include <istream>
-namespace mgo2win::combat {
+namespace mgo2mt::combat {
 struct HealthRules {
  falling::Policy falling;
  special_pc::regeneration::Policy regeneration;

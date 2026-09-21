@@ -17,7 +17,7 @@ from gwp import ROOT, load, record, lobby_membership_text, STAGE_OBJECT_ASSETS
 
 DESTINATIONS = {'stage_lighting20':'stage/n022a.lighting.cfg','stage_collision20':'stage/n022a.collision.cfg',**{f'stage_env{i}':f'stage/audio/env_s01a30l_{i:02d}.gwa' for i in (1,4,5,7,8)},'stage_preview20':'stage/n022a.gwm','character_catalog':'character/appearance.gwc','network_keys':'network.gnk','login_background':'login/frame.m2pv',**{f'login_texture{i}':f'login/images/{i}.dds' for i in range(6)},'agreement_motion':'motion/animated.m2an',**{f'motion_texture{i}':f'motion/images/{i}.dds' for i in range(8)},'agreement_background':'agreement/frame.m2pv','lobby_bgm':'audio/lobby.gwa',**{f'agreement_texture{i}':f'agreement/images/{i}.dds' for i in range(6)},'menu92':'audio/92.gwa','menu93':'audio/93.gwa','menu94':'audio/94.gwa','scenario': 'title.gwp', 'animation': 'title/animated.m2an',
                 'bgm23': 'audio/title.gwa', 'start18999':'audio/start.gwa','loading':'loading/loading.m2an','loading_texture0':'loading/images/0.dds','loading_texture1':'loading/images/1.dds', **{f'texture{i}': f'title/images/{i}.dds' for i in range(10)}}
-DOCUMENTS = ('README.md', 'README.ja.md', 'THIRD_PARTY_NOTICES.md', 'PUBLICATION.md', 'LICENSE_STATUS.md', 'LOCAL_TWO_CLIENT_PLAYTEST.md', 'START_KEYBOARD.cmd', 'START_PAD_1.cmd')
+DOCUMENTS = ('README.md', 'README.ja.md', 'THIRD_PARTY_NOTICES.md', 'PUBLICATION.md', 'LICENSE_STATUS.md', 'START_KEYBOARD.cmd', 'START_PAD_1.cmd')
 DESTINATIONS.update({f'voice{g}_{v}':f'voice/{g}_{v}.gwa' for g in range(2) for v in range(8)})
 DESTINATIONS.update({**{f'stage_item{i}':f'stage/items/{i}.gwm' for i in (113,140)},'bgm_catalog':'bgm/catalog.json','stage_placements20':'stage/n022a.placements.cfg',**{f'stage_prop{i}':f'stage/props/{i}.gwm' for i in range(6)}})
 DESTINATIONS['stage_cbox20']='stage/n022a.cbox.cfg'
@@ -89,7 +89,7 @@ def original_hold_box_package_sources():
     folder = ROOT/'work/hold-font'
     proof = json.loads((ROOT/'outputs/original_hold_ui_20260915/font_manifest.json').read_text(encoding='utf-8'))
     index = folder/'index.tsv'
-    expected = ['MGO2WIN_WEAPON_ICONS\t1'] + [f'ICON\t{i}\tglyph_{i}.png' for i in range(32,127)]
+    expected = ['MGO2MT_WEAPON_ICONS\t1'] + [f'ICON\t{i}\tglyph_{i}.png' for i in range(32,127)]
     if index.is_symlink() or index.read_text(encoding='utf-8').splitlines() != expected:
         raise ValueError('Original hold font index mismatch')
     result = [(medium,'stage/items/ibox_item_mid.gwm'), (index,'hold-font/index.tsv')]
@@ -118,7 +118,7 @@ def skill_package_sources():
         if not path.is_file() or path.is_symlink() or path.stat().st_size > 16384:
             raise ValueError('Missing or invalid skill icon index: '+index_name)
         lines = path.read_text(encoding='utf-8').splitlines()
-        if not lines or lines[0] != 'MGO2WIN_WEAPON_ICONS\t1':
+        if not lines or lines[0] != 'MGO2MT_WEAPON_ICONS\t1':
             raise ValueError('Skill icon index version')
         rows = {}
         for line in lines[1:]:
@@ -148,7 +148,7 @@ def skill_package_sources():
     catalog = result[0][0]
     if not catalog.is_file() or catalog.is_symlink() or not 1 <= catalog.stat().st_size <= 65536:
         raise ValueError('Missing reviewed skill catalog')
-    if not catalog.read_text(encoding='utf-8').startswith('MGO2WIN_SKILLS\t1\n'):
+    if not catalog.read_text(encoding='utf-8').startswith('MGO2MT_SKILLS\t1\n'):
         raise ValueError('Skill catalog version')
     return result
 
@@ -161,8 +161,8 @@ def build_release(root=ROOT):
     folder = root/'build/package'
     logs = root/'outputs/package'; logs.mkdir(parents=True, exist_ok=True)
     commands = [('configure', [cmake, '-S', str(root), '-B', str(folder), '-A', 'x64',
-                               '-DMGO2WIN_STATIC_RUNTIME=ON',
-                               '-DMGO2WIN_BUILD_TIMESTAMP='+datetime.datetime.now().strftime('%Y%m%d%H%M%S')]),
+                               '-DMGO2MT_STATIC_RUNTIME=ON',
+                               '-DMGO2MT_BUILD_TIMESTAMP='+datetime.datetime.now().strftime('%Y%m%d%H%M%S')]),
                 ('build', [cmake, '--build', str(folder), '--config', 'Release']),
                 ('test', [str(Path(cmake).with_name('ctest.exe')), '--test-dir', str(folder), '-C', 'Release', '--output-on-failure'])]
     for name, command in commands:
@@ -172,7 +172,7 @@ def build_release(root=ROOT):
         if result.returncode:
             print(result.stdout.decode('utf-8', errors='replace'))
             raise ValueError('Build/test failed: '+str(logs/(name+'.log')))
-    return folder/'Release/MGO2WIN.exe'
+    return folder/'Release/MGO2MT.exe'
 
 
 def package(gwp_path, exe, output, seconds=None):
@@ -211,7 +211,7 @@ def package(gwp_path, exe, output, seconds=None):
     music=[];catalog=None
     if 'bgm_catalog' in assets:
         catalog=json.loads(assets['bgm_catalog'].read_text(encoding='utf-8'))
-        if catalog.get('format')!='MGO2WIN.BGM_CATALOG' or catalog.get('version')!=1 or not 0<len(catalog['tracks'])<=256:
+        if catalog.get('format')!='MGO2MT.BGM_CATALOG' or catalog.get('version')!=1 or not 0<len(catalog['tracks'])<=256:
             raise ValueError('BGM catalog contract')
         names=set()
         for track in catalog['tracks']:
@@ -224,7 +224,7 @@ def package(gwp_path, exe, output, seconds=None):
     data = output/'data'; data.mkdir()
     (data/'bgm/additional').mkdir(parents=True)
     (data/'bgm/additional/README.txt').write_text('Add up to 32 PCM 16-bit WAV tracks (8 kHz–192 kHz, 1–8 channels, up to 256 MiB each). Restart to rescan. The filename is the displayed title.\n16-bit PCM WAVを最大32曲追加できます。8～192 kHz・1～8ch・1曲256 MiB以下。追加後は再起動。ファイル名が表示名になります。\nTracks use content SHA-256 IDs, not list positions. Missing forced tracks fall back to local selection, then an available original track, then silence.\n',encoding='utf-8')
-    shutil.copyfile(exe, output/'MGO2WIN.exe')
+    shutil.copyfile(exe, output/'MGO2MT.exe')
     for name, source in documents.items():
         shutil.copyfile(source, output/name)
     for source in (ROOT/'licenses').glob('*.txt'):
@@ -270,16 +270,16 @@ def package(gwp_path, exe, output, seconds=None):
     if index.exists():
         rows={int(line.split()[0]):line.split()[1] for line in index.read_text().splitlines()[1:] if line.strip()}
         rows.update({cue:f'ak102_reload_{cue}.wav' for cue in range(17000,17008)})
-        index.write_text(f'MGO2WIN.COMBAT_AUDIO 1 {len(rows)}\n'+''.join(f'{cue} {name}\n' for cue,name in sorted(rows.items())),encoding='ascii')
+        index.write_text(f'MGO2MT.COMBAT_AUDIO 1 {len(rows)}\n'+''.join(f'{cue} {name}\n' for cue,name in sorted(rows.items())),encoding='ascii')
         hashes['sfx/combat.txt']=record(index)['sha256']
     duration = runtime['preview_seconds'] if seconds is None else seconds
-    (data/'launch.cfg').write_text(f"MGO2WIN.TITLE 7\n{duration} {runtime['entry_procedure']} {int(runtime['audio_enabled'])}\n{document['network']['policy_url']}\n", encoding='ascii')
+    (data/'launch.cfg').write_text(f"MGO2MT.TITLE 7\n{duration} {runtime['entry_procedure']} {int(runtime['audio_enabled'])}\n{document['network']['policy_url']}\n", encoding='ascii')
     hashes['launch.cfg'] = record(data/'launch.cfg')['sha256']
     (data/'assets.sha256').write_text(''.join(f'{value}  {name}\n' for name, value in sorted(hashes.items())), encoding='ascii')
     # The GWP remains the editable source for a future build; the desktop reads a
     # fixed, hashed launch snapshot, not arbitrary JSON commands.
     gwp = copy.deepcopy(document)
-    gwp['format'] = 'MGO2WIN.GWP'
+    gwp['format'] = 'MGO2MT.GWP'
     gwp['runtime']['preview_seconds'] = duration
     for role in assets:
         gwp['assets'][role]['path'] = './data/'+DESTINATIONS[role]
@@ -293,9 +293,9 @@ def package(gwp_path, exe, output, seconds=None):
         'ゲーム由来のデータを含むローカル専用ビルドです。このフォルダーをGitHubにアップロードしないでください。\n', encoding='utf-8')
     files = [{**record(p), 'path': p.relative_to(output).as_posix()} for p in sorted(output.rglob('*')) if p.is_file()]
     version_output = subprocess.run([str(exe.resolve()), '--version'], capture_output=True, text=True, check=True, timeout=10).stdout.strip()
-    if not re.fullmatch(r'MGO2WIN v0\.01-[0-9]{14}', version_output):
+    if not re.fullmatch(r'MGO2MT v0\.01-[0-9]{14}', version_output):
         raise ValueError('Executable build version is missing or invalid')
-    manifest = {'format': 'MGO2WIN.LOCAL_PACKAGE', 'version': 1, 'build_version': version_output.split()[1], 'distribution': 'local_only_contains_game_assets',
+    manifest = {'format': 'MGO2MT.LOCAL_PACKAGE', 'version': 1, 'build_version': version_output.split()[1], 'distribution': 'local_only_contains_game_assets',
                 'created_utc': datetime.datetime.now(datetime.timezone.utc).isoformat(),
                 'source_gwp_sha256': record(gwp_path)['sha256'],
                 'packager_sha256': record(Path(__file__))['sha256'],
@@ -321,17 +321,17 @@ def main():
     load(args.gwp)
     if not 0 < args.seconds <= 600:
         raise ValueError('Invalid seconds')
-    exe = ROOT/'build/package/Release/MGO2WIN.exe' if args.skip_build else build_release()
-    output = args.output or ROOT/'dist'/('MGO2WIN-local-'+datetime.datetime.now().strftime('%Y%m%d-%H%M%S-%f'))
+    exe = ROOT/'build/package/Release/MGO2MT.exe' if args.skip_build else build_release()
+    output = args.output or ROOT/'dist'/('MGO2MT-local-'+datetime.datetime.now().strftime('%Y%m%d-%H%M%S-%f'))
     manifest = package(args.gwp, exe, output, args.seconds)
-    checked = subprocess.run([str(output.resolve()/'MGO2WIN.exe'), '--check'], cwd=ROOT, timeout=30)
+    checked = subprocess.run([str(output.resolve()/'MGO2MT.exe'), '--check'], cwd=ROOT, timeout=30)
     if checked.returncode:
         raise ValueError('Desktop package validation failed / パッケージ検証に失敗しました')
-    print('Ready / 作成完了: '+str(output.resolve()/'MGO2WIN.exe'))
+    print('Ready / 作成完了: '+str(output.resolve()/'MGO2MT.exe'))
     print('Local only: contains game assets / ゲームデータを含むためローカル専用です。')
     (ROOT/'outputs/package').mkdir(parents=True, exist_ok=True)
     (ROOT/'outputs/package/latest.json').write_text(json.dumps({'folder': str(output.resolve()),
-        'exe': record(output/'MGO2WIN.exe'), 'manifest': record(output/'package.json'),
+        'exe': record(output/'MGO2MT.exe'), 'manifest': record(output/'package.json'),
         'validation_exit': checked.returncode}, indent=2), encoding='utf-8')
 
 

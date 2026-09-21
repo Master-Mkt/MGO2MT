@@ -4,7 +4,7 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
-using namespace mgo2win::radio_audio;
+using namespace mgo2mt::radio_audio;
 static void check(bool ok) {if(!ok)throw std::runtime_error("radio audio contract");}
 int main() {
  const std::array<unsigned,16> types{7,8,9,10,11,12,13,14,16,17,18,19,20,21,22,23};

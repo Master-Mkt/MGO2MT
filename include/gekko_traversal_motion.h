@@ -1,7 +1,7 @@
 #pragma once
 #include "gekko_motion.h"
 
-namespace mgo2win::special_pc {
+namespace mgo2mt::special_pc {
 // Inspected original poses selected for native traversal. Original action
 // dispatch is unverified. Turn candidates are stored for research, not enabled.
 inline constexpr std::array<GekkoClip,5> gekko_traversal_clips{{

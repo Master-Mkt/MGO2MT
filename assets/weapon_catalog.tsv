@@ -2,7 +2,7 @@
 # Ordinary TDM subset. Unique/variant eligibility not yet recovered is withheld.
 # Costs exclude attachments; ? means unverified.
 # Evidence: notes/WEAPON_CATALOG_20260912.md
-MGO2WIN_WEAPON_CATALOG	1
+MGO2MT_WEAPON_CATALOG	1
 INITIAL_DP	1000
 WEAPON	PRIMARY	0	NONE	0	0	?
 WEAPON	PRIMARY	23	SKORPION	0	1	23

@@ -1,3 +1,4 @@
+#include "product_identity.h"
 #pragma once
 #include "character_client.h"
 #include <algorithm>
@@ -6,7 +7,7 @@
 #include <set>
 #include <stdexcept>
 
-namespace mgo2win {
+namespace mgo2mt {
 // Native presentation order. Original UI selectors 0x98BDB4..0x98BF1C
 // write modes 4,3,10,7,1,2. Combat (server subtype 8) shares Training here.
 enum class LobbyGroup : unsigned {automatching,free_battle,training,survival,tournament,registration,unknown};
@@ -24,7 +25,7 @@ inline std::vector<LobbyMembership> read_lobby_membership(std::istream& in){
  auto token=[&]{std::string s;if(!(in>>s)||s.size()>64)throw std::runtime_error("lobby membership token");return s;};
  auto number=[&](unsigned min,unsigned max){auto s=token();unsigned v=0;auto r=std::from_chars(s.data(),s.data()+s.size(),v);
   if(r.ec!=std::errc{}||r.ptr!=s.data()+s.size()||v<min||v>max)throw std::runtime_error("lobby membership number");return v;};
- if(token()!="MGO2WIN.LOBBIES"||number(1,1)!=1||token()!="49.212.132.180")throw std::runtime_error("lobby membership contract");
+ if(token()!=mgo2mt::brand::Format{"MGO2MT.LOBBIES"}||number(1,1)!=1||token()!="49.212.132.180")throw std::runtime_error("lobby membership contract");
  auto count=number(0,256);std::vector<LobbyMembership> rows;std::set<unsigned> ids;
  for(unsigned i=0;i<count;++i){auto id=number(1,65535),port=number(1,65535),subtype=number(0,255);
   if(!ids.insert(id).second)throw std::runtime_error("duplicate lobby membership");rows.push_back({uint16_t(id),uint16_t(port),uint8_t(subtype)});}

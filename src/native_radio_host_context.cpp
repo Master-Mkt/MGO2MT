@@ -1,5 +1,5 @@
 #include "native_radio_context.h"
-namespace mgo2win::radio {
+namespace mgo2mt::radio {
 Context host_context(combat::Cycle& cycle,std::span<const Identity> admitted,uint64_t now){
  auto snapshot=cycle.service().authority().snapshot();
  std::optional<combat::wire::Preparation> prep;

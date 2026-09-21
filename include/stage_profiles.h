@@ -4,7 +4,7 @@
 #include <filesystem>
 #include <stdexcept>
 #include <string_view>
-namespace mgo2win::stage {
+namespace mgo2mt::stage {
 // Fixed local candidates, from updated lobby GCX procedure 11. A supported
 // route does not certify that all assets/object contracts have been compiled.
 struct Profile {uint8_t map;std::string_view stage;};

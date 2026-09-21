@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <iostream>
 #include <sstream>
-using namespace mgo2win;
+using namespace mgo2mt;
 void require(bool b){if(!b)throw std::runtime_error("STUN contract failed");}
 std::vector<uint8_t> reply(const StunId& id){auto a=stun_request(id);std::vector<uint8_t>b(a.begin(),a.end());b[0]=1;b[3]=12;b.insert(b.end(),{0,0x20,0,8,0,1,0x37,0x70,0xea,0x12,0xd5,0x45});return b;}
 int main(){

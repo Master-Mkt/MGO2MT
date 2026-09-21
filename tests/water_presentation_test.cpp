@@ -3,7 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win::stage;
+using namespace mgo2mt::stage;
 void check(bool v,const char* why){if(!v)throw std::runtime_error(why);}
 void save(const std::vector<uint32_t>& p,const std::filesystem::path& path){BITMAPFILEHEADER f{};BITMAPINFOHEADER h{};f.bfType=0x4d42;f.bfOffBits=sizeof(f)+sizeof(h);f.bfSize=f.bfOffBits+uint32_t(p.size()*4);h.biSize=sizeof(h);h.biWidth=1280;h.biHeight=-720;h.biPlanes=1;h.biBitCount=32;std::ofstream out(path,std::ios::binary);out.write(reinterpret_cast<const char*>(&f),sizeof(f));out.write(reinterpret_cast<const char*>(&h),sizeof(h));out.write(reinterpret_cast<const char*>(p.data()),p.size()*4);check(bool(out),"bitmap saved");}
 int main(int argc,char**argv){try{

@@ -6,7 +6,7 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {
 namespace wire=combat::wire;
 void check(bool b,const char*why){if(!b)throw std::runtime_error(why);}
@@ -27,10 +27,11 @@ void codec(){
  auto absent=f;absent.sop={};check(std::get<wire::Frame>(wire::decode(wire::encode(absent))).sop==combat::SopView{},"absent footer remains empty");absent.sop.activation=1;invalid([&]{wire::encode(absent);},"absent recipient cannot smuggle activation");
  auto jammed=f;jammed.sop.visibleMask=0;jammed.sop.jammed=true;check(std::get<wire::Frame>(wire::decode(wire::encode(jammed)))==jammed,"jammed recipient with no disclosed peers is valid");
  auto zero=f;zero.sop.activation=0;zero.sop.origin={};invalid([&]{wire::encode(zero);},"linked visibility needs a nonzero activation serial");
- for(uint16_t angle:{uint16_t(0),uint16_t(3),uint16_t(30)}){auto cone=f;cone.sop.spreadMilliRadians=angle;check(std::get<wire::Frame>(wire::decode(wire::encode(cone)))==cone,"recipient angle round-trip at zero/base/max");}
- for(unsigned kind=0;kind<3;++kind){auto bad=f;bad.sop.spreadMilliRadians=7;if(kind==0)bad.sop.spreadMilliRadians=31;if(kind==1)bad.snapshot.players[1]->weapon=3;if(kind==2){bad.snapshot.players[1]->alive=false;bad.snapshot.players[1]->hp=0;bad.sop.visibleMask=0;}invalid([&]{wire::encode(bad);},"excessive/unsupported/dead recipient cone rejected");}
- auto old=bytes;old[5]=10;check(!wire::recognized(old),"old GWCB10 cannot mix with GWCB11");invalid([&]{wire::decode(old);},"old wire version rejected");
- auto malformed=bytes;malformed[malformed.size()-10]=31;invalid([&]{wire::decode(malformed);},"malformed cone byte rejected");
+ for(uint16_t angle:{uint16_t(0),uint16_t(3),uint16_t(30),uint16_t(800)}){auto cone=f;cone.sop.spreadMilliRadians=angle;check(std::get<wire::Frame>(wire::decode(wire::encode(cone)))==cone,"recipient angle round-trip at zero/base/max");}
+ for(unsigned kind=0;kind<3;++kind){auto bad=f;bad.sop.spreadMilliRadians=7;if(kind==0)bad.sop.spreadMilliRadians=801;if(kind==1){bad.snapshot.players[1]->stunned=true;bad.snapshot.players[1]->stamina=0;}if(kind==2){bad.snapshot.players[1]->alive=false;bad.snapshot.players[1]->hp=0;bad.sop.visibleMask=0;}invalid([&]{wire::encode(bad);},"excessive/stunned/dead recipient cone rejected");}
+ auto other=f;other.snapshot.players[1]->weapon=3;other.sop.spreadMilliRadians=200;check(std::get<wire::Frame>(wire::decode(wire::encode(other)))==other,"configured non-AK cone supported");
+ auto old=bytes;old[5]=26;check(!wire::recognized(old),"old GWCB26 cannot mix with GWCB27");invalid([&]{wire::decode(old);},"old wire version rejected");
+ auto malformed=bytes;malformed[malformed.size()-10]=255;malformed[malformed.size()-9]=255;invalid([&]{wire::decode(malformed);},"malformed cone byte rejected");
  // Current compressed states retain exact nonzero reload deadlines. Use
  // the worst human reload roster to prove the real 2000-byte boundary.
  auto big=frame(24);for(auto&p:big.snapshot.players)p->reloadUntil=UINT64_MAX;

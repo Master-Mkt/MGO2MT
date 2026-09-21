@@ -2,7 +2,7 @@
 #include "dedicated_peer.h"
 #include <algorithm>
 #include <utility>
-namespace mgo2win::host {
+namespace mgo2mt::host {
 namespace {
 void put(std::vector<uint8_t>&b,uint32_t n,unsigned bytes){while(bytes--){b.push_back(uint8_t(n));n>>=8;}}
 uint32_t read(std::span<const uint8_t>b,size_t at,unsigned n){if(at>b.size()||n>b.size()-at)throw Invalid(Error::extent);uint32_t v=0;for(unsigned i=0;i<n;++i)v|=uint32_t(b[at+i])<<(i*8);return v;}

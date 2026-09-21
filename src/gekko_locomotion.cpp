@@ -1,7 +1,7 @@
 #include "gekko_locomotion.h"
 #include <algorithm>
 #include <cmath>
-namespace mgo2win::gekko_locomotion {
+namespace mgo2mt::gekko_locomotion {
 namespace {
 constexpr float pi=3.14159265359f;
 float wrap(float a){return std::remainder(a,2*pi);}

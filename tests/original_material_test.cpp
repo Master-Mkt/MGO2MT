@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <string>
 
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {
 void require(bool ok,const char* why){if(!ok)throw std::runtime_error(why);}
 void be32(uint8_t* bytes,uint32_t value){for(unsigned i=0;i<4;++i)bytes[i]=uint8_t(value>>(24-8*i));}

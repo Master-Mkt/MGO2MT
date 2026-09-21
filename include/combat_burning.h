@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <vector>
 
-namespace mgo2win::combat::burning {
+namespace mgo2mt::combat::burning {
 using Vec3=stage::Vec3;
 struct Key {uint64_t epoch=0;uint8_t slot=255;uint16_t instance=0;uint32_t character=0,life=0;bool operator==(const Key&)const=default;};
 bool valid(Key)noexcept;
@@ -32,7 +32,7 @@ struct Replay {
 // Trusted HOST producer only, with a nonzero actual source weapon for damage
 // events. Object-only sources have no wire identity and are rejected.
 // Radius/damage are never accepted from client wire.
-struct Blast {Source source;uint64_t serial=0;Vec3 position{};float radius=0;uint32_t damage=0;bool ignite=false;};
+struct Blast {Source source;uint64_t serial=0;Vec3 position{};float radius=0;uint32_t damage=0;bool ignite=false;uint32_t staminaDamage=0;};
 bool valid(const Blast&)noexcept;
 // A capsule-nearest point, bounded sphere radius and actual occlusion ray form
 // the native exposure test. It does not claim the original blast hit shape.

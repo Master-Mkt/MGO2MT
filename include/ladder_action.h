@@ -6,7 +6,7 @@
 #include <cmath>
 #include <filesystem>
 #include <vector>
-namespace mgo2win::ladder {
+namespace mgo2mt::ladder {
 // Native safe traversal of explicitly reviewed stage anchors. This is not a
 // decoder for arbitrary ladder-looking triangles or original ladder physics.
 struct Anchor {uint16_t id=0;stage::Vec3 bottom{},top{},bottomExit{},topExit{};float facingYaw=0;bool operator==(const Anchor&)const=default;};

@@ -2,7 +2,7 @@
 #include "host_protocol.h"
 #include <optional>
 
-namespace mgo2win::host {
+namespace mgo2mt::host {
 // Original global cache 0, descriptor 0. Values 0..7 have verified original
 // writers. This byte does not acknowledge scene objects, spawning, or START.
 std::vector<uint8_t> phase_update(uint8_t phase);

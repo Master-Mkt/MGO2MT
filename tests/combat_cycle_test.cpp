@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <iostream>
 #include <set>
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace cw=combat::wire;
 namespace {
 void check(bool b,const char*s){if(!b)throw std::runtime_error(s);}

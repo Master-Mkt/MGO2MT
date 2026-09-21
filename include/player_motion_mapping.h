@@ -1,7 +1,7 @@
 #pragma once
 #include "player_motion.h"
 #include "player_control.h"
-namespace mgo2win {
+namespace mgo2mt {
 // Selection clips occupy IDs15..18; gameplay enums must never be raw-cast.
 inline PlayerMotion render_motion(player::Motion motion){
  switch(motion){

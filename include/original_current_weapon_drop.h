@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <optional>
 
-namespace mgo2win::original_current_weapon_drop {
+namespace mgo2mt::original_current_weapon_drop {
 // Current ELF 8C9EA0, tables 8CA064/8CA1A4. These are WEAPON indices
 // (also packed low-nine IDs for this 0..72 subset), never equipment IDs.
 // A positive answer is this producer's ID gate, not general menu permission.

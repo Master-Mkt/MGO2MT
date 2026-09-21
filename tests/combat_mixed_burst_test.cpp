@@ -3,14 +3,14 @@
 #include "combat_wire_budget.h"
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;using namespace mgo2win::combat;
+using namespace mgo2mt;using namespace mgo2mt::combat;
 namespace {
 void check(bool b,const char*m){if(!b)throw std::runtime_error(m);}
 Identity identity(unsigned slot){return {uint8_t(slot),uint16_t(slot+100),uint32_t(slot+1000)};}
 Pose pose(unsigned slot){Pose p;p.feet[1]=2;if(slot<10){p.feet[0]=(int(slot)-5)*700.f;p.feet[2]=5000;}else if(slot<14){p.feet[0]=(int(slot)-10)*700.f;p.feet[2]=7000;}else p.feet[0]=(int(slot)-19)*700.f;return p;}
 std::shared_ptr<const stage::Collision> scene(){
- std::vector<Vec3> vertices{{-200000,0,-200000},{200000,0,-200000},{200000,0,200000},{-200000,0,200000}};std::vector<stage::CollisionTriangle> triangles{{{0,1,2}},{{0,2,3}}};
- for(unsigned i=0;i<64;++i){const auto n=uint32_t(vertices.size());const float z=1500.f+i*30;vertices.insert(vertices.end(),{{-20000,0,z},{20000,0,z},{20000,4000,z},{-20000,4000,z}});triangles.push_back({{n,n+2,n+1},4,0,0,0});triangles.push_back({{n,n+3,n+2},4,0,0,0});}
+ std::vector<Vec3> vertices{{-200000,0,-200000},{200000,0,-200000},{200000,0,200000},{-200000,0,200000}};std::vector<stage::CollisionTriangle> triangles{{{0,1,2},stage::attribute::native_solid},{{0,2,3},stage::attribute::native_solid}};
+ for(unsigned i=0;i<64;++i){const auto n=uint32_t(vertices.size());const float z=1500.f+i*30;vertices.insert(vertices.end(),{{-20000,0,z},{20000,0,z},{20000,4000,z},{-20000,4000,z}});triangles.push_back({{n,n+2,n+1},stage::attribute::native_solid,0,0,0});triangles.push_back({{n,n+3,n+2},stage::attribute::native_solid,0,0,0});}
  return std::make_shared<const stage::Collision>(stage::Collision::make(vertices,triangles,{{1,.5f,.5f,true,0,true}}));
 }
 size_t run(bool evade){

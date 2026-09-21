@@ -6,7 +6,7 @@
 #include <optional>
 #include <span>
 #include <vector>
-namespace mgo2win::items {
+namespace mgo2mt::items {
 // Preserve existing primary/secondary/support/equipment indices. Knife owns
 // an additional slot, so the fixed grant never replaces the support grenade.
 inline constexpr uint8_t equipment_slot=3,knife_slot=4,held_slot_count=5;
@@ -22,7 +22,7 @@ struct Contents {
 };
 struct HeldSlot {Contents contents;uint64_t revision=1;bool operator==(const HeldSlot&)const=default;};
 enum class PlacementKind {dropped,installed,round};
-struct Position {float x=0,y=0,z=0,yaw=0;bool operator==(const Position&)const=default;};
+struct Position {float x=0,y=0,z=0,yaw=0,nx=0,ny=1,nz=0;bool operator==(const Position&)const=default;};
 struct Entity {EntityKey key;uint64_t revision=1;PlacementKind kind=PlacementKind::dropped;Actor owner;Contents contents;Position position;bool operator==(const Entity&)const=default;};
 struct Seed {Contents contents;Position position;};
 struct Movement {EntityKey key;uint64_t revision=0;Position position;};
@@ -55,6 +55,10 @@ public:
  void remove(Actor); // does not destroy world entities owned by that actor
  Result drop(const Request&,HeldSlot&,uint64_t expectedHeldRevision,Position,const DropPolicy&);
  Result install(const Request&,HeldSlot&,uint64_t expectedHeldRevision,uint32_t quantity,Position,const DropPolicy&);
+ // HOST accepted weapon action: transfer exactly one loaded deployable into
+ // an installed entity while retaining the owner's remaining ammunition.
+ Result deploy(Actor,HeldSlot&,uint64_t expectedHeldRevision,Position);
+ bool erase_deployed(EntityKey,uint64_t expectedEntityRevision);
  Result pickup(const Request&,EntityKey,uint64_t expectedEntityRevision,HeldSlot&,uint64_t expectedHeldRevision);
  // Serialized HOST physics/contact operations; do not consume client sequences.
  bool move(Scope,std::span<const Movement>); // all-or-nothing, excludes installed

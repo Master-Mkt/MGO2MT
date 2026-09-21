@@ -5,7 +5,7 @@
 #include <limits>
 #include <stdexcept>
 
-namespace mgo2win::invitation_ui {
+namespace mgo2mt::invitation_ui {
 namespace {
 constexpr int canvasW=1280,canvasH=720,left=48,right=1232,top=28,stripHeight=32;
 bool text_valid(const std::wstring& s){

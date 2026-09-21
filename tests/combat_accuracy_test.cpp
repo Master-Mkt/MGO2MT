@@ -2,11 +2,11 @@
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;using namespace mgo2win::combat;
+using namespace mgo2mt;using namespace mgo2mt::combat;
 namespace {
 void check(bool b,const char*m){if(!b)throw std::runtime_error(m);}
 constexpr Identity shooter{0,1,101},target{1,1,102};
-std::shared_ptr<const stage::Collision> wall(float depth=100000){return std::make_shared<const stage::Collision>(stage::Collision::make({{-200000,-200000,depth},{200000,-200000,depth},{200000,200000,depth},{-200000,200000,depth}},{{{0,1,2}},{{0,2,3}}}));}
+std::shared_ptr<const stage::Collision> wall(float depth=100000){return std::make_shared<const stage::Collision>(stage::Collision::make({{-200000,-200000,depth},{200000,-200000,depth},{200000,200000,depth},{-200000,200000,depth}},{{{0,1,2},stage::attribute::native_solid},{{0,2,3},stage::attribute::native_solid}}));}
 std::vector<Weapon> profiles(bool enabled){Weapon ak;ak.id=25;ak.damage=2000;ak.intervalMs=100;ak.reloadMs=200;ak.magazine=30;ak.reserve=60;ak.range=200000;ak.nativeAkAccuracy=enabled;Weapon secondary;secondary.id=3;secondary.heldOnly=true;return {ak,secondary};}
 void setup(Authority&a,bool enabled=true,uint64_t epoch=1){a.begin(epoch,wall(),profiles(enabled));check(a.join(shooter,1,{},1000,1000,std::array<uint16_t,2>{25,3},0),"shooter join");a.active(true);a.advance(0);}
 Decision fire(Authority&a,uint32_t seq,uint64_t now,uint32_t life=1){check(a.pose(shooter,a.snapshot().epoch,seq,{},now,life)==Reject::none,"fresh pose");return a.fire(shooter,{a.snapshot().epoch,seq,25,{0,0,1},life},now);}

@@ -4,7 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <thread>
-int run_audio_probe(int,wchar_t**,const std::atomic_bool*,const mgo2win::AudioControl*);
+int run_audio_probe(int,wchar_t**,const std::atomic_bool*,const mgo2mt::AudioControl*);
 int wmain(int argc,wchar_t** argv){
     const std::wstring mode=argc==4?argv[3]:L"";
     if((argc!=3&&argc!=4)||(argc==4&&mode!=L"--near-loop"&&mode!=L"--no-loop"&&mode!=L"--cancel")){
@@ -20,7 +20,7 @@ int wmain(int argc,wchar_t** argv){
             std::vector<unsigned char> bytes(static_cast<size_t>(size));
             input.seekg(0);input.read(reinterpret_cast<char*>(bytes.data()),size);
             if(!input)throw std::runtime_error("Near-loop WAV read");
-            const auto wave=mgo2win::read_pcm_wave(bytes);
+            const auto wave=mgo2mt::read_pcm_wave(bytes);
             if(!wave.loopEnd||wave.loopEnd-wave.loopBegin<=wave.rate)
                 throw std::runtime_error("Near-loop needs an embedded loop longer than one second");
             const auto playBegin=wave.loopEnd-wave.rate;
@@ -31,7 +31,7 @@ int wmain(int argc,wchar_t** argv){
                      <<",\"loop_end\":"<<wave.loopEnd<<",\"play_begin\":"<<playBegin<<"}\n";
         }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 2;}
     }
-    mgo2win::AudioControl control;
+    mgo2mt::AudioControl control;
     control.stream="layer_smoke";control.loopWhole=mode!=L"--no-loop";control.alternateWave=argv[2];
     control.layerMix={93*.007874f,98*.007874f,500,2000};
     std::atomic_bool cancel{false};

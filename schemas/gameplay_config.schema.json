@@ -1,0 +1,570 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "format": {
+      "const": "MGO2MT.Gameplay"
+    },
+    "version": {
+      "const": 1
+    },
+    "provenance": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "handsPath": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240,
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*[\\\\:<>\"|?*])(?!.*(?:^|/)(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\\.|/|$))(?!.*[. ](?:/|$))[^\\x00-\\x1f\\x7f]+$"
+        },
+        "modelsIndexPath": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240,
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*[\\\\:<>\"|?*])(?!.*(?:^|/)(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\\.|/|$))(?!.*[. ](?:/|$))[^\\x00-\\x1f\\x7f]+$"
+        },
+        "modelRoot": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240,
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*[\\\\:<>\"|?*])(?!.*(?:^|/)(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\\.|/|$))(?!.*[. ](?:/|$))[^\\x00-\\x1f\\x7f]+$"
+        },
+        "audioManifest": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240,
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*[\\\\:<>\"|?*])(?!.*(?:^|/)(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\\.|/|$))(?!.*[. ](?:/|$))[^\\x00-\\x1f\\x7f]+$"
+        },
+        "effectsManifest": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240,
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*[\\\\:<>\"|?*])(?!.*(?:^|/)(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\\.|/|$))(?!.*[. ](?:/|$))[^\\x00-\\x1f\\x7f]+$"
+        }
+      },
+      "required": [
+        "handsPath",
+        "modelsIndexPath",
+        "modelRoot",
+        "audioManifest",
+        "effectsManifest"
+      ]
+    },
+    "initialDp": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "catalog": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 511
+          },
+          "category": {
+            "enum": [
+              "PRIMARY",
+              "SECONDARY",
+              "SUPPORT"
+            ]
+          },
+          "displayName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[^\\x00-\\x1f\\x7f]+$"
+          },
+          "dpCost": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4294967295
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "availableWithoutDp": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "restrictionBit": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 127
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "category",
+          "displayName",
+          "dpCost",
+          "availableWithoutDp",
+          "restrictionBit"
+        ]
+      }
+    },
+    "weapons": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 511
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[^\\x00-\\x1f\\x7f]+$"
+          },
+          "provenance": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "massCandidate": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "parameters": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "damage": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000
+              },
+              "staminaDamage": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000
+              },
+              "shotCue": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000
+              },
+              "impactCue": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000
+              },
+              "bodyCue": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000
+              },
+              "intervalMs": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 60000
+              },
+              "reloadMs": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 60000
+              },
+              "reloadRefillMs": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 60000
+              },
+              "magazine": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000
+              },
+              "reserve": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10000
+              },
+              "range": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1000000
+              },
+              "behaviorSourceId": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 511
+              },
+              "automatic": {
+                "type": "boolean"
+              },
+              "nativePrimaryMastery": {
+                "type": "boolean"
+              },
+              "nativeAkPenetration": {
+                "type": "boolean"
+              },
+              "nativeAkHitRegions": {
+                "type": "boolean"
+              },
+              "heldOnly": {
+                "type": "boolean"
+              },
+              "nativeAkAccuracy": {
+                "type": "boolean"
+              },
+              "nativeProjectile": {
+                "type": "boolean"
+              },
+              "originalFirearm": {
+                "type": "boolean"
+              },
+              "meleeAttack": {
+                "type": "boolean"
+              },
+              "nativePlaced": {
+                "type": "boolean"
+              },
+              "mountedOnly": {
+                "type": "boolean"
+              },
+              "fireIntervalTicks": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 17982
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "reloadMotion": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "baseTick": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 1000
+                      },
+                      "intervals": {
+                        "type": "integer",
+                        "minimum": 2,
+                        "maximum": 3600
+                      },
+                      "refillTick": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 3600000
+                      },
+                      "rate": {
+                        "type": "number",
+                        "minimum": 0.001,
+                        "maximum": 16
+                      }
+                    },
+                    "required": [
+                      "baseTick",
+                      "intervals",
+                      "refillTick",
+                      "rate"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "ballistics": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "range": {
+                        "type": "number",
+                        "minimum": 1,
+                        "maximum": 1000000
+                      },
+                      "speed": {
+                        "type": "number",
+                        "minimum": 1,
+                        "maximum": 10000000
+                      },
+                      "decayStart": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1000000
+                      },
+                      "decayEnd": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1000000
+                      },
+                      "minimumForce": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 1000
+                      },
+                      "penetration": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 1000000
+                      }
+                    },
+                    "required": [
+                      "range",
+                      "speed",
+                      "decayStart",
+                      "decayEnd",
+                      "minimumForce",
+                      "penetration"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "stageMaterialAudio": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "damage",
+              "staminaDamage",
+              "shotCue",
+              "impactCue",
+              "bodyCue",
+              "intervalMs",
+              "reloadMs",
+              "reloadRefillMs",
+              "magazine",
+              "reserve",
+              "range",
+              "behaviorSourceId",
+              "automatic",
+              "nativePrimaryMastery",
+              "nativeAkPenetration",
+              "nativeAkHitRegions",
+              "heldOnly",
+              "nativeAkAccuracy",
+              "nativeProjectile",
+              "originalFirearm",
+              "meleeAttack",
+              "nativePlaced",
+              "mountedOnly",
+              "fireIntervalTicks",
+              "reloadMotion",
+              "ballistics",
+              "stageMaterialAudio"
+            ]
+          },
+          "visual": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "motionId": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 511
+              },
+              "effectId": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 511
+              },
+              "modelPath": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 240,
+                    "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*[\\\\:<>\"|?*])(?!.*(?:^|/)(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\\.|/|$))(?!.*[. ](?:/|$))[^\\x00-\\x1f\\x7f]+$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "secondaryModelPath": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 240,
+                    "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*[\\\\:<>\"|?*])(?!.*(?:^|/)(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\\.|/|$))(?!.*[. ](?:/|$))[^\\x00-\\x1f\\x7f]+$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "flags": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 7
+              },
+              "muzzle": {
+                "type": "array",
+                "minItems": 3,
+                "maxItems": 3,
+                "items": {
+                  "type": "number",
+                  "minimum": -100000,
+                  "maximum": 100000
+                }
+              },
+              "magPosition": {
+                "type": "array",
+                "minItems": 3,
+                "maxItems": 3,
+                "items": {
+                  "type": "number",
+                  "minimum": -100000,
+                  "maximum": 100000
+                }
+              },
+              "magRotation": {
+                "type": "array",
+                "minItems": 4,
+                "maxItems": 4,
+                "items": {
+                  "type": "number",
+                  "minimum": -1,
+                  "maximum": 1
+                }
+              },
+              "autoAim": {
+                "type": "boolean"
+              },
+              "tracer": {
+                "type": "boolean"
+              },
+              "lockRange": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1000000
+              },
+              "lockWidth": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100000
+              },
+              "lockYaw": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 3.141593
+              },
+              "flashTexture": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4294967295,
+                "default": 0,
+                "description": "Original texture key inside effectsManifest. Zero retains the effect source default."
+              },
+              "smokeTexture": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4294967295,
+                "default": 0,
+                "description": "Original texture key inside effectsManifest. Zero retains the effect source default."
+              },
+              "iconPath": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 240,
+                "description": "Optional data-relative single PNG, <=1024x512 pixels and 4 MiB. Omit/null uses the original icon index."
+              }
+            },
+            "required": [
+              "motionId",
+              "effectId",
+              "modelPath",
+              "secondaryModelPath",
+              "flags",
+              "muzzle",
+              "magPosition",
+              "magRotation",
+              "autoAim",
+              "tracer",
+              "lockRange",
+              "lockWidth",
+              "lockYaw"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "provenance",
+          "parameters",
+          "visual"
+        ]
+      }
+    }
+  },
+  "required": [
+    "format",
+    "version",
+    "provenance",
+    "resources",
+    "initialDp",
+    "catalog",
+    "weapons"
+  ],
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mgo2mt.local/schemas/gameplay_config.schema.json",
+  "title": "MGO2MT gameplay parameters and original resource paths",
+  "description": "Runtime additionally enforces unique IDs/category-ID pairs, safe Windows relative paths, unit quaternion, consistent timing, supported explicit action sources and complete catalog references. massCandidate is evidence only."
+}

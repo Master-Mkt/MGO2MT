@@ -6,7 +6,7 @@
 #include <optional>
 #include <set>
 #include <limits>
-namespace mgo2win::names {
+namespace mgo2mt::names {
 // Display metadata only. Never feed these strings into PS3/HOST wire records.
 // A directory belongs to one authenticated connection; the current roster
 // controls interest, while a fresh nonce binds each bounded batch response.

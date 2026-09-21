@@ -1,7 +1,7 @@
 #pragma once
 #include "combat_spawn.h"
 #include <string>
-namespace mgo2win::combat::spawn {
+namespace mgo2mt::combat::spawn {
 // GCX source arrays may have different lengths across maps/rules. Placement
 // entity capacity is unrelated and is not encoded in these spawn arrays.
 class StageProfile {

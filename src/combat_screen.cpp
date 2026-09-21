@@ -1,7 +1,7 @@
 #include "menu_audio.h"
 #include "character_screen.h"
 #include <algorithm>
-namespace mgo2win {
+namespace mgo2mt {
 namespace {
 const wchar_t* round_error(combat::wire::CommandError error){using E=combat::wire::CommandError;switch(error){
  case E::none:return L"";

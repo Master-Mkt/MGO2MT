@@ -5,7 +5,7 @@
 #include <chrono>
 #include <iostream>
 #include <thread>
-using namespace mgo2win;
+using namespace mgo2mt;
 int main(int argc,char**argv){
  for(unsigned i=0;i<256;++i)assert(stage::runtime_stage_supported(uint8_t(i))==(i==1||i==4||i==7||i==20||i==21));
  assert(stage::asset_path("data/stages",1,".gwm")==std::filesystem::path("data/stages/n001a.gwm"));

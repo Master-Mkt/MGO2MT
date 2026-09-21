@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <optional>
-namespace mgo2win::weapon_extensions {
+namespace mgo2mt::weapon_extensions {
 struct Damage {uint32_t hp=0,stamina=0;bool operator==(const Damage&)const=default;};
 // Exact current table rows: MK2/RUGER ID2 variant1 @1292A60 = 0/245;
 // RPG7 ID50 variant0 @1292BA0 = 1125/0. D3A3B8 selects these for the

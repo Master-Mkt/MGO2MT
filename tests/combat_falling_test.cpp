@@ -2,7 +2,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <limits>
-using namespace mgo2win::combat::falling;
+using namespace mgo2mt::combat::falling;
 void check(bool value,const char* m){if(!value)throw std::runtime_error(m);}
 int main(){try{
  check(damage(3000,1000)==0u&&damage(5000,1000)==450u&&damage(7000,1000)==900u&&damage(8500,1000)==950u&&damage(10000,1000)==1000u&&damage(12000,1000)==1000u,"user native thresholds");check(damage(7000,100)==90u&&damage(9999,1000).value()<1000,"maxHP scaling and below fatal survival");check(!damage(-1,1000)&&!damage(1,0)&&!damage(std::numeric_limits<float>::quiet_NaN(),1000),"invalid policy inputs");

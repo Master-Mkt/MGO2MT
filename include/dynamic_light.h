@@ -4,7 +4,7 @@
 #include <span>
 #include <stdexcept>
 
-namespace mgo2win {
+namespace mgo2mt {
 inline constexpr size_t maximum_dynamic_lights=8;
 struct DynamicPointLight {
     std::array<float,3> position{},color{1,1,1};

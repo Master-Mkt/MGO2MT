@@ -3,7 +3,7 @@
 #include "menu_audio.h"
 #include <iostream>
 #include <stdexcept>
-using namespace mgo2win;
+using namespace mgo2mt;
 namespace {
 void check(bool value,const char* message){if(!value)throw std::runtime_error(message);}
 template<class Screen> void cue(Screen& screen,unsigned expected,const char* message){check(screen.cues()==std::vector<unsigned>{expected},message);}
